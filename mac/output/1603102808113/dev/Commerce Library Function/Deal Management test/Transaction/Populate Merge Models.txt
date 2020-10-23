@@ -1,9 +1,0 @@
-/************************************************
-Rule Name: Populate Merge Models
-Description: To Populate Models that are Merged
-Author: Ravi
-*/
-
-retstring = "";
-retString = retString + "1~mergedModels~" + jsonarraytostr(modelsmerged)+ "|";
-return retstring;

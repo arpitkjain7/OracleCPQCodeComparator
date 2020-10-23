@@ -1,8 +1,0 @@
-/************************************************************************************************
-Author(s) - Satyabrata
-Date      - 05/01/2019
-Summary   - This action submits the quote details to EBS.
-*************************************************************************************************/
-res = "";
-res = commerce.invokingSOAService_brcm("B");
-return res;

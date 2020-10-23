@@ -1,9 +1,0 @@
-/*****************************************************************
-Function Name : Recommendation Rule to Send Selected Customer Details to Commerce
-Name :Satyabrata Acharya
-Description : This Rule used to recommende parts to the customer
-*****************************************************************/ 
-result="";
-line_comment_field=line_Comment_Field_contact_avg;
-result=result + "Cust" + "~" +"0"+ "~" + line_Comment_Field_contact_avg + "~"+ "0"  + "|^|";
-return result;

@@ -1,0 +1,51 @@
+//Created Library To trigger Action which in turn will update covered Product details in Renewal Quotes.
+
+result = bmql("select * from Renewal_CP_Update");
+returnString = "";
+headersDict = dict("string");
+for r in result
+{
+transactionID = get(r,"Transaction_ID");
+returnString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\">";
+returnString = returnString +  "<soapenv:Header>";
+returnString = returnString + "<wsse:Security xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\" xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\">";
+returnString = returnString +"<wsse:UsernameToken wsu:Id=\"UsernameToken-2\">";
+returnString = returnString +"<wsse:Username>"+"Integration"+"</wsse:Username>";
+returnString = returnString +"<wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">"+"Prod@2019"+"</wsse:Password>";
+returnString = returnString +"</wsse:UsernameToken>";
+returnString = returnString +"</wsse:Security>";
+returnString = returnString +"</soapenv:Header>";
+returnString = returnString +"<soapenv:Body>";
+returnString = returnString + "<bm:updateTransaction xmlns:bm=\"http://xmlns.oracle.com/cpqcloud/commerce/oraclecpqo\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">";
+returnString = returnString + "<bm:transaction>";
+returnString = returnString + "<bm:id>"+transactionID+"</bm:id>";
+returnString = returnString + "<bm:process_var_name>oraclecpqo</bm:process_var_name>";
+returnString = returnString + "<bm:buyer_company_name>broadcom</bm:buyer_company_name>";
+returnString = returnString + "<bm:supplier_company_name>broadcom</bm:supplier_company_name>";
+returnString = returnString + "<bm:data_xml>";
+returnString = returnString + "<bm:transaction bm:bs_id=\""+transactionID+"\" bm:buyer_company_name=\"broadcom\" bm:buyer_user_name=\"Integration\" bm:currency_pref=\"USD\" bm:data_type=\"0\" bm:document_name=\"Transaction\" bm:document_number=\"1\" bm:document_var_name=\"transaction\" bm:process_var_name=\"oraclecpqo\" bm:supplier_company_name=\"broadcom\">";
+returnString = returnString + "<bm:_document_number>1</bm:_document_number>";
+returnString = returnString + "<bm:_price_book_var_name>_default_price_book</bm:_price_book_var_name>";
+returnString = returnString + "</bm:transaction>";
+returnString = returnString + "</bm:data_xml>";
+returnString = returnString + "<bm:action_data>";
+returnString = returnString + "<bm:action_var_name>actionForRenewal_t</bm:action_var_name>";
+returnString = returnString + "<bm:_bm_cm_new_transaction_currency/>";
+returnString = returnString + "<bm:performer_comment/>";
+returnString = returnString + "<bm:reason_var_name/>";
+returnString = returnString + "<bm:performer_name/>";
+returnString = returnString + "<bm:performer_type/>";
+returnString = returnString + "<bm:performer_company_name/>";
+returnString = returnString + "</bm:action_data>";
+returnString = returnString + "</bm:transaction>";
+returnString = returnString + "</bm:updateTransaction>";
+returnString = returnString + "</soapenv:Body>";
+returnString = returnString + "</soapenv:Envelope>";
+print returnString;
+response = urldatabypost("https://avagotechdev1.bigmachines.com/v2_0/receiver/commerce/oraclecpqo",returnString, "",headersDict,true);
+print response;
+returnString = "";
+headersDict = dict("string");
+transactionID = "";
+}
+return "";

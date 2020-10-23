@@ -1,0 +1,88 @@
+/********************************************************************
+Function Name: Constraint Serial No based on Current SKU and SHip to details 
+Description: Conditional error message for different scenarios.
+Author: Kavita Lolla
+Date: 12-06-2020
+Jira: VIPER-898
+********************************************************************/
+/***********************************************Change Log*************************************************************/
+ 
+//Initalization of variables
+flag = false;
+result = "";
+currSKU = "";
+serial_no = "";
+res=recordset();
+serNo = "";
+//checking whether user has configured upgrade product 
+if(selectUpgradeProduct_avg == True)
+{
+ loop = range(upgradeSKUArrayController_avg);
+ ErpNo = shipToCust_ErpNo_avg;
+ SiteNo = shipToCust_SiteNo_avg;
+ endCustERP=endCustERPNO_Avg;
+ endCustERPSiteNo=endCustSiteNo_avg;
+ currSKU = currentSKU_avg_picker;
+ 
+ serNo = serialNumber_avg;
+
+ //Fetching Srial number value from data table based on Ship to ERP and SIte Id and current SKU
+ if(endCustERPNO_Avg<>"" and endCustSiteNo_avg<>"")
+ {
+  res = bmql("select SERIAL_NUMBER,CONTRACT_STATUS from SERIAL_NO_HW_UPG where Current_SKU = $currSKU and SHIPTOCUST_ERP_No = $endCustERP and SHIPTOCUST_SiteNo = $endCustERPSiteNo");
+ }
+ else{
+  
+  res = bmql("select SERIAL_NUMBER,CONTRACT_STATUS from SERIAL_NO_HW_UPG where Current_SKU = $currSKU and SHIPTOCUST_ERP_No = $ErpNo and SHIPTOCUST_SiteNo = $SiteNo");
+ }
+ status = "";
+ //check if serial number matches any from the data table extract.
+ for every in res
+ {
+  serial_no =  get(every,"SERIAL_NUMBER");
+  if(NOT flag)
+  {
+  //if serial number is present in data table, retreive the contract status.
+   if(serNo == serial_no)
+   {
+    flag = true;
+    status = get(every,"CONTRACT_STATUS");
+   }
+  }
+ }
+ 
+ //COndition at which constrain message should be thrown
+serialFlag = false;
+if(flag){ 
+ if(status <> "Active")
+ {
+  result = "The contract associated with the Serial Number entered is expired, and must be active prior to upgrading.";
+ }
+}
+ else
+ {
+  siteID = "";
+//  result = " Serial Number: Please enter valid serial number";
+  res = bmql("select SERIAL_NUMBER,SHIPTOCUST_SiteNo from SERIAL_NO_HW_UPG where Current_SKU = $currSKU AND SERIAL_NUMBER = $serNo");
+  for each in res
+  {
+   siteID = get(each,"SERIAL_NUMBER");
+   if(siteID==endCustERPSiteNo OR siteID==SiteNo)
+   {
+    serialFlag = true;
+   }
+  }
+  if(siteID == "")
+  {
+   result = "Please enter valid serial number.";
+  }
+  else
+  {
+   if(NOT serialFlag) {
+    result = "Issue with Site ID located on Customer Detail tab.";
+   }
+  }
+ }
+}
+
+return result;

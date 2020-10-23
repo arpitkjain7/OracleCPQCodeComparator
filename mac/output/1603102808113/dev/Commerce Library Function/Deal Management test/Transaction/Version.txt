@@ -1,0 +1,12 @@
+/*****************************************************************************************************
+Function Name : Version
+Author : Nandhini Vurimella.
+Description : Updates the transaction's version number. 
+              Sets the Commerce Process 'Version' attribute (version_t) to the value of the CPQ platform-created Version attributes set 'Version' attribute (version_number_versionTransaction_t).  
+              This allows all customizations to refer to the Commerce attribute rather than a system attribute.
+*****************************************************************************************************/
+if(version_number_versionTransaction_t <> "") {
+ return atoi(version_number_versionTransaction_t);
+ } else {
+ return 1;
+}

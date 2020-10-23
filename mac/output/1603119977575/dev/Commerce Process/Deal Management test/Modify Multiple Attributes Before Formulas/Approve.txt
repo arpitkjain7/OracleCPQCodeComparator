@@ -1,0 +1,268 @@
+/*****************************************************************
+Author - Kavita Lolla
+Date - 26/01/2019
+UID - 217
+USer story summary - Initiate approvals for each line level approver
+*****************************************************************/
+/*****************************************************************
+Author - Kavita Lolla
+Date - 27/02/2019
+UID - 554
+USer story summary - Modify Approver assignment based on the 
+        Sales Approver / BU Approver
+*****************************************************************/
+/*****************************************************************
+Author - Kavita Lolla
+Date - 22/05/2019
+USer story summary - Concatenation using stringbuilder for 
+     performance improvement.
+*****************************************************************/
+/********************************************************************
+Description: BROCAD2-5478 - Line item status "Approved" in batch table while quote is 
+ in "Pending Approval" status for renewal quotes (Regression defect).
+Author: Kavita Lolla
+Date: 09-07-2019
+********************************************************************/
+result="|";
+//Number of levels of approvals completed is stored in levelup.
+levelup = approvalLevelCompleted_avg + 1;
+sbapprover = stringbuilder();
+buRole = "";
+
+salesRegion = quoteOwnerSubRegion_t;
+buRole = approverRoleLevel3_t;
+workflow="pending_approval";
+status = status_t;
+flag = true;
+quoteFlag = true;
+prodFam = json();
+sb = stringbuilder();
+for line in transactionLine 
+{
+ if(line._part_number == "")
+ {
+  if(upper(line._model_product_line_name) == "ENTERPRISE SOFTWARE")
+  {
+   jsonput(prodFam,line._document_number,"ES");
+  }
+  elif(upper(line._model_product_line_name) == "MAINFRAMES")
+  {
+   jsonput(prodFam,line._document_number,"MF");
+  }
+  else
+  {
+   jsonput(prodFam,line._document_number,line._model_product_line_name);
+  }
+ }
+}
+//Pricing DDR applies, followed by Line Level Approval.
+//BROCAD2-5478 - Approver assignment for Line Level approval. Hence, execute only for standard quotes.
+if(startswith(quoteType_t,"standard")){
+if(levelup == 0)
+{
+ for line in transactionLine{
+ if (line.approvalFlag_l){
+  quoteFlag = false;
+ if(line._part_number <> ""){
+  part = line._part_number;
+  bu = line.businessDivision_l;
+  sbapprover = stringbuilder();
+  workflow = "pending_approval";
+  //If list price = 0 & Proposed Price > 0, Line goes to the BU approver for approval.
+  if(line.perUnitPerListPrice_l == 0 and line.proposedNetUnitPriceRequested_l > 0){
+   if(startswith(dealType_t,"cAD")){
+    resultSet = bmql("select User_Id, User_Name from Approval_PF_Mapping where User_Role = $buRole and Assigned_Region = $salesRegion");
+    for record in resultSet
+    {
+     sbappend(sbapprover , "," ,  get(record,"User_Id"));
+    }
+    }
+    else{
+     sbfam = stringbuilder();
+     resultSet = bmql("select PRODUCT_FAMILY from BRCM_Part_Master where MPN = $part");
+     for each in resultSet{
+      sbappend(sbfam ,"%" , get(each,"PRODUCT_FAMILY") , "%");
+      
+       }
+       fam = sbtostring(sbfam);
+     resultSet = bmql("select User_Id, User_Name from Approval_PF_Mapping where User_Role = $buRole and Assigned_Region = $salesRegion and Assigned_PF like $fam");
+     for record in resultSet
+     { 
+      sbappend(sbapprover , "," ,  get(record,"User_Id"));
+     }
+    }
+   }
+  else
+  {
+  if(line.proposedNetUnitPriceRequested_l >= line.salesMin1_l)
+  {
+   workflow = "approved";
+  }
+
+  else
+  {
+    sbappend(sbapprover,approverLevel1_t);
+    flag = false;
+
+  }
+  }
+  approver = sbtostring(sbapprover);
+  sbappend(sb , line._document_number , "~" , "approver_l" , "~" , approver , "|",line._document_number ,"~" , "lineApprovalStatus_l" , "~" , replace(upper(workflow),"_"," ") ,"|",line._document_number , "~" , "workflowStatus_l" , "~" , workflow , "|");
+ }
+ else
+ {
+  sbappend(sbapprover,"");
+  workflow = "approved";
+  approver = sbtostring(sbapprover);
+  sbappend(sb, line._document_number, "~", "approver_l", "~", approver, "|",line._document_number, "~", "lineApprovalStatus_l", "~", replace(upper(workflow),"_"," "), "|",line._document_number, "~", "workflowStatus_l", "~", workflow, "|");
+ }
+ }
+ }
+if(quoteFlag)
+{
+ status = "APPROVED";
+ flag = false;
+}
+if (flag)
+{
+
+ result = "";
+ levelup = levelup + 1;
+}
+if(dDRFlag_t)
+{
+ 
+ sbappend(sb , "1~approvalLevelCompleted_avg~" , String(levelup) , "|");
+}
+}
+//If pricing DDR does not apply, assign next level approvers to the lines.
+//If levelup = 1, assign 2nd level approvers.
+if(levelup == 1)
+{
+
+  for line in transactionLine{
+  if (line.approvalFlag_l){
+  part = line._part_number;
+  bu = line.businessDivision_l;
+  if(part<>""){
+   sbapprover = stringbuilder();
+   workflow="pending_approval";
+  //If list price = 0 & Proposed Price > 0, Line goes to the BU approver for approval.
+   if(line.perUnitPerListPrice_l == 0 and line.proposedNetUnitPriceRequested_l > 0){
+    workflow = "approved";
+   }
+   else
+   {
+   if(line.proposedNetUnitPriceRequested_l >= line.salesMin2_l)
+  {
+   workflow = "approved";
+  }
+
+  else
+  {
+   sbappend(sbapprover,approverLevel2_t);
+  }
+  }
+   approver = sbtostring(sbapprover);
+   sbappend(sb , line._document_number , "~" , "approver_l" , "~" , approver , "|",line._document_number , "~" , "lineApprovalStatus_l" , "~" ,replace(upper(workflow),"_"," ") , "|",line._document_number , "~" , "workflowStatus_l" , "~" , workflow , "|");
+  }
+  }
+  else
+  {
+   //none of the above criteria is met, quote should be fully approved.
+   sbappend(sbapprover,"");
+   workflow = "approved";
+   approver = sbtostring(sbapprover);
+   sbappend(sb , line._document_number , "~" , "approver_l" , "~" , approver , "|",line._document_number , "~" , "lineApprovalStatus_l" , "~" , replace(upper(workflow),"_"," ") , "|",line._document_number , "~" , "workflowStatus_l" , "~" , workflow , "|");
+  }
+  }
+}
+else
+{
+//if levelup = 2, assign 2nd level approvers.
+  flag = true;
+  for line in transactionLine{
+  if (line.approvalFlag_l){
+  part = line._part_number;
+  bu = line.businessDivision_l;
+  if(part<>""){
+  if(levelup == 2){
+   sbapprover = stringbuilder();
+   workflow="pending_approval";
+   if(line.perUnitPerListPrice_l == 0 and line.proposedNetUnitPriceRequested_l > 0){
+    workflow = "approved";
+   }
+   else
+   {
+   if(line.proposedNetUnitPriceRequested_l >= line.salesMin3_l)
+   {
+    workflow = "approved";
+   }
+
+   else
+   {
+    //Fetching and assigning BU approver.
+    sbfam = stringbuilder();
+    resultSet = bmql("select PRODUCT_FAMILY from BRCM_Part_Master where MPN = $part");
+    for each in resultSet{
+     sbappend(sbfam ,"%" , get(each,"PRODUCT_FAMILY") , "%");
+     }
+    fam = sbtostring(sbfam);
+    if(startswith(dealType_t,"cAD")){
+    resultSet = bmql("select User_Id, User_Name from Approval_PF_Mapping where User_Role = $buRole and Assigned_Region = $salesRegion");
+    for record in resultSet
+    {
+     sbappend(sbapprover , "," ,  get(record,"User_Id"));
+    }
+    }
+    else{
+    
+    resultSet = bmql("select User_Id, User_Name from Approval_PF_Mapping where User_Role = $buRole and Assigned_Region = $salesRegion and Assigned_PF like $fam");
+    for record in resultSet
+    {
+     sbappend(sbapprover , "," ,  get(record,"User_Id"));
+    }
+    }
+    flag = false;
+   }
+   }
+    if(flag){
+     status = "APPROVED";
+    }
+    approver = sbtostring(sbapprover);
+    sbappend(sb, line._document_number, "~", "approver_l", "~", approver, "|",line._document_number, "~", "workflowStatus_l", "~", workflow, "|",line._document_number, "~", "lineApprovalStatus_l", "~", replace(upper(workflow),"_"," "), "|");
+   }
+   else
+   {
+    //none of the above criteria is met, quote should be fully approved.
+    if(levelup > 0){
+    
+    sbappend(sb,"1~status_t~APPROVED|");
+    status = "APPROVED";
+    }
+   }
+   }
+  }
+  else
+  {
+   sbappend(sbapprover,"");
+   workflow = "approved";
+   approver = sbtostring(sbapprover);
+   sbappend(sb ,line._document_number , "~" , "approver_l" , "~" , approver , "|",line._document_number , "~" , "lineApprovalStatus_l" , "~" , replace(upper(workflow),"_"," ") , "|",line._document_number , "~" , "workflowStatus_l" , "~" , workflow , "|");
+  }
+  }
+}
+}
+//BROCAD2-5478 - For Renewal Lines.
+else
+{
+ approver = "";
+ workflow = "pending_approval";
+ for line in transactionLine
+ {
+  sbappend(sb ,line._document_number , "~" , "approver_l" , "~" , approver , "|",line._document_number , "~" , "lineApprovalStatus_l" , "~" , replace(upper(workflow),"_"," ") , "|",line._document_number , "~" , "workflowStatus_l" , "~" , workflow , "|");
+ }
+}
+result = sbtostring(sb);
+//return result;
+return "";

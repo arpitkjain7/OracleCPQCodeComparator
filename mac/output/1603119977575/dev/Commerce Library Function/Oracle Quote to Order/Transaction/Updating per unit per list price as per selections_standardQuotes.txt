@@ -1,0 +1,1447 @@
+errorLines="";
+sub_type = "";
+base_price1 = "0.0";
+EndCust = soldToCustomerAccountID_t;
+totalMaintenanceFee = 0.0;
+totalLicenseFee = 0.0;
+totalExtPrice = 0.0;
+salesminprice = "";
+totalUSD=0.0;
+total=0.0;
+Customer = _transaction_customer_id;
+Curr_date = getdate();
+partNoDict = Dict("string");
+StartDate = getdate();
+EndDate = getdate();
+currdate = getdate();
+BillTo = billToCustomerId_t;
+supp_price = "";
+Division = "";
+partPrice = "";
+listPrice="0.0";
+basePrice = "";
+SubscriptionPricing1="0.0";
+isPresentInPremierCodes = false;
+isPresentInEssentialCodes = false;
+coveredProductDictionary = Dict("string");
+parentPartDictionary = Dict("integer");
+busDivision = "";
+extMSRP = "";
+sb=stringbuilder();
+sb1=stringbuilder();
+sb2=stringbuilder();
+sb3=stringbuilder();
+sb4=stringbuilder();
+sb5=stringbuilder();
+sb6=stringbuilder();
+sb7=stringbuilder();
+sb8=stringbuilder();
+sb9=stringbuilder();
+sb9a=stringbuilder();
+sb10=stringbuilder();
+sb11=stringbuilder();
+sb12=stringbuilder();
+sb13=stringbuilder();
+sb14=stringbuilder();
+sb15=stringbuilder();
+sb16=stringbuilder();
+sb17=stringbuilder();
+sb18=stringbuilder();
+sb19=stringbuilder();
+sb20=stringbuilder();
+sb21=stringbuilder();
+sb22=stringbuilder();
+sb23=stringbuilder();
+sb24=stringbuilder();
+sb25=stringbuilder();
+sb26=stringbuilder();
+sb27=stringbuilder();
+sb28=stringbuilder();
+sb29=stringbuilder();
+sb30=stringbuilder();
+sb31=stringbuilder();
+sb32=stringbuilder();
+sb33=stringbuilder();
+
+dDRFlag = dDRFlag_param;
+
+
+
+
+result="";
+if(quoteType_t <> "renewalQuote" and quoteType_t<>"contractQuote")
+{
+ for line in transactionLine
+ {   
+  licensetype=line.licenseType_l;
+  Contract_no=line.contractNumber_l;
+  //Validate Effective Start And Expiration Dates
+  //line._part_number <> "Cust" restricts customer search parts that get added after customer search
+  if(line._part_number <> "" and line.endOfSupportServiceDate_l <> "" and line.effectiveStartDate_l <> "" and line.lineExpirationDate_l <> "" and line._part_number <> "Cust")
+  {
+   endOfSupportServiceDateObject = strtodate(line.endOfSupportServiceDate_l,dateFormat1);
+   effectiveStartDateObject = strtodate(line.effectiveStartDate_l,dateFormat1);
+   lineExpirationDateObject = strtodate(line.lineExpirationDate_l,dateFormat1);
+   if(comparedates(endOfSupportServiceDateObject,effectiveStartDateObject) == -1 or comparedates(endOfSupportServiceDateObject,lineExpirationDateObject) == -1)
+   {
+    line_no=line._sequence_number;
+    errorbuilder=stringbuilder(errorLines,string(line_no),",");
+    errorLines = sbtostring(errorbuilder);
+   }
+  }
+   
+  
+  //validation rule: Validate Support Types on Line Items; adithya
+  if(line._part_number <> "" and line.supportType_l <> "")
+  {
+   if(containsKey(premierSupportCodesDictionary,line.supportType_l))
+   {
+    isPresentInPremierCodes = true;
+   }
+   elif(containsKey(EssentialSupportCodesDictionary,line.supportType_l))
+   {
+    isPresentInEssentialCodes = true;
+   }
+
+   if(isPresentInEssentialCodes and isPresentInPremierCodes)
+   {
+    validateSupportTypesOnLineItemsFlag = true;
+   }
+  }
+
+  //validation rule : Validate Covered Products On Lines; adithya
+  if(line.coveredProduct_l <> "" and line._part_number <> "")
+  {
+   put(coveredProductDictionary, line.coveredProduct_l , line.coveredProduct_l);
+  }
+  //constraint rule :Constrain Education Line Items; kacharya
+  //looking for Education in QuoteDealType
+  if(find(QuoteDealType, searchString) >= 0)
+  {
+   if(line._part_number <> "")
+   {
+    if(not containsKey(parentPartDictionary,line._part_number))
+    {
+     put(parentPartDictionary, line._part_number, line._price_quantity);
+    }
+   }
+  }
+  transactionTypeM=line.transactionTypeM_l;
+  lineold=getoldvalue("_line_item_comment",atoi(line._document_number));
+  contractenddateold=getoldvalue("contractEndDate_l",atoi(line._document_number));
+  contractstartdateold=getoldvalue("contractStartDate_l",atoi(line._document_number));
+  coveredold=getoldvalue("coveredProduct_l",atoi(line._document_number));
+  licenseold=getoldvalue("licenseType_l",atoi(line._document_number));
+  //checks if line item comment was changed for the line by comparing _line_item_comment field with custom field.
+  //if(line.lineItemComment_avg<>line._line_item_comment){
+   //line._part_number <> "Cust" restricts customer search parts that get added after customer search
+   if(line._line_item_comment<>"" and line._part_number<>"Cust")
+   {
+    sb1=stringbuilder(sb1,line._document_number,"~lineItemComment_avg~",line._line_item_comment,"|",commerce.fetchConfigAttributesFromCommerce_brcm(line._document_number, line._part_number, line._line_item_comment, line.effectiveStartDate_l, line.lineExpirationDate_l, line._model_name));
+   }
+  //}
+
+  if(billToCustomerId_t=="" or soldToCustomerAccountID_t=="" or shipToPartyID_t=="" or _transaction_customer_id=="" or line.lineItemComment_avg<>line._line_item_comment or operatingUnit<>operatingUnit_t){
+   if(line.lineItemComment_avg<>line._line_item_comment or operatingUnit<>operatingUnit_t)
+   {
+   if(line._part_number=="Cust" AND line._model_name=="")
+   {
+    sb2=stringbuilder(sb2,line._document_number,"~lineItemComment_avg~",line._line_item_comment,"|",commerce.fetchCustomerSearchDetails_brcm(line._model_name, line._part_number, line._line_item_comment));
+   }
+   }
+  }
+  //Condition for Defer Pricing Logic (Currently not in use) 
+  if(avoidPricingCalculations_t == false){
+  //Standard Quote Pricing Logic to update Contract/List Unit Price
+  final_price=string(line.perUnitPerListPrice_l);
+  //restricting customer search parts that get added after customer search and also restricting model lines in case of configured parts
+  if(line._part_number<>"Cust" AND line._model_name=="")
+  {
+   coveredProduct_l=line.coveredProduct_l;
+   coveredpdt = line.coveredProduct_l;
+   supportType_l=line.supportType_l;
+   part=line._part_number;
+   //VIPER - 438 - Fetching Business division from BRCM Part Master table and updating business divsion attribute at header level - Start
+   busDiv=bmql("SELECT Business_Div from BRCM_Part_Master WHERE MPN=$part");
+   for res2 in busDiv
+   {
+   busDivision=get(res2,"Business_Div");
+   }
+       
+   if(busDivision == "SED")
+   {
+   sb33=stringbuilder(sb33,"1~businessDivision_t~","Symantec","|");   
+   }
+   else{
+   sb33=stringbuilder(sb33,"1~businessDivision_t~","","|");
+   }
+   //Viper - 438 - END    
+   accountbuilder=stringbuilder(EndCustomerId,"~",BillToCustomerId,"~",EndCustomerId, "~" , EndParentId , "~" , EndGrandParentId , "~" , line.cPN_l , "~" ,line.effectiveStartDate_l , "~" , line.effectiveStartDate_l , "~" , routeToMarket_t , "~" , BillParentId ,"~" , BillGrandParentId , "~" , quoteType_t);
+   //print accountbuilder;
+   AccountNums=sbtostring(accountbuilder);
+   //hidden price stores contract list price for imported lines. If 0, lines should go through the normal pricing logic else hidden price value to be taken into consideration.
+   if(line.hiddenPrice_l==0.0)
+   {
+    //this is the loop for Standalone Line items _price_list_price_each contains values 
+    if(line._price_list_price_each==0.0)
+    {
+     //getoldvalue compares all the old values of the attribute with the current value in order to restrict multiple traversal of the code without any necessity
+     if(getoldvalue(routeToMarket_t) <> routeToMarket_t or (getoldvalue("perUnitPerListPrice_l",atoi(line._document_number))=="0.00") or (getoldvalue("perUnitPerListPrice_l",atoi(line._document_number))=="0") OR (getoldvalue("perUnitPerListPrice_l",atoi(line._document_number))=="0.0000") or (getoldvalue("perUnitPerListPrice_l",atoi(line._document_number))=="") or (contractenddateold)<>line.contractEndDate_l OR (contractstartdateold)<>line.contractStartDate_l OR (coveredold)<>line.coveredProduct_l OR (licenseold)<>line.licenseType_l)
+     {
+      if(line.coveredProduct_l=="")
+      {
+       if(line.contractStartDate_l <> "" )
+       {
+        StartDate=strtojavadate(line.contractStartDate_l,"yyyy-MM-dd HH:mm:ss", "America/Chicago");
+       }
+       if(line.contractEndDate_l <> "" )
+       {
+        EndDate=strtojavadate(line.contractEndDate_l,"yyyy-MM-dd HH:mm:ss", "America/Chicago");
+       }
+       //+1 means the difference in days includes end date
+       Days=getdiffindays(StartDate,EndDate)+1;
+       partnumber=line._part_number;
+       subset1=bmql("SELECT MPN, Base_Support_Value,Base_Price,Start_Date,End_Date,Subscription_Type from BRCM_Part_Master_Prc WHERE MPN=$partnumber ORDER BY Start_Date ASC");
+       for subres in subset1{
+        base_price1 =get(subres,"Base_Price");
+        sub_type =get(subres,"Subscription_Type");
+       }
+       subs_factor_result =bmql("SELECT Subscription_Factor from BRCM_Subs_Factor WHERE Subscription_Type=$sub_type");
+       for subsfactresult in subs_factor_result{
+        sub_factor =atof(get(subsfactresult,"Subscription_Factor"));
+       }
+       Contract_no="NA";
+       contractdetials = string[2];
+       put(partNoDict,"Item1",partnumber);
+       //configpricing fetches the base price from global price list or customer price list
+       partPriceDict=util.configpricing_brcm("",AccountNums,partNoDict);
+       if(line.licenseType_l=="Perpetual" or line.licenseType_l=="UMF" or line.licenseType_l=="")
+       {
+        if(find(get(partPriceDict,"Item1"),"~") <> -1)
+        {
+         contractdetials = split(get(partPriceDict,"Item1"), "~");
+         Contract_no = contractdetials[1];
+        }
+        else
+        {
+         contractdetials[0]=get(partPriceDict,"Item1");
+         Contract_no="NA";
+        }
+        partPrice=string(atof(contractdetials[0])*atof(exch));
+        SubscriptionPricing1=partPrice;
+          /*BROCAD2-4748*/
+          unitMSRP = (atof(base_price1)*atof(exch));
+          //rounding is done before quantity multiplication as the UI value is rounded off
+          extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+    
+          /*BROCAD2-4748*/
+        //final_price variable stores the part price so that it can be used for calculations in other different calculations
+        final_price=String(round(atof(partPrice),precision));
+        sb4=stringbuilder(sb4,line._document_number,"~perUnitPerListPrice_l~",string(round(atof(final_price),precision)),"|");
+        //added new variable for Jira#1617
+        listPrice = string(round(atof(final_price),precision));
+        sb31=stringbuilder(sb31,line._document_number,"~unitMSRP_l~",string(unitMSRP),"|");
+        sb32=stringbuilder(sb32,line._document_number,"~extMSRP_l~",extMSRP,"|");  
+       }
+       if(line.licenseType_l=="Subscription")
+       {
+        partNo=get(partNoDict, "Item1");
+        if(find(get(partPriceDict,"Item1"),"~")<>-1)
+        {
+         contractdetials= split(get(partPriceDict,"Item1"), "~");
+         Contract_no=contractdetials[1];
+        }
+        else
+        {
+         contractdetials[0]=get(partPriceDict,"Item1");
+         Contract_no="NA";
+        }
+
+        calcPrice=string(atof(contractdetials[0])*atof(exch));
+        SubscriptionPricing1=calcPrice;
+        if((ISNULL(StartDate)==false) AND (ISNULL(EndDate)==false) ){
+         //+1 means endDate is included in the difference of days
+         days=getdiffindays(EndDate, StartDate) + 1 ;
+         partPrice=util.subscriptionPriceCalculation_brcm(partNo,calcPrice,StartDate,EndDate,_system_current_document_currency_pref);
+         //part price variable contains the subscription price along with term days calculation. Now we are removing term days calculation so that it can be stored in Contract List/Unit Price.
+         //partPrice1=round(atof(partPrice)*(365.0/days),precision);
+         //partPrice=string(partPrice1*(days/365.0));
+   
+         final_price=String(atof(partPrice));
+          /*BROCAD2-4748*/
+          unitMSRP=(round(atof(base_price1)*sub_factor*atof(exch),precision))*(days/365.0);
+          //round off is done before multiplying quantity since the UI value is a rounded off value and multiplication should be as per UI value
+          extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+          /*BROCAD2-4748*/
+         SubscriptionPricing=String(atof(SubscriptionPricing1));
+         sb4=stringbuilder(sb4,line._document_number,"~perUnitPerListPrice_l~",String(round(atof(partPrice)*365/days,precision)),"|");
+         //added new variable for Jira#1617
+         listPrice = String(round(atof(partPrice)*365/days,precision));
+         sb31=stringbuilder(sb31,line._document_number,"~unitMSRP_l~",string(unitMSRP),"|");
+         sb32=stringbuilder(sb32,line._document_number,"~extMSRP_l~",extMSRP,"|");
+         
+        } 
+       }
+      }
+      /*******************************************************************************
+       * Calculation of Contract/List Unit Price for Standalone Support/Maintenance
+       * SKUs
+       ******************************************************************************/
+      else
+      {
+       if(line.contractStartDate_l<>"" ){
+        StartDate=strtojavadate(line.contractStartDate_l,"yyyy-MM-dd HH:mm:ss", "America/Chicago");
+       }
+       if(line.contractEndDate_l<>"" ){
+        EndDate=strtojavadate(line.contractEndDate_l,"yyyy-MM-dd HH:mm:ss", "America/Chicago");
+       }
+       Days=getdiffindays(StartDate,EndDate)+1;
+       coveredpdt=line.coveredProduct_l;
+       basepriceset=bmql("SELECT Business_Div from BRCM_Part_Master WHERE MPN=$coveredProduct_l");
+       supportset=bmql("SELECT Support_Level, Support_Rate from BRCM_Support_Rate WHERE Support_Type_Code=$supportType_l");
+       subset=bmql("SELECT MPN, Base_Support_Value,Base_Price,Start_Date,End_Date from BRCM_Part_Master_Prc WHERE MPN=$coveredProduct_l ORDER BY Start_Date ASC");
+       for res2 in basepriceset{
+        Division=get(res2,"Business_Div");
+       }
+       for res1 in subset{
+        if(strtojavadate(get(res1 ,"Start_Date"),"yyyy-MM-dd HH:mm:ss") <= currdate AND strtojavadate(get(res1 ,"End_Date"),"yyyy-MM-dd HH:mm:ss") >= currdate)
+        {              basePrice=get(res1,"Base_Price");
+        NDP=atof(get(res1,"Base_Support_Value"));
+
+
+        }
+       }
+       if(Division=="CAD" or Division=="SED")
+       {
+        Contract_no="NA";
+        contractdetials=string[2];
+        put(partNoDict,"Item1",coveredProduct_l);
+        partPriceDict=util.configpricing_brcm("",AccountNums,partNoDict);
+        if(line.licenseType_l=="Perpetual" or line.licenseType_l=="UMF" or line.licenseType_l==""){
+
+         if(find(get(partPriceDict,"Item1"),"~")<>-1)
+         {
+          contractdetials= split(get(partPriceDict,"Item1"), "~");
+          Contract_no=contractdetials[1];
+         }
+         else
+         {
+          contractdetials[0]=get(partPriceDict,"Item1");
+          Contract_no="NA";
+         }
+
+         partPrice=string(atof(contractdetials[0])*atof(exch));
+         
+         //added new variable for Jira#1617
+         salesminprice=partPrice;
+         SubscriptionPricing1=partPrice;
+         
+         /*BROCAD2-4748*/
+          unitMSRP = (atof(partPrice));
+          extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+          /*BROCAD2-4748*/
+         
+         
+
+        }
+        if(line.licenseType_l=="Subscription"){
+
+         partNo=get(partNoDict, "Item1");
+
+
+         if(find(get(partPriceDict,"Item1"),"~")<>-1)
+         {
+          contractdetials= split(get(partPriceDict,"Item1"), "~");
+          Contract_no=contractdetials[1];
+         }
+         else
+         {
+          contractdetials[0]=get(partPriceDict,"Item1");
+          Contract_no="NA";
+         }
+
+         calcPrice=string(atof(contractdetials[0])*atof(exch));
+         SubscriptionPricing1=calcPrice;
+         //added new variable for Jira#
+         salesminprice=calcPrice;
+         if((ISNULL(StartDate)==false) AND (ISNULL(EndDate)==false) ){
+          partPrice=util.subscriptionPriceCalculation_brcm(partNo,calcPrice,StartDate,EndDate,_system_current_document_currency_pref);
+          
+          //partPrice1=round(atof(partPrice)*(365.0/days),precision);
+          //partPrice=string(partPrice1*(days/365.0));
+         }
+          /*BROCAD2-4748*/
+          unitMSRP = (atof(partPrice));
+          extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+          /*BROCAD2-4748*/
+        }
+        For results in supportset{
+         
+         supp_rate=atof(get(results,"Support_Rate"));
+         if(partPrice<>""){
+          supp_price=String((round(atof(salesminprice)*supp_rate,precision))*NDP*Days/365);
+          /*BROCAD2-4748*/
+          
+          unitMSRP = ((atof(basePrice)*supp_rate)*NDP*Days/365)*atof(exch);
+          extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+          /*BROCAD2-4748*/
+
+         }
+
+         final_price=String(atof(supp_price));
+         
+         
+         
+         SubscriptionPricing=String(atof(SubscriptionPricing1));
+         sb4=stringbuilder(sb4,line._document_number,"~perUnitPerListPrice_l~",String(round(atof(supp_price)*365/Days,precision)),"|");
+         //added new variable for Jira#1617
+         listPrice = String(round(atof(supp_price)*365/Days,precision));
+         sb31=stringbuilder(sb31,line._document_number,"~unitMSRP_l~",string(unitMSRP),"|");
+         sb32=stringbuilder(sb32,line._document_number,"~extMSRP_l~",extMSRP,"|");
+         //output4=sbtostring(sb4);
+        }
+        
+        
+       }
+       elif(Division=="BSN"){
+        For results in supportset{
+         supp_rate=atof(get(results,"Support_Rate"));
+         supp_price=String((atof(basePrice)*supp_rate)*NDP);
+
+         final_price=String(atof(supp_price)*atof(exch));
+         SubscriptionPricing=String(atof(basePrice)*atof(exch));
+         //added new variable for Jira#1617
+         salesminprice=basePrice;
+         sb4=stringbuilder(sb4,line._document_number,"~perUnitPerListPrice_l~",string(round(atof(SubscriptionPricing),precision)),"|");
+         //added new variable for Jira#1617
+         listPrice = string(round(atof(SubscriptionPricing),precision));
+        //output4=sbtostring(sb4);
+        }
+       }
+       
+
+      }
+     }
+    }
+    /** ************************************************************************************ */
+    else
+    {
+     //Loop for Configured Lines
+     if(line._model_name=="" AND line._parent_doc_number<>""){
+
+      final_price=String(line._price_list_price_each);
+      sb4=stringbuilder(sb4,line._document_number,"~perUnitPerListPrice_l~",string(round(atof(final_price),precision)),"|");
+      //added new variable for Jira#1617
+      listPrice = string(round(atof(final_price),precision));
+      param_per_unit_per_list_price = line._price_list_price_each;
+      coveredpdt=line.coveredProduct_l;
+      licensetype=line.licenseType_l;
+      supportType=line.supportType_l;
+      obj=json();
+      if(line._line_item_comment<>"")
+      {
+       teststring=line._line_item_comment;
+       obj=json(teststring);
+       child=jsonget(obj,"child");
+       childObj=json(child);
+       PartNumber=jsonget(obj,"PartNumber");
+       licensetype=jsonget(childObj,"selectLicenseType");
+       transactionTypeM=jsonget(childObj,"transactionType");
+       supportPartsPicklist=jsonget(childObj,"supportPartsPicklist");
+       supportType=jsonget(childObj,"supportType");
+       if (line._part_number == supportPartsPicklist)
+       {
+        coveredpdt=PartNumber;
+       }
+
+       if(jsonget(childObj,"startDate")<>"" ){
+        StartDate=strtojavadate(jsonget(childObj,"startDate"), "MM/dd/yyyy HH:mm:ss", "America/Chicago");
+       }
+
+       if(jsonget(childObj,"endDate")<>"" ){
+        EndDate=strtojavadate(jsonget(childObj,"endDate"), "MM/dd/yyyy HH:mm:ss", "America/Chicago");
+       }
+      }
+
+      //For running the pricing logic for items added using configurator
+      //if((getoldvalue("extContractListPrice_l",atoi(line._document_number))=="") or (getoldvalue("extContractListPrice_l",atoi(line._document_number))=="0") or (getoldvalue("contractEndDate_l",atoi(line._document_number))<>line.contractEndDate_l) OR (getoldvalue("contractStartDate_l",atoi(line._document_number))<>line.contractStartDate_l) OR (getoldvalue("_line_item_comment",atoi(line._document_number))<>line._line_item_comment))
+      //{
+
+      if(coveredpdt=="")
+      {
+       Days=getdiffindays(StartDate,EndDate)+1;
+       partnumber=line._part_number;
+       subset1=bmql("SELECT MPN, Base_Support_Value,Base_Price,Start_Date,End_Date,Subscription_Type from BRCM_Part_Master_Prc WHERE MPN=$partnumber ORDER BY Start_Date ASC");
+       for res2 in subset1{
+        base_price1 =get(res2,"Base_Price");
+        sub_type =get(res2,"Subscription_Type");
+        subs_factor_result =bmql("SELECT Subscription_Factor from BRCM_Subs_Factor WHERE Subscription_Type=$sub_type");
+        for subsfactresult in subs_factor_result{
+        sub_factor =atof(get(subsfactresult,"Subscription_Factor"));
+        }
+        if(get(res2 ,"Start_Date")<>"" and get(res2 ,"End_Date")<>"")
+        {
+         if(strtojavadate(get(res2 ,"Start_Date"),"yyyy-MM-dd HH:mm:ss") <= currdate AND strtojavadate(get(res2 ,"End_Date"),"yyyy-MM-dd HH:mm:ss") >= currdate)
+         {
+
+          Contract_no="NA";
+          contractdetials=string[2];
+          put(partNoDict,"Item1",partnumber);
+
+          partPriceDict=util.configpricing_brcm("",AccountNums,partNoDict);
+          if(licensetype=="Perpetual" or licensetype=="UMF" or licensetype==""){
+
+           if(find(get(partPriceDict,"Item1"),"~")<>-1)
+           {
+            contractdetials= split(get(partPriceDict,"Item1"), "~");
+            Contract_no=contractdetials[1];
+           }
+           else
+           {
+            contractdetials[0]=get(partPriceDict,"Item1");
+            Contract_no="NA";
+           }
+           partPrice=string(atof(contractdetials[0])*atof(exch));
+           
+
+           final_price=String(round(atof(partPrice),precision));
+           /*BROCAD2-4748*/
+           unitMSRP = (atof(base_price1)*atof(exch));
+           extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+           /*BROCAD2-4748*/
+           sb4=stringbuilder(sb4,line._document_number,"~perUnitPerListPrice_l~",string(round(atof(final_price),precision)),"|");
+           //added new variable for Jira#1617
+           listPrice = string(round(atof(final_price),precision));
+           sb31=stringbuilder(sb31,line._document_number,"~unitMSRP_l~",string(unitMSRP),"|");
+           sb32=stringbuilder(sb32,line._document_number,"~extMSRP_l~",extMSRP,"|");
+           
+           //output4=sbtostring(sb4);
+
+          }
+          if(licensetype=="Subscription"){
+
+           partNo=get(partNoDict, "Item1");
+           if(find(get(partPriceDict,"Item1"),"~")<>-1)
+           {
+            contractdetials= split(get(partPriceDict,"Item1"), "~");
+            Contract_no=contractdetials[1];
+           }
+           else
+           {
+            contractdetials[0]=get(partPriceDict,"Item1");
+            Contract_no="NA";
+           }
+
+           calcPrice=string(atof(contractdetials[0])*atof(exch));
+           
+           
+            if((ISNULL(StartDate)==false) AND (ISNULL(EndDate)==false) ){
+             days=getdiffindays(EndDate, StartDate) + 1 ;
+            partPrice=util.subscriptionPriceCalculation_brcm(partNo,calcPrice,StartDate,EndDate,_system_current_document_currency_pref);
+            
+            //partPrice1=round(atof(partPrice)*(365.0/days),precision);
+            //partPrice=string(partPrice1*(days/365.0));
+            
+            final_price=String(atof(partPrice));
+            SubscriptionPricing=String(atof(calcPrice));
+            /*BROCAD2-4748*/
+            //unitMSRP = (atof(partPrice));
+            unitMSRP=(round(atof(base_price1)*sub_factor*atof(exch),precision))*(days/365.0);
+            extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+            /*BROCAD2-4748*/
+            sb4=stringbuilder(sb4,line._document_number,"~perUnitPerListPrice_l~",String(round(atof(partPrice)*365/days,precision)),"|");
+            //added new variable for Jira#1617
+            listPrice = String(round(atof(partPrice)*365/days,precision));
+            sb31=stringbuilder(sb31,line._document_number,"~unitMSRP_l~",string(unitMSRP),"|");
+            sb32=stringbuilder(sb32,line._document_number,"~extMSRP_l~",extMSRP,"|");
+            //output4=sbtostring(sb4);
+            
+           } 
+          }
+         }
+        }
+       }
+      }
+      /*******************************************************************************
+       * Calculation of Contract/List Unit Price for Support/Maintenance
+       * SKUs
+       ******************************************************************************/
+      else
+      {
+       //PRINT "i am here";
+       Days=getdiffindays(StartDate,EndDate)+1;
+       basepriceset=bmql("SELECT Business_Div from BRCM_Part_Master WHERE MPN=$coveredpdt");
+       supportset=bmql("SELECT Support_Level, Support_Rate from BRCM_Support_Rate WHERE Support_Type_Code=$supportType");
+       subset=bmql("SELECT MPN, Base_Support_Value,Base_Price,Start_Date,End_Date from BRCM_Part_Master_Prc WHERE MPN=$coveredpdt ORDER BY Start_Date ASC");
+       for res2 in basepriceset{
+        Division=get(res2,"Business_Div");
+       }
+       for res1 in subset{
+        if(strtojavadate(get(res1 ,"Start_Date"),"yyyy-MM-dd HH:mm:ss") <= currdate AND strtojavadate(get(res1 ,"End_Date"),"yyyy-MM-dd HH:mm:ss") >= currdate)
+        {              basePrice=get(res1,"Base_Price");
+        NDP=atof(get(res1,"Base_Support_Value"));
+
+
+        }
+       }
+       if(Division=="CAD" or Division=="SED")
+       {
+        Contract_no="NA";
+        contractdetials=string[2];
+        put(partNoDict,"Item1",coveredpdt);
+        partPriceDict=util.configpricing_brcm("",AccountNums,partNoDict);
+        if(licensetype=="Perpetual" or licensetype=="UMF" or licensetype==""){
+
+         if(find(get(partPriceDict,"Item1"),"~")<>-1)
+         {
+          contractdetials= split(get(partPriceDict,"Item1"), "~");
+          Contract_no=contractdetials[1];
+         }
+         else
+         {
+          contractdetials[0]=get(partPriceDict,"Item1");
+          Contract_no="NA";
+         }
+
+         partPrice=string(atof(contractdetials[0])*atof(exch));
+         //added new variable for Jira#1617
+         salesminprice=partPrice;
+          /*BROCAD2-4748*/
+          unitMSRP = (atof(partPrice));
+          extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+          /*BROCAD2-4748*/
+
+        }
+        if(licensetype=="Subscription"){
+
+         partNo=get(partNoDict, "Item1");
+
+
+         if(find(get(partPriceDict,"Item1"),"~")<>-1)
+         {
+          contractdetials= split(get(partPriceDict,"Item1"), "~");
+          Contract_no=contractdetials[1];
+         }
+         else
+         {
+          contractdetials[0]=get(partPriceDict,"Item1");
+          Contract_no="NA";
+         }
+
+         calcPrice=string(atof(contractdetials[0])*atof(exch));
+         SubscriptionPricing1=calcPrice;
+         //added new variable for Jira#1617
+         salesminprice=calcPrice;
+         if((ISNULL(StartDate)==false) AND (ISNULL(EndDate)==false) ){
+          partPrice=util.subscriptionPriceCalculation_brcm(partNo,calcPrice,StartDate,EndDate,_system_current_document_currency_pref);
+          
+          //partPrice1=round(atof(partPrice)*(365.0/days),precision);
+          //partPrice=string(partPrice1*(days/365.0));
+          
+         }
+          /*BROCAD2-4748*/
+          unitMSRP = round(atof(partPrice)*days,precision);
+          extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+          
+          /*BROCAD2-4748*/
+         
+        }
+        For results in supportset{
+
+         supp_rate=atof(get(results,"Support_Rate"));
+         if(partPrice<>""){
+          supp_price=String((round(atof(salesminprice)*supp_rate,precision))*NDP*Days/365);
+          /*BROCAD2-4748*/
+          unitMSRP = ((atof(basePrice)*supp_rate)*NDP*Days/365)*atof(exch);
+          extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+          /*BROCAD2-4748*/
+
+         }
+
+         final_price=String(atof(supp_price));
+         
+         SubscriptionPricing=String(atof(SubscriptionPricing1));
+         sb4=stringbuilder(sb4,line._document_number,"~perUnitPerListPrice_l~",String(round(atof(salesminprice)*supp_rate,precision)),"|");
+         //added new variable for Jira#1617
+         listPrice = String(round(atof(salesminprice)*supp_rate,precision));
+         
+         sb31=stringbuilder(sb31,line._document_number,"~unitMSRP_l~",string(unitMSRP),"|");
+         sb32=stringbuilder(sb32,line._document_number,"~extMSRP_l~",extMSRP,"|");
+         //output4=sbtostring(sb4);
+         
+        }
+       }
+       elif(Division=="BSN"){
+        For results in supportset{
+         supp_rate=atof(get(results,"Support_Rate"));
+         supp_price=String((atof(basePrice)*supp_rate)*NDP);
+
+         final_price=String(atof(supp_price)*atof(exch));
+         
+         //added new variable for Jira#1617
+         salesminprice=basePrice;
+         SubscriptionPricing=String(atof(basePrice)*atof(exch));
+         sb4=stringbuilder(sb4,line._document_number,"~perUnitPerListPrice_l~",string(round(atof(SubscriptionPricing),precision)),"|");
+         //added new variable for Jira#1617
+         listPrice = string(round(atof(SubscriptionPricing),precision));
+         //output4=sbtostring(sb4);
+        }
+       }
+
+      }
+
+      //End of code
+      
+     }
+    }
+   }
+   else
+   { 
+   Contract_no=line.contractNumber_l;
+    licensetype=line.licenseType_l;
+    if(line.contractStartDate_l <> "" )
+       {
+        StartDate=strtojavadate(line.contractStartDate_l,"yyyy-MM-dd HH:mm:ss", "America/Chicago");
+       }
+       if(line.contractEndDate_l <> "" )
+       {
+        EndDate=strtojavadate(line.contractEndDate_l,"yyyy-MM-dd HH:mm:ss", "America/Chicago");
+       }
+    //Begin: Added Unit MSRP calculations for Import/Export as part of BROCAD2-5532
+    if(coveredpdt=="")
+      {
+       Days=getdiffindays(StartDate,EndDate)+1;
+       partnumber=line._part_number;
+       subset1=bmql("SELECT MPN, Base_Support_Value,Base_Price,Start_Date,End_Date,Subscription_Type from BRCM_Part_Master_Prc WHERE MPN=$partnumber ORDER BY Start_Date ASC");
+       for res2 in subset1{
+        base_price1 =get(res2,"Base_Price");
+        sub_type =get(res2,"Subscription_Type");
+        subs_factor_result =bmql("SELECT Subscription_Factor from BRCM_Subs_Factor WHERE Subscription_Type=$sub_type");
+        for subsfactresult in subs_factor_result{
+        sub_factor =atof(get(subsfactresult,"Subscription_Factor"));
+        }
+          if(licensetype=="Perpetual" or licensetype=="UMF" or licensetype==""){
+           /*BROCAD2-4748*/
+           unitMSRP = (atof(base_price1)*atof(exch));
+           extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+           /*BROCAD2-4748*/
+           sb31=stringbuilder(sb31,line._document_number,"~unitMSRP_l~",string(unitMSRP),"|");
+           sb32=stringbuilder(sb32,line._document_number,"~extMSRP_l~",extMSRP,"|");
+          }
+          if(licensetype=="Subscription"){
+             days=getdiffindays(EndDate, StartDate) + 1 ;
+            /*BROCAD2-4748*/
+            unitMSRP=(round(atof(base_price1)*sub_factor*atof(exch),precision))*(days/365.0);
+            extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+            /*BROCAD2-4748*/
+            sb31=stringbuilder(sb31,line._document_number,"~unitMSRP_l~",string(unitMSRP),"|");
+            sb32=stringbuilder(sb32,line._document_number,"~extMSRP_l~",extMSRP,"|");
+          
+          }
+       }
+      }
+    
+   //End: Added Unit MSRP calculations for Import/Export as part of BROCAD2-5532 
+   //Import Export Pricing for Standard Quotes
+    if(line.contractStartDate_l <> "" )
+       {
+        StartDate=strtojavadate(line.contractStartDate_l,"yyyy-MM-dd HH:mm:ss", "America/Chicago");
+       }
+       if(line.contractEndDate_l <> "" )
+       {
+        EndDate=strtojavadate(line.contractEndDate_l,"yyyy-MM-dd HH:mm:ss", "America/Chicago");
+       }
+       Days=getdiffindays(StartDate,EndDate)+1;
+    if(licenseType=="Subscription" or coveredpdt<>""){
+     final_price=String(line.hiddenPrice_l*(Days/365.0));
+    }
+    else{
+     final_price=String(line.hiddenPrice_l);
+    }
+    sb4=stringbuilder(sb4,line._document_number,"~perUnitPerListPrice_l~",String(round(line.hiddenPrice_l,precision)),"|");
+    //added new variable for Jira#1617
+    listPrice = String(round(line.hiddenPrice_l,precision));
+    //output4=sbtostring(sb4);
+   }
+   //end of contract/List price pricing
+   //salesmin and PromotionalSetup
+   //changes added as part of BROCAD2 - 1617
+   mpn_var=line._part_number;
+   //final_price=string(round(atof(final_price),precision));
+   final_price1 = final_price;
+   
+    
+   if(trim(coveredpdt) <> "")
+   {
+   //Begin: Added Unit MSRP calculations for Import/Export as part of BROCAD2-5532
+   Days=getdiffindays(StartDate,EndDate)+1;
+     supportset=bmql("SELECT Support_Level, Support_Rate from BRCM_Support_Rate WHERE Support_Type_Code=$supportType_l");
+     subset=bmql("SELECT MPN,Base_Price, Base_Support_Value,Start_Date,End_Date from BRCM_Part_Master_Prc WHERE MPN=$coveredpdt ORDER BY Start_Date ASC");
+     for res1 in subset{
+     
+     basePrice=get(res1,"Base_Price");
+     NDP=atof(get(res1,"Base_Support_Value"));
+     }
+     licensetype=line.licenseType_l; 
+     for results in supportset{
+      supp_rate=atof(get(results,"Support_Rate"));
+      if(String(line.hiddenPrice_l)<>""){
+       supp_price=String((round(line.hiddenPrice_l*supp_rate,precision))*NDP*Days/365);
+        if(basePrice<>""){
+       supp_rate1=((atof(basePrice)*supp_rate)*NDP*Days/365);
+       unitMSRP=((supp_rate1)*atof(exch));
+       extMSRP = string(round((unitMSRP),precision)*line._price_quantity);
+       }
+       
+     }
+
+     }
+     sb31=stringbuilder(sb31,line._document_number,"~unitMSRP_l~",string(unitMSRP),"|");
+     sb32=stringbuilder(sb32,line._document_number,"~extMSRP_l~",extMSRP,"|"); 
+    //End: Added Unit MSRP calculations for Import/Export as part of BROCAD2-5532
+    mpn_var = coveredpdt;
+    if(trim(listPrice) <> "")
+    {
+    final_price1=listPrice;
+    }
+   }
+   
+   salesMinl_var=0.0;
+   salesMin2_var=0.0;
+   salesMin3_var=0.0;
+   promotion_type="Single";
+   min_qty=line._price_quantity;
+   promotion_req="N";
+   
+   //if(final_price<>""){
+   //final_price1=string(round(atof(final_price),precision)); 
+   //}
+   //else{
+    //final_price = string(0.0);
+   //}
+   
+   // Sales min Calculation; Here calculation for Sales Min values is done for normal/promotion scenarios
+   res = bmql("select Sales_Min3,Sales_Min2,Sales_Min1,Start_Date,End_Date from BRCM_Part_Master_Prc where MPN = $mpn_var ORDER BY Start_Date ASC");
+   for rec in res 
+   {
+    salesMinl_var = getfloat(rec,"Sales_Min1");
+    salesMin2_var = getfloat(rec,"Sales_Min2");
+    salesMin3_var = getfloat(rec,"Sales_Min3");
+    if(get(rec,"Start_Date")<>"" AND get(rec,"End_Date")<>"")
+    {
+     salesMinl_var = (100-salesMinl_var)* atof(final_price1)/ 100;
+     salesMin2_var = (100-salesMin2_var)* atof(final_price1) / 100;
+     
+     //BROCAD2-1617 - begin 
+     //Remove Null checks for Salesmin3.
+    /* if(isnull(salesMin3_var) or salesMin3_var == 0)
+     {
+      salesMin3_var = 0;
+     }
+     else
+     { */
+      salesMin3_var = (100-salesMin3_var)* atof(final_price1) / 100;
+    // }
+    //BROCAD2-1617 - end
+    }
+
+   }
+   results4=bmql("select Promotion_Enabled from BRCM_Part_Master_Ext where MPN=$mpn_var");
+   for res3 in results4
+   {
+    promotion_req=get(res3,"Promotion_Enabled");
+   }
+
+   if(promotion_req=="Y")
+   {
+    results2 = bmql("select Sales_Min1,Sales_Min2,Sales_Min3,Start_Date,End_Date,Promotion_Type,Minimum_Qty from BRCM_Promotion_Tb where MPN=$mpn_var");
+    for result3 in results2 
+    {
+     if(strtojavadate(get(result3,"Start_Date"),"dd/MM/yyyy") <= Curr_date AND strtojavadate(get(result3,"End_Date"),"dd/MM/yyyy") >= Curr_date )
+     {
+      if(findinarray(mpn_arraymulti,mpn_var)<>-1 AND get(result3,"Promotion_Type")=="Multi")
+      {
+
+       if(atoi(get(result3,"Minimum_Qty")) > min_qty)
+       {
+        min_qty=atoi(get(result3,"Minimum_Qty"));
+       }
+       salesMinl_var=atof(get(result3,"Sales_Min1"));
+       salesMinl_var= (100 - salesMinl_var) * atof(final_price1) / 100;
+       salesMin2_var=atof(get(result3,"Sales_Min2"));
+       salesMin2_var= (100 - salesMin2_var) * atof(final_price1)/ 100;
+       SalesMin3_var=atof(get(result3,"Sales_Min3"));
+       //BROCAD2-1617 - begin
+       //Remove Null checks for Salesmin3.
+     //  if(SalesMin3_var<>0.0){
+        SalesMin3_var= (100 - SalesMin3_var) *atof(final_price1)/ 100;
+     /*  }else{ 
+        SalesMin3_var=0.0;
+       }*/
+     //BROCAD2-1617 - end
+      }
+
+      else
+      {
+
+       if(get(result3,"Promotion_Type")=="Single" AND findinarray(mpn_arraymulti,mpn_var)==-1)
+       {
+        if(atoi(get(result3,"Minimum_Qty")) > min_qty)
+        {
+         min_qty=atoi(get(result3,"Minimum_Qty"));
+        }
+        salesMinl_var=atof(get(result3,"Sales_Min1"));
+        salesMinl_var= (100 - salesMinl_var) * atof(final_price1)/ 100;
+        salesMin2_var=atof(get(result3,"Sales_Min2"));
+        salesMin2_var= (100 - salesMin2_var) * atof(final_price1)/ 100;
+        SalesMin3_var=atof(get(result3,"Sales_Min3"));
+        //BROCAD2-1617 - begin
+        //Remove Null checks for Salesmin3.
+       // if(SalesMin3_var<>0.0){
+         SalesMin3_var= (100 - SalesMin3_var) *atof(final_price1)/ 100;
+       /* }else{
+         SalesMin3_var=0.0;
+        }*/
+        //BROCAD2-1617 - end
+       }
+      }
+
+
+     }
+
+    }
+
+   }
+   
+   elif(line.coveredProduct_l<>"")
+   {
+    sup_var=line.coveredProduct_l;
+    results2 = bmql("select Sales_Min1,Sales_Min2,Sales_Min3,Start_Date,End_Date,Promotion_Type,Minimum_Qty from BRCM_Promotion_Tb where MPN=$sup_var");
+    for result3 in results2 
+    {
+
+
+     if(strtojavadate(get(result3,"Start_Date"),"dd/MM/yyyy") <= Curr_date AND strtojavadate(get(result3,"End_Date"),"dd/MM/yyyy") >= Curr_date )
+     {
+
+      if(findinarray(mpn_arraymulti,sup_var)<>-1 AND get(result3,"Promotion_Type")=="Multi")
+      {
+
+       if(atoi(get(result3,"Minimum_Qty")) > min_qty)
+       {
+        min_qty=atoi(get(result3,"Minimum_Qty"));
+
+       }
+
+      }
+
+      else
+      {
+
+       if(get(result3,"Promotion_Type")=="Single" AND findinarray(mpn_arraymulti,sup_var)==-1)
+       {
+        if(atoi(get(result3,"Minimum_Qty")) > min_qty)
+        {
+         min_qty=atoi(get(result3,"Minimum_Qty"));
+        }
+
+       }
+      }
+
+
+     }
+
+    }
+   }
+   //End of SalesMin and Setup
+   //Calling Eligible Discounts Calculator to calculate Environment and partner discounts
+   quantity = min_qty;
+   documentnum=line._document_number;
+   partNumber  = line._part_number;
+   teststring=line._line_item_comment;
+   env_selected=line.enterEnvironment_l;
+   coveredpdt=line.coveredProduct_l;
+   transactionTypeM=line.transactionTypeM_l;
+   //Changes made as per VIPER - 304 - added condition to compare support term days attribute value with its previous value. 
+   //Changes made as per VIPER - 304 - If there is any change in Term days value then this additional codition will allow control to go inside the condition and calculate Ext. Contract/List Price accordingly.
+   if((getoldvalue("_price_quantity",atoi(line._document_number))<>string(line._price_quantity)) OR (getoldvalue("totalNewSupportTermDays_l",atoi(line._document_number))<>String(Days)) OR (getoldvalue("enterEnvironment_l",atoi(line._document_number))<>line.enterEnvironment_l) OR (getoldvalue("_line_item_comment",atoi(line._document_number))<>line._line_item_comment) or (getoldvalue("perUnitPerListPrice_l",atoi(line._document_number))<>final_price) OR (line.requestedQuantity_l<>min_qty)  OR (getoldvalue("extContractListPrice_l",atoi(line._document_number))=="0")){
+
+
+
+    if(coveredpdt <> ""){
+     partNumber = line.coveredProduct_l;
+    }
+    if(teststring<>""){
+     obj=json(teststring);
+     child=jsonget(obj,"child");
+     childObj=json(child);
+     PartNum=jsonget(obj,"PartNumber");
+     licensetype=jsonget(childObj,"selectLicenseType");
+     supportPartsPicklist=jsonget(childObj,"supportPartsPicklist");
+     transactionTypeM=jsonget(childObj,"Transaction Type");
+     if (line._part_number == supportPartsPicklist)
+     {
+      coveredpdt=PartNumber;
+     }
+     env_selected=jsonget(childObj,"enterEnvironment");
+     if (line._part_number == supportPartsPicklist)
+     {
+      partNumber=PartNum;
+     }   
+    }
+
+    //To calculate Ext Contract/List Price
+    ExtListPrice = commerce.eligibleDiscounts_brcm(final_price,partNumber,env_selected,quantity);
+    if(line._part_number<>"")
+    {
+     sb5=stringbuilder(sb5,line._document_number,"~extContractListPrice_l~",string(round(ExtListPrice,precision)),"|");
+     sb5=stringbuilder(sb5,line._document_number,"~unroundedExtListPrice_l~",string(ExtListPrice),"|");
+     totalExtPrice = totalExtPrice + ExtListPrice;
+    }
+   }
+   else{
+    if(line._part_number<>"")
+    { ExtListPrice = line.extContractListPrice_l;
+    sb5=stringbuilder(sb5,line._document_number,"~extContractListPrice_l~",string(round(ExtListPrice,precision)),"|");
+    
+    sb5=stringbuilder(sb5,line._document_number,"~unroundedExtListPrice_l~",string(ExtListPrice),"|");
+    
+    totalExtPrice = totalExtPrice + ExtListPrice;
+    }
+   }
+   //end of code for eligible discount
+   
+   //Calling Requested Discounts Calculator
+   requestedDiscount=line.requestedDiscount_l;
+   //Added the code for SYMINT-3206 for having discount 100% for Symantec Trail POC Quote by Arjun on 19-Dec-2019
+   if(symantecTrialPOC_t==true AND dealType_t=="cADStandard")
+   {
+    requestedDiscount=100.0;
+   }
+   
+   //To Calculate Requested Discount and Ext Proposed Net Unit Price
+   if(final_price<>"0.0" AND round(requestedDiscount,0)==round(line.customDiscountValue_l,0) AND line.proposedNetUnitPriceRequested_l<>0.0 AND  round(line.proposedNetUnitPriceRequested_l,4)<>round(line.proposedNetPriceRequestedHidden_ct,4)){
+    
+     if(quantity <> 0 and (line.licenseType_l=="Subscription" or coveredpdt<>"")){
+     requestedDiscount=((round(ExtListPrice/quantity,precision))-round(line.proposedNetUnitPriceRequested_l*(Days/365.0),precision))*100/(round(ExtListPrice/quantity,precision)); 
+     }
+     else{
+      requestedDiscount=((round(ExtListPrice/quantity,precision))-round(line.proposedNetUnitPriceRequested_l,precision))*100/(round(ExtListPrice/quantity,precision));
+     }
+     //Added the code for SYMINT-3206 for having discount 100% for Symantec Trail POC Quote by Arjun on 19-Dec-2019
+   
+     if(symantecTrialPOC_t==true AND dealType_t=="cADStandard")
+     {
+     requestedDiscount=100.0;
+     }
+     proposedPrice = round(ExtListPrice - ((ExtListPrice * requestedDiscount)/100),precision);
+     
+     
+    
+   }
+   else{
+
+     proposedPrice=round(commerce.calculateProposedPrice_brcm(ExtListPrice,quantity,requestedDiscount),precision);
+     
+   }
+   //If loop for setting proposed entered using Import/Export
+   //added the comparison of requested discount and custom discount so that import/export proposed price do not affect discounts 
+   //and proposed price for EURO and other currencies that have "," instead of "."
+   if(line.hiddenProposedPrice_l <> -1 AND round(requestedDiscount,0)<>round(line.customDiscountValue_l,0))
+    { 
+    if(line.contractStartDate_l <> "" )
+       {
+        StartDate=strtojavadate(line.contractStartDate_l,"yyyy-MM-dd HH:mm:ss", "America/Chicago");
+       }
+       if(line.contractEndDate_l <> "" )
+       {
+        EndDate=strtojavadate(line.contractEndDate_l,"yyyy-MM-dd HH:mm:ss", "America/Chicago");
+       }
+       Days=getdiffindays(StartDate,EndDate)+1;
+    
+     if(quantity <> 0 and round(ExtListPrice,4) <> 0.0 AND round(requestedDiscount,0)==round(line.customDiscountValue_l,0)){
+      if(quantity <> 0 and (line.licenseType_l=="Subscription" or coveredpdt<>"")){
+      
+      requestedDiscount=((round(ExtListPrice/quantity,precision))-round(line.hiddenProposedPrice_l*(Days/365.0),precision))*100/(round(ExtListPrice/quantity,precision)); 
+      
+      proposedPrice=round(line.hiddenProposedPrice_l*quantity*(Days/365.0),precision);
+      
+      
+      }else{
+      requestedDiscount=((round(ExtListPrice/quantity,precision))-round(line.hiddenProposedPrice_l,precision))*100/(round(ExtListPrice/quantity,precision)); 
+      
+      proposedPrice=round(line.hiddenProposedPrice_l*quantity,precision);
+      
+      }
+     }
+     
+     sb5 = stringbuilder(sb5,line._document_number,"~hiddenProposedPrice_l~",String(-1),"|");
+    }
+    //end of code for hidden proposed price
+    sb5 = stringbuilder(sb5,line._document_number,"~hiddenProposedPrice_l~",String(-1),"|");  //Placed outside to set for all scenarios
+   
+   //Changes made as per VIPER-355  -  Added additional conditions to handle zero priced products based on license type or covered product
+   if(final_price=="0" or final_price =="0.0000" or final_price =="0.0"){
+    if(round(atof(final_price),0) == 0 and round(ExtListPrice,0)==0){
+  
+     if(licensetype=="Subscription" or coveredpdt<>"")
+     {
+      proposedPrice=round(line.proposedNetUnitPriceRequested_l*quantity*(Days/365.0),precision);
+      requestedDiscount=0;
+     }
+     else{
+      proposedPrice=round(line.proposedNetUnitPriceRequested_l*quantity,precision);
+      requestedDiscount=0;
+     }
+
+    }
+   }
+   //}
+   /*if(line.proposedNetPriceRequestedHidden_ct <> line.proposedNetUnitPriceRequested_l){
+   proposedPrice=round(line.proposedNetUnitPriceRequested_l*quantity,precision);
+   sb30=stringbuilder(output30,line._document_number,"~applyProposedPriceFlag_l~","false","|");
+   output30=sbtostring(sb30);
+  }
+  if(line.customDiscountValue_l <> line.requestedDiscount_l){
+   proposedPrice=round(commerce.calculateProposedPrice_brcm(ExtListPrice,quantity,requestedDiscount),precision);
+   sb29=stringbuilder(output29,line._document_number,"~applyProposedPriceFlag_l~","false","|");
+   output29=sbtostring(sb29);
+  }*/
+  
+   if(line._model_name == "")
+   { 
+    if(atof(exch) <> 0){
+     totalUSD=totalUSD + (proposedPrice/atof(exch));
+    }   
+    if(coveredpdt <> ""){
+     totalMaintenanceFee = totalMaintenanceFee + round(proposedPrice,precision);
+    }
+    else{
+     totalLicenseFee = totalLicenseFee + round(proposedPrice,precision);
+     //sb6=stringbuilder(sb6,line._document_number,"~totalFee_l~",string(round(proposedPrice,precision)),"|");
+    }
+    total=total+round(proposedPrice,precision);
+    
+    //To Calculate Proposed Net Unit Price
+    if(licensetype=="Subscription" or coveredpdt<>"")
+    {
+    
+    TermsDays = 0.0;
+    TermsDays=getdiffindays(StartDate,EndDate)+1.0;
+    DivFactor=TermsDays/365.0;
+    sb6=stringbuilder(sb6,line._document_number,"~proposedNetUnitPriceRequested_l~",string(round((proposedPrice/min_qty)/DivFactor,precision)),"|");
+    
+    
+    sb7=stringbuilder(sb7,line._document_number,"~proposedNetPriceRequestedHidden_ct~",string(round((proposedPrice/min_qty)/DivFactor,precision)),"|");
+    
+    }
+    
+    else 
+    {
+    sb6=stringbuilder(sb6,line._document_number,"~proposedNetUnitPriceRequested_l~",string(round(proposedPrice/min_qty,precision)),"|");
+    sb7=stringbuilder(sb7,line._document_number,"~proposedNetPriceRequestedHidden_ct~",string(round(proposedPrice/min_qty,precision)),"|");
+    }
+    if(requestedDiscount<=0 and round(atof(final_price),4) == 0)
+    {
+     requestedDiscount=0;
+    }
+    proposedunitprice=proposedPrice/min_qty;
+    sb8=stringbuilder(sb8,line._document_number,"~requestedDiscount_l~",string(requestedDiscount),"|");
+    sb9=stringbuilder(sb9,line._document_number,"~extProposedNetPriceRequested_l~",string(proposedPrice),"|");
+    // Adding changes for New Annual Renewal Value
+   sb9a=stringbuilder(sb9a,commerce.setLineItemDetailsConfig_brcm(line._line_item_comment,proposedPrice,line._document_number,line._part_number,line._model_name,line.contractEndDate_l,line.contractStartDate_l,line.transactionTypeM_l,line.licenseType_l,line.coveredProduct_l));
+    if(atof(exch) <> 0){
+     sb10=stringbuilder(sb10,line._document_number,"~totalValueUSD~",string(proposedPrice/atof(exch)),"|");
+    }
+    lineDiscount = atof(final_price) - proposedPrice/min_qty;
+    if(requestedDiscount<=0)
+    {
+     lineDiscount=0;
+    }
+   }
+   
+   sb11=stringbuilder(sb11,line._document_number,"~lineDiscountAmount_l~",string(lineDiscount),"|");
+   //output11=sbtostring(sb11);
+
+   sb12=stringbuilder(sb12,line._document_number,"~customDiscountValue_l~",string(requestedDiscount),"|");
+   //output12=sbtostring(sb12);
+   extLineDiscount = ExtListPrice - proposedPrice;
+   if(requestedDiscount<=0){
+    extLineDiscount=0;
+   }
+   sb13=stringbuilder(sb13,line._document_number,"~extLineDiscountAmount_l~",string(extLineDiscount),"|");
+   if(string(line.approverRecommendedNetUnitPrice_l) <> "")
+   {
+    param_approver_recc_net_unit_price = line.approverRecommendedNetUnitPrice_l;
+    param_approver_ext_recc_net_unit_price = param_approver_recc_net_unit_price * min_qty;
+   }
+   sb14=stringbuilder(sb14,line._document_number,"~approverRecommendedExtNetPrice_l~",string(param_approver_ext_recc_net_unit_price),"|");
+   //output14=sbtostring(sb14);
+   sm1 = round(salesMinl_var,precision);
+   sb15=stringbuilder(sb15,line._document_number,"~salesMin1_l~",string(sm1),"|");
+   //output15=sbtostring(sb15);
+   sm2 = round(salesMin2_var,precision);
+   sb16=stringbuilder(sb16,line._document_number,"~salesMin2_l~",string(sm2),"|");
+   sm3 = round(salesMin3_var,precision);
+   sb17=stringbuilder(sb17,line._document_number,"~salesMin3_l~",string(sm3),"|");
+   sb18=stringbuilder(sb18,line._document_number,"~_price_quantity~",string(min_qty),"|",line._document_number,"~requestedQuantity_l~",string(min_qty),"|");
+
+   if(Contract_no=="NA"){
+    sb19=stringbuilder(sb19,line._document_number,"~contractNumber_l~","","|");
+   }
+   else
+   {
+    sb19=stringbuilder(sb19,line._document_number,"~contractNumber_l~",Contract_no,"|");
+   }
+   
+   //Satyabrata Acharya; Changing the code to remove temporary fields as the read/write scenarios for site details is no more in scope.
+   
+    sb20=stringbuilder(sb20,line._document_number,"~installedAtCustomerNumber_l~",shipToPartyID_t,"|");
+    sb23=stringbuilder(sb23,line._document_number,"~siteID_l~",shipToSiteNumber_t,"|");
+    sb24=stringbuilder(sb24,line._document_number,"~siteIDStreetAddress_l~",_transaction_shipTo_t_address,"|");
+    sb25=stringbuilder(sb25,line._document_number,"~siteIDCityStateZip_l~",_transaction_shipTo_t_city,"|");
+    sb27=stringbuilder(sb27,line._document_number,"~siteIDZip_l~",_transaction_shipTo_t_zip,"|");
+   //end of code
+   //VIPER-438 Adding the code to populate installed at fields in line level based on the business division and end customer site number ;
+     
+                           if((businessDivision_t=="Symantec" OR busDivision == "SED") AND endCustomerSiteNumber_t <> ""){
+     if(line.installedAtCustomerNumber_l==line.temporaryInstalledAtCustomerNumber_avg){
+                                           sb20=stringbuilder(sb20,line._document_number,"~installedAtCustomerNumber_l~",customerERPId_t,"|");
+                                                          //output20=sbtostring(sb20);    
+                                           sb21=stringbuilder(sb21,line._document_number,"~temporaryInstalledAtCustomerNumber_avg~",customerERPId_t,"|");
+                                                         //output21=sbtostring(sb21);
+                                           }
+                                           if(line.installedAtCustomerNumber_l==""){
+                                           sb20=stringbuilder(sb20,line._document_number,"~installedAtCustomerNumber_l~",customerERPId_t,"|");
+                                                          //output20=sbtostring(sb20);    
+                                           sb21=stringbuilder(sb21,line._document_number,"~temporaryInstalledAtCustomerNumber_avg~",customerERPId_t,"|");
+                                                          //output21=sbtostring(sb21);
+                                           }
+
+                                           if(line.installedAtCustomerNumber_l<>"" AND line.installedAtCustomerNumber_l<>line.temporaryInstalledAtCustomerNumber_avg){
+                                           sb20=sbappend(sb20,line._document_number,"~installedAtCustomerNumber_l~",line.installedAtCustomerNumber_l,"|");
+                                           }
+                                           else{
+                                           sb20=sbappend(sb20,line._document_number,"~installedAtCustomerNumber_l~",customerERPId_t,"|");
+                                                          //output20=sbtostring(sb20);
+                                           }
+
+                                           if(line.siteID_l==line.temporarysiteID_avg or line.siteID_l==""){
+                                           sb22=stringbuilder(sb22,line._document_number,"~temporarysiteID_avg~",endCustomerSiteNumber_t,"|");
+                                                          //output22=sbtostring(sb22);
+                                           sb23=stringbuilder(sb23,line._document_number,"~siteID_l~",endCustomerSiteNumber_t,"|");
+                                                          //output23=sbtostring(sb23);
+                                           }             
+                                           if(line.siteID_l<>"" AND line.siteID_l<>line.temporarysiteID_avg){
+                                           sb23=stringbuilder(sb23,line._document_number,"~siteID_l~",line.siteID_l,"|");
+                                                          //output23=sbtostring(sb23);
+                                           //sb22=stringbuilder(sb22,line._document_number,"~temporarysiteID_avg~",shipToSiteNumber_t,"|");
+                                                          //output22=sbtostring(sb22);
+                                           }
+                                           else{
+                                           sb23=stringbuilder(sb23,line._document_number,"~siteID_l~",endCustomerSiteNumber_t ,"|");
+                                                          //output23=sbtostring(sb23);
+                                           sb22=stringbuilder(sb22,line._document_number,"~temporarysiteID_avg~",endCustomerSiteNumber_t,"|");
+                                                          //output22=sbtostring(sb22);
+                                           }
+
+                                           if(line.siteIDStreetAddress_l==line.temporarysiteIDStreetAddress_avg or line.siteIDStreetAddress_l==""){
+                                           sb24=stringbuilder(sb24,line._document_number,"~siteIDStreetAddress_l~",_transaction_customer_t_address,"|");
+                                                          //output24=sbtostring(sb24);
+                                           sb25=stringbuilder(sb25,line._document_number,"~temporarysiteIDStreetAddress_avg~",_transaction_customer_t_address,"|");
+                                                          //output25=sbtostring(sb25);
+                                           }
+
+                                           if(line.siteIDStreetAddress_l<>"" AND line.siteIDStreetAddress_l<>line.temporarysiteIDStreetAddress_avg){
+                                           sb24=stringbuilder(sb24,line._document_number,"~siteIDStreetAddress_l~",line.siteIDStreetAddress_l,"|");
+                                                          //output24=sbtostring(sb24);
+                                           }
+                                           else{
+                                           sb24=stringbuilder(sb24,line._document_number,"~siteIDStreetAddress_l~",_transaction_customer_t_address,"|");
+                                                          //output24=sbtostring(sb24);
+                                           }
+                                           if(line.siteIDCityStateZip_l==line.temporarysiteIDCityStateZip_avg or line.siteIDCityStateZip_l==""){
+                                           sb25=stringbuilder(sb25,line._document_number,"~siteIDCityStateZip_l~",_transaction_customer_t_city,"|");
+                                           sb26=stringbuilder(sb26,line._document_number,"~temporarysiteIDCityStateZip_avg~",_transaction_customer_t_city,"|");
+                                           }
+
+                                           if(line.siteIDCityStateZip_l<>"" AND line.siteIDCityStateZip_l<>line.temporarysiteIDCityStateZip_avg){
+                                           sb25=stringbuilder(sb25,line._document_number,"~siteIDCityStateZip_l~",line.siteIDCityStateZip_l,"|");
+                                           }
+                                           else{
+                                           sb25=stringbuilder(sb25,line._document_number,"~siteIDCityStateZip_l~",_transaction_customer_t_city,"|");
+                                           }
+
+                                           if(line.siteIDZip_l==line.temporarysiteIDZip_avg or line.siteIDZip_l==""){
+                                           sb27=stringbuilder(sb27,line._document_number,"~siteIDZip_l~",_transaction_customer_t_zip,"|");
+                                           sb28=stringbuilder(sb28,line._document_number,"~temporarysiteIDZip_avg~",_transaction_customer_t_zip,"|");
+                                           }
+
+                                           if(line.siteIDZip_l<>"" AND line.siteIDZip_l<>line.temporarysiteIDZip_avg){
+                                           sb27=stringbuilder(sb27,line._document_number,"~siteIDZip_l~",line.siteIDZip_l,"|");
+                                           }
+                                           else{
+                                           sb27=stringbuilder(sb27,line._document_number,"~siteIDZip_l~",_transaction_customer_t_zip,"|");
+                                           }
+        }  
+        else {
+     if(line.installedAtCustomerNumber_l==line.temporaryInstalledAtCustomerNumber_avg){
+                                           sb20=stringbuilder(sb20,line._document_number,"~installedAtCustomerNumber_l~",shipToPartyID_t,"|");
+                                                          //output20=sbtostring(sb20);    
+                                           sb21=stringbuilder(sb21,line._document_number,"~temporaryInstalledAtCustomerNumber_avg~",shipToPartyID_t,"|");
+                                                         //output21=sbtostring(sb21);
+                                           }
+                                           if(line.installedAtCustomerNumber_l==""){
+                                           sb20=stringbuilder(sb20,line._document_number,"~installedAtCustomerNumber_l~",shipToPartyID_t,"|");
+                                                          //output20=sbtostring(sb20);    
+                                           sb21=stringbuilder(sb21,line._document_number,"~temporaryInstalledAtCustomerNumber_avg~",shipToPartyID_t,"|");
+                                                          //output21=sbtostring(sb21);
+                                           }
+
+                                           if(line.installedAtCustomerNumber_l<>"" AND line.installedAtCustomerNumber_l<>line.temporaryInstalledAtCustomerNumber_avg){
+                                           sb20=sbappend(sb20,line._document_number,"~installedAtCustomerNumber_l~",line.installedAtCustomerNumber_l,"|");
+                                           }
+                                           else{
+                                           sb20=sbappend(sb20,line._document_number,"~installedAtCustomerNumber_l~",shipToPartyID_t,"|");
+                                                          //output20=sbtostring(sb20);
+                                           }
+         
+
+                                           if(line.siteID_l==line.temporarysiteID_avg or line.siteID_l==""){
+                                           sb22=stringbuilder(sb22,line._document_number,"~temporarysiteID_avg~",shipToSiteNumber_t,"|");
+                                                          //output22=sbtostring(sb22);
+                                           sb23=stringbuilder(sb23,line._document_number,"~siteID_l~",shipToSiteNumber_t,"|");
+                                                          //output23=sbtostring(sb23);
+                                           }             
+                                           if(line.siteID_l<>"" AND line.siteID_l<>line.temporarysiteID_avg){
+                                           sb23=stringbuilder(sb23,line._document_number,"~siteID_l~",line.siteID_l,"|");
+                                                          //output23=sbtostring(sb23);
+                                           //sb22=stringbuilder(sb22,line._document_number,"~temporarysiteID_avg~",shipToSiteNumber_t,"|");
+                                                          //output22=sbtostring(sb22);
+                                           }
+                                           else{
+                                           sb23=stringbuilder(sb23,line._document_number,"~siteID_l~",shipToSiteNumber_t ,"|");
+                                                          //output23=sbtostring(sb23);
+                                           sb22=stringbuilder(sb22,line._document_number,"~temporarysiteID_avg~",shipToSiteNumber_t,"|");
+                                                          //output22=sbtostring(sb22);
+                                           }
+
+                                           if(line.siteIDStreetAddress_l==line.temporarysiteIDStreetAddress_avg or line.siteIDStreetAddress_l==""){
+                                           sb24=stringbuilder(sb24,line._document_number,"~siteIDStreetAddress_l~",_transaction_shipTo_t_address,"|");
+                                                          //output24=sbtostring(sb24);
+                                           sb25=stringbuilder(sb25,line._document_number,"~temporarysiteIDStreetAddress_avg~",_transaction_shipTo_t_address,"|");
+                                                          //output25=sbtostring(sb25);
+                                           }
+
+                                           if(line.siteIDStreetAddress_l<>"" AND line.siteIDStreetAddress_l<>line.temporarysiteIDStreetAddress_avg){
+                                           sb24=stringbuilder(sb24,line._document_number,"~siteIDStreetAddress_l~",line.siteIDStreetAddress_l,"|");
+                                                          //output24=sbtostring(sb24);
+                                           }
+                                           else{
+                                           sb24=stringbuilder(sb24,line._document_number,"~siteIDStreetAddress_l~",_transaction_shipTo_t_address,"|");
+                                                          //output24=sbtostring(sb24);
+                                           }
+                                           if(line.siteIDCityStateZip_l==line.temporarysiteIDCityStateZip_avg or line.siteIDCityStateZip_l==""){
+                                           sb25=stringbuilder(sb25,line._document_number,"~siteIDCityStateZip_l~",_transaction_shipTo_t_city,"|");
+                                           sb26=stringbuilder(sb26,line._document_number,"~temporarysiteIDCityStateZip_avg~",_transaction_shipTo_t_city,"|");
+                                           }
+
+                                           if(line.siteIDCityStateZip_l<>"" AND line.siteIDCityStateZip_l<>line.temporarysiteIDCityStateZip_avg){
+                                           sb25=stringbuilder(sb25,line._document_number,"~siteIDCityStateZip_l~",line.siteIDCityStateZip_l,"|");
+                                           }
+                                           else{
+                                           sb25=stringbuilder(sb25,line._document_number,"~siteIDCityStateZip_l~",_transaction_shipTo_t_city,"|");
+                                           }
+
+                                           if(line.siteIDZip_l==line.temporarysiteIDZip_avg or line.siteIDZip_l==""){
+                                           sb27=stringbuilder(sb27,line._document_number,"~siteIDZip_l~",_transaction_shipTo_t_zip,"|");
+                                           sb28=stringbuilder(sb28,line._document_number,"~temporarysiteIDZip_avg~",_transaction_shipTo_t_zip,"|");
+                                           }
+
+                                           if(line.siteIDZip_l<>"" AND line.siteIDZip_l<>line.temporarysiteIDZip_avg){
+                                           sb27=stringbuilder(sb27,line._document_number,"~siteIDZip_l~",line.siteIDZip_l,"|");
+                                           }
+                                           else{
+                                           sb27=stringbuilder(sb27,line._document_number,"~siteIDZip_l~",_transaction_shipTo_t_zip,"|");
+                           }
+                           }                
+   //end of code
+   // merge approval flag
+   propPrice = proposedPrice/min_qty;
+   flag = true;
+   part=line._part_number;
+
+   if(quoteType_t == "renewalQuote" and upper(line.transactionTypeM_l) <> "NEW"  and line.transactionTypeM_l <> "")
+   {
+    flag = true;
+    sb1=sbappend(sb1,line._document_number, "~approvalFlag_l~", String(flag), "|");
+   }
+   else
+   {
+    CustomerAccountArray = String[]{Customer,BillTo,EndCust};
+    resultset=bmql("SELECT MPN,Item_Price FROM BRCM_Cust_Pricelist WHERE MPN= $part AND Customer_Account_No IN $CustomerAccountArray");
+    for res1 in resultset
+    {
+     price = get(res1,"Item_Price");
+     if(price <> "")
+     {
+      flag = false;
+     }
+    }
+    if(flag == false)
+    {
+     if(requestedDiscount <> 0.0)
+     {
+      flag = true;
+     }
+    }
+    if(flag == true)
+    {
+     if( line.noBid_l == true)
+     {
+      flag = false;
+     }
+    }
+    if(flag and part == "Cust")
+    {
+     flag = false;
+    }
+    if(propPrice > 0 and atof(final_price) == 0)
+    {
+     flag = true;
+    }
+    sb1=sbappend(sb1,line._document_number, "~approvalFlag_l~", String(flag), "|");
+   }
+   if((flag and propPrice < line.salesMin1_l) or (flag and propPrice > 0 and atof(final_price) == 0))
+   {
+    approveFlag = true;
+   } 
+   if(dDRFlag == false)
+   {
+    if(startswith(line.isDiscountable_l,"N"))
+    {
+     dDRFlag = true;
+    }
+    resultset = bmql("select Restricted from BRCM_Part_Master_Prc where MPN = $part");
+    restFlag = "";
+    for record in resultset 
+    {
+     restFlag = get(record,"Restricted");
+    } 
+    if(restFlag == "Y")
+    {
+     dDRFlag = true;
+    }
+   }
+
+   //end merge
+
+  }
+
+ }
+ }
+
+ sb = sbappend(sb,sb1,sb2,sb3,sb4,sb5,sb6,sb7,sb9,sb9a,sb8,sb10,sb11,sb12,sb13,sb14,sb15,sb16,sb17,sb19,sb18,sb20,sb21,sb22,sb23,sb24,sb25,sb26,sb27,sb28,sb29,sb30,sb31,sb32,sb33,result);
+ result= sbtostring(sb);
+}
+return result;

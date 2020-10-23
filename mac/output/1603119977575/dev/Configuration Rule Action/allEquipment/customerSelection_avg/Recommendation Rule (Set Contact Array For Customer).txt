@@ -1,0 +1,134 @@
+/*****************************************************************
+Function Name : Set Contact Array For Customer
+Name :Rohit Ranjan
+Description : This Rule to Force set contact name
+*****************************************************************/ 
+jsonObj=json(contactDetailsJsonString_avg); // creating a JSON object of the string
+delim=",";
+partynumbers=String[];
+counter=0;
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..SubjectPartyName"); //fetching subjectpartyname from json obj
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter]))
+{
+ partynumbers[counter]="";
+ }
+counter=counter+1;
+}
+
+counter=sizeofarray(partynumbers);// counted total number of contact name present
+
+return partynumbers;// returning the contact name
+/*****************************************************************
+Function Name : Set Contact Array For Customer
+Name :Rohit Ranjan
+Description : This Rule to Force set contact array control
+*****************************************************************/ 
+jsonObj=json(contactDetailsJsonString_avg);
+count=jsonget(jsonObj,"count");
+
+delim=",";
+SubjectPartyName=String[];
+counter=0;
+if(atoi(count)<>0)
+{
+ret = jsonpathgetmultiple(jsonObj,"$..PartyId"); //fetching subject party number
+size=jsonarraysize(ret);
+i=range(size);
+result=String[];
+//setting array control attribute
+for each in i{
+ valsplit=split(jsonarrayget(ret,each), delim);
+ Arraysize=sizeofarray(valsplit);
+ splitrange=range(Arraysize);
+ for res in splitrange{
+  SubjectPartyName[counter]=valsplit[res];
+  counter=counter+1;
+ }
+}
+counter=sizeofarray(SubjectPartyName);
+}
+else
+{
+counter=1;
+}
+return counter;
+/*****************************************************************
+Function Name : Set Contact Array For Customer
+Name :Rohit Ranjan
+Description : This Rule to Force set contact name
+*****************************************************************/ 
+jsonObj=json(contactDetailsJsonString_avg); // creating a JSON object of the string
+delim=",";
+partynumbers=String[];
+counter=0;
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..RelationshipEO_BRCM_Rel_ContactMobileNumber_c"); //fetching subjectpartyname from json obj
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter]))
+{
+ partynumbers[counter]="";
+ }
+counter=counter+1;
+}
+
+counter=sizeofarray(partynumbers);// counted total number of contact name present
+
+return partynumbers;// returning the contact name
+/*****************************************************************
+Function Name : Set Contact Array For Customer
+Name :Rohit Ranjan
+Description : This Rule to Force set contact name
+*****************************************************************/ 
+jsonObj=json(contactDetailsJsonString_avg); // creating a JSON object of the string
+delim=",";
+partynumbers=String[];
+counter=0;
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..RelationshipEO_BRCM_RelContactWorkPhone_c "); //fetching subjectpartyname from json obj
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter]))
+{
+ partynumbers[counter]="";
+ }
+counter=counter+1;
+}
+
+counter=sizeofarray(partynumbers);// counted total number of contact name present
+
+return partynumbers;// returning the contact name
+/*****************************************************************
+Function Name : Set Contact Array For Customer
+Name :Rohit Ranjan
+Description : This Rule to Force set contact name
+*****************************************************************/ 
+jsonObj=json(contactDetailsJsonString_avg); // creating a JSON object of the string
+delim=",";
+partynumbers=String[];
+counter=0;
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..RelationshipEO_BRCM_RelContactEmail_c"); //fetching subjectpartyname from json obj
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter]))
+{
+ partynumbers[counter]="";
+ }
+counter=counter+1;
+}
+
+counter=sizeofarray(partynumbers);// counted total number of contact name present
+
+return partynumbers;// returning the contact name

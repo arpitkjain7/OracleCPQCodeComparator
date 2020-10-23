@@ -1,0 +1,41 @@
+/******************************
+Function Name :Presetting values for End Customer Selection
+Name : Rohit Ranjan
+Description :This function is used to return ERP Number from OEC 
+*****************************************************************/ 
+
+
+ret="";
+result = bmql("SELECT customerERPId_t from commerce.transaction");
+for each in result{
+ret = get(each,"customerERPId_t");
+}
+
+
+
+return ret;
+/******************************
+Function Name :Presetting values for End Customer Selection
+Name : Rohit Ranjan
+Description :This function is used to return Customer Name from OEC 
+*****************************************************************/ 
+ret="";
+result = bmql("SELECT _customer_t_company_name from commerce.transaction");
+for each in result{
+ret = get(each,"_customer_t_company_name");
+}
+
+return ret;
+/******************************
+Function Name :Presetting values for End Customer Selection
+Name : Rohit Ranjan
+Description :This function is used to return ERP Number from OEC 
+*****************************************************************/ 
+return customerNumber_avg;
+/*****************************************************************
+Function Name :Presetting values for End Customer Selection
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer name from OEC
+*****************************************************************/ 
+
+return customerName_avg;

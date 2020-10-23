@@ -1,0 +1,84 @@
+/*
+This service add the line items to the transaction based on the part array sent by the calling funcion
+Created by Vamsi on  3rd Dec 2018
+
+*/
+
+flag = false;
+
+url = "https://"+_company_name+".bigmachines.com/v1_0/receiver";
+
+returnString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\">";
+returnString = returnString + "<soapenv:Header>";
+returnString = returnString + "<bm:userInfo xmlns:bm=\"urn:soap.bigmachines.com\">";
+returnString = returnString + "<bm:sessionId>"+_user_session_id+"</bm:sessionId>";
+returnString = returnString + "</bm:userInfo>";
+returnString = returnString + "<bm:category xmlns:bm=\"urn:soap.bigmachines.com\">Commerce</bm:category>";
+returnString = returnString + "<bm:xsdInfo xmlns:bm=\"urn:soap.bigmachines.com\">";
+returnString = returnString + "<bm:schemaLocation>https://"+_company_name+".bigmachines.com/bmfsweb/avagotechtest2/schema/v1_0/commerce/oraclecpqo.xsd</bm:schemaLocation>";
+returnString = returnString + "</bm:xsdInfo>";
+returnString = returnString + "</soapenv:Header>";
+returnString = returnString + "<soapenv:Body>";
+returnString = returnString + "<bm:addToTransaction xmlns:bm=\"http://xmlns.oracle.com/cpqcloud/commerce/oraclecpqo\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">";
+returnString = returnString + "<bm:items>";
+returnString = returnString + "<bm:catalogItem>";
+returnString = returnString + "<bm:segment/>";
+returnString = returnString + "<bm:product_line/>";
+returnString = returnString + "<bm:model/>";
+returnString = returnString + "</bm:catalogItem>";
+
+jsonObj = json();
+for each in PartArray
+{
+//partDataArray = split(each,"$$");
+jsonObj = json(each);
+partNo = jsonget(jsonObj,"partNumber");
+qty =jsonget(jsonObj,"quantity");
+        returnString = returnString + "<bm:partItem>";
+        returnString = returnString + "<bm:part>"+partNo+"</bm:part>";
+        returnString = returnString + "<bm:quantity>"+qty+"</bm:quantity>";
+          returnString = returnString + "<bm:price_book_var_name>_default_price_book</bm:price_book_var_name>";
+        returnString = returnString + "</bm:partItem>";
+}
+
+returnString = returnString + "</bm:items>";
+returnString = returnString + "<bm:transaction>";
+returnString = returnString + "<bm:process_var_name>oraclecpqo</bm:process_var_name>";
+returnString = returnString + "<bm:id>"+Transaction_ID+"</bm:id>";
+returnString = returnString + "<bm:action_data>";
+returnString = returnString + "<bm:action_var_name>cleanSave_t</bm:action_var_name>";
+returnString = returnString + "<bm:document_var_name>transaction</bm:document_var_name>";
+returnString = returnString + "</bm:action_data>";
+returnString = returnString + "<bm:return_specific_attributes>";
+returnString = returnString + "<bm:documents>";
+returnString = returnString + "<bm:document>";
+returnString = returnString + "<bm:var_name>transaction</bm:var_name>";
+returnString = returnString + "<bm:attributes>";
+returnString = returnString + "<bm:attribute>_document_number</bm:attribute>";
+returnString = returnString + "</bm:attributes>";
+returnString = returnString + "</bm:document>";
+returnString = returnString + "</bm:documents>";
+returnString = returnString + "</bm:return_specific_attributes>";
+returnString = returnString + "</bm:transaction>";
+returnString = returnString + "<bm:include_transaction>true</bm:include_transaction>";
+       
+returnString = returnString + "</bm:addToTransaction>";
+returnString = returnString + "</soapenv:Body>";
+returnString = returnString + "</soapenv:Envelope>";
+
+finalString = urldatabypost(url, returnString, "Failed to Connect");
+
+
+if (finalString <> "Failed to Connect") 
+{
+  
+              finalString = finalString;
+              flag = true;
+}
+else
+{
+  
+              finalString = "";
+}
+
+return flag;

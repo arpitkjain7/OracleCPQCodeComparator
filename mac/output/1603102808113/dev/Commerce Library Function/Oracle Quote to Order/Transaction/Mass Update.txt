@@ -1,0 +1,284 @@
+/****************************************************************************************
+Function Name : Mass Update
+Author : Nandhini Vurimella / Adhitya Suresh.
+Date : 30th jan 2019.
+Description : To mass update the attributes in line level 
+Modified by Ravi on 20th June 2019 added new attributes to Mass update as part of BROCAD2-755 enhancement
+Modified code by Arjun for replacing specialMetricLicense_t with specialMetricLicenseN_t for Jira: BROCAD2-5498 on 11th July 2109
+Modified code by Arjun for replacing specialMetricLicense_l with specialMetric_l for Jira: BROCAD2-5498 on 17th July 2019
+Modified by Ravi on 26 July 2019 Apply Proposed Price Changes for Selected Lines as part of BROCAD2-4865 Enhancement
+Adithya Suresh  03/23/2020   VIPER-748 Fix for pricing issue when product is dropped.
+05/05/2020 Adithya  //VIPER-768 The header proposed price is allocated based on the line level proposed prices
+06/16/2020 M Vamsi  VIPER-862 - Allow Mass Update Edits to Line Item Start&End Dates/Qty/Special Metric & Usage Qty
+28/09/2020  Sravan M   Viper-VIPER-998 Special Metric condition change for configured lines, included 0 check, same as non configured lines
+****************************************************************************************/
+
+result="";
+dlim="~";
+dend="|";
+flag=false;
+sb=stringbuilder();
+sb1=stringbuilder();
+sb2=stringbuilder();
+sb3=stringbuilder();
+sb4=stringbuilder();
+sb5=stringbuilder();
+sb6=stringbuilder();
+sb7=stringbuilder();
+sb8=stringbuilder();
+sb9=stringbuilder();
+sb9a=stringbuilder();
+sb10=stringbuilder();
+sb11=stringbuilder();
+sb12=stringbuilder();
+sb13=stringbuilder();
+sb14=stringbuilder();
+sb15=stringbuilder();
+sb16=stringbuilder();
+sb17=stringbuilder();
+sb18=stringbuilder();
+sb18a=stringbuilder();
+sb19=stringbuilder();
+sb20=stringbuilder();
+sb21=stringbuilder();
+sb22=stringbuilder();
+sb23=stringbuilder();
+sb24=stringbuilder();
+sb25=stringbuilder();
+sb26=stringbuilder();
+sb27=stringbuilder();
+sb28=stringbuilder();
+sb29=stringbuilder();
+sb30=stringbuilder();
+sb31=stringbuilder();
+sb32=stringbuilder();
+sb33=stringbuilder();
+sb34=stringbuilder();
+sb35=stringbuilder();
+sb36=stringbuilder();
+sb37=stringbuilder();
+sb38=stringbuilder();
+sb39=stringbuilder();
+sb40=stringbuilder();
+sb41=stringbuilder();
+//VIPER-862 - variable declaration
+sb42=stringbuilder();
+custString = "Cust";
+
+NewrequestedDiscountpercent=0.0;
+NewLinePrice=0.0;
+precision = 0;
+total = 0;
+totalExtPropPriceSelectedLines = 0.0;
+res = bmql("SELECT Precision from Func_Curr_Prec_Map WHERE Functional_Currency=$_system_current_document_currency_pref");
+
+for line in res{
+ precision=atoi(get(line,"Precision"));
+ }
+ 
+if(avoidPricingCalculations_t == false){
+
+for line in transactionLine{
+ if(line.selectLineItem_l == true){
+  //VIPER-748 Added the drop product logic to prevent the pricing issue while summing the ext Contract List Price
+  if(line.dropProduct_l <> true){
+   totalExtPropPriceSelectedLines = totalExtPropPriceSelectedLines  + line.extProposedNetPriceRequested_l;
+  }
+  flag = true;
+ }
+}
+  
+if(flag == true){  
+for line in transactionLine
+{
+ if(line.selectLineItem_l == true){
+      if(serial_t <> "" AND line.renewalCreatedBy_l <> "Integration User" AND line.transactionTypeM_l == "Capacity"){
+  sb1=stringbuilder(sb1,line._document_number,"~serial_l~",serial_t + dend); }
+  if(totalNewSupportTermDays_t <> 0){
+  sb2=stringbuilder(sb2,line._document_number,"~totalNewSupportTermDays_l~",string(totalNewSupportTermDays_t) + dend);}
+  if( eOSDate_t <> ""){
+  sb3=stringbuilder(sb3,line._document_number,"~eOSDate_l~",eOSDate_t + dend);}
+  if( existingSupportType_t <>""){
+  sb4=stringbuilder(sb4,line._document_number,"~existingSupportType_l~",existingSupportType_t + dend);}
+  if( dateShipped_t<>""){
+  sb5=stringbuilder(sb5,line._document_number,"~dateShipped_l~",dateShipped_t + dend);}
+  if( existingSupportStartDate_t<>""){
+  sb6=stringbuilder(sb6,line._document_number,"~existingSupportStartDate_l~",existingSupportStartDate_t + dend);}
+  if( existingSupportExpirationDate_t <>""){
+  sb7=stringbuilder(sb7,line._document_number,"~existingSupportExpirationDate_l~",existingSupportExpirationDate_t + dend);}
+  if (installedAtCustomerNumber_t <> ""){
+  sb8=stringbuilder(sb8,line._document_number,"~installedAtCustomerNumber_l~",installedAtCustomerNumber_t + dend);}
+  if( siteID_t <> ""){
+  sb9=stringbuilder(sb9,line._document_number,"~siteID_l~",siteID_t+ dend);}
+  if( siteIDStreetAddress_t <> ""){
+  sb10=stringbuilder(sb10,line._document_number,"~siteIDStreetAddress_l~",siteIDStreetAddress_t+ dend);}
+  if( siteIDCityStateZip_t <>""){
+  sb11=stringbuilder(sb11,line._document_number,"~siteIDCityStateZip_l~",siteIDCityStateZip_t+ dend);}
+  if( siteIDZip_t <> ""){
+  sb12=stringbuilder(sb12,line._document_number,"~siteIDZip_l~",siteIDZip_t + dend);}
+  if(siteIDCountry_t <>""){
+  sb13=stringbuilder(sb13,line._document_number,"~siteIDCountry_l~",siteIDCountry_t + dend);}
+  if ( cPProductFamily_t <>""){
+  sb14=stringbuilder(sb14,line._document_number,"~cPProductFamily_l~",cPProductFamily_t + dend);}
+  if(description_t <>""){
+  sb15=stringbuilder(sb15,line._document_number,"~description_l~",description_t + dend);}
+  if ( contractListUnitPrice_t <> 0){
+  sb16=stringbuilder(sb16,line._document_number,"~perUnitPerListPrice_l~",string(contractListUnitPrice_t) + dend);
+  sb17=stringbuilder(sb17,line._document_number,"~hiddenPrice_l~",string(contractListUnitPrice_t) + dend);
+  sb18=stringbuilder(sb18,line._document_number,"~_price_list_price_each~",string(contractListUnitPrice_t) + dend);}
+  if(requestedDiscount_t <> 0){
+  sb18a=stringbuilder(sb18a,line._document_number,"~requestedDiscount_l~",string(requestedDiscount_t) + dend);}
+  //Begin: Adding new Attributes for Mass update as part of BROCAD2-755 Enhancement done by Ravi
+  if(dropProduct_t){
+  sb19=stringbuilder(sb19,line._document_number,"~dropProduct_l~",String(dropProduct_t) + dend);}
+  if( dropReason_t <>""){
+  sb20=stringbuilder(sb20,line._document_number,"~dropReason_l~",dropReason_t + dend);}
+  if( contractEndDateMU_t <>""){
+  sb21=stringbuilder(sb21,line._document_number,"~contractEndDate_l~",contractEndDateMU_t + dend);}
+  if( contractStartDateMU_t <>""){
+  sb22=stringbuilder(sb22,line._document_number,"~contractStartDate_l~",contractStartDateMU_t + dend);}
+  if( price_quantityMU <> 0){
+  sb23=stringbuilder(sb23,line._document_number,"~_price_quantity~",string(price_quantityMU) + dend);}
+  if( existingQuantity_t <>""){
+  sb24=stringbuilder(sb24,line._document_number,"~existingQuantity_l~",existingQuantity_t + dend);}
+  if( nonStandardQty_t <> 0){
+  sb25=stringbuilder(sb25,line._document_number,"~nonStandardQty_l~",string(nonStandardQty_t) + dend);}
+  if( proposedPriceMU_t <> 0){
+   //Begin: Apply Proposed Price Calculations done by Ravi  as part of BROCAD2-4865
+   //Exclude Proposed price calculation for Customer selction lines and if line is dropped 
+   if(line._model_name == "" AND line._part_number<>"Cust" and line.dropProduct_l<>true and line.unroundedExtListPrice_l <> 0){
+    if(line.isDiscountable_l == "None" and line.requestedDiscount_l == 0.0){
+    sb26=stringbuilder(sb26,line._document_number,"~proposedNetUnitPriceRequested_l~",string(line.extContractListPrice_l) + dend);}
+    else{
+     //VIPER-768 The header proposed price is allocated based on the line level proposed prices
+     if(line.extContractListPrice_l<>0 and totalExtPropPriceSelectedLines<>0){
+     NewrequestedDiscountpercent=round((1-((proposedPriceMU_t*line.extProposedNetPriceRequested_l)/(totalExtPropPriceSelectedLines*line.unroundedExtListPrice_l)))*100,12);
+     
+     }
+     
+     NewLinePrice=round(line.unroundedExtListPrice_l-((line.unroundedExtListPrice_l*NewrequestedDiscountpercent)/100),precision);
+     total = total + NewLinePrice;
+     sb26=stringbuilder(sb26,line._document_number,"~proposedNetUnitPriceRequested_l~",string(NewLinePrice/line._price_quantity) + dend);
+     sb37=stringbuilder(sb37,line._document_number,"~proposedNetPriceRequestedHidden_ct~",string(NewLinePrice/line._price_quantity) + dend);
+     sb38=stringbuilder(sb38,line._document_number,"~requestedDiscount_l~",string(NewrequestedDiscountpercent) + dend);
+     sb39=stringbuilder(sb39,line._document_number,"~customDiscountValue_l~",string(NewrequestedDiscountpercent) + dend);
+     sb40=stringbuilder(sb40,line._document_number,"~extProposedNetPriceRequested_l~",string(NewLinePrice) + dend);
+     sb41=stringbuilder(sb41,line._document_number,"~applyProposedPriceFlag_l~", "true" + dend); 
+     print NewLinePrice; 
+  //sb26=stringbuilder(sb26,line._document_number,"~proposedNetUnitPriceRequested_l~",string(proposedPriceMU_t) + dend);
+  }}
+  
+  
+  //End: Apply Proposed Price Calculations done by Ravi  as part of BROCAD2-4865
+  }
+  if( nonStandardLicenseMetricMU_t <>""){
+  sb27=stringbuilder(sb27,line._document_number,"~nonStandardLicenseMetric_l~",nonStandardLicenseMetricMU_t + dend);}
+  if( proposedDiscountMU_t <> 0){
+  sb28=stringbuilder(sb28,line._document_number,"~extLineDiscountAmount_l~",string(proposedDiscountMU_t) + dend);}
+  if( contractedOrPriorDealValue_t <>""){
+  sb29=stringbuilder(sb29,line._document_number,"~contractedOrPriorDealValue_l~",contractedOrPriorDealValue_t + dend);} 
+  //Replaced specialMetricLicense_t with specialMetricLicenseN_t as per Jira BROCAD2-5498 by Arjun 11th July 2019
+  //Replaced specialMetricLicense_l with specialMetric_l as per Jira BROCAD2-5498 by Arjun on 17th July 2019
+  if( specialMetricLicenseN_t <>""){
+  sb30=stringbuilder(sb30,line._document_number,"~specialMetric_l~",specialMetricLicenseN_t + dend);}
+  // end of Changes for Jira BROCAD2-5498
+  // end of Changes for Jira BROCAD2-5498
+  if( priorContract_t <>""){
+  sb31=stringbuilder(sb31,line._document_number,"~priorContract~",priorContract_t + dend);}
+  if( priorContractLine_t <>""){
+  sb32=stringbuilder(sb32,line._document_number,"~priorContractLineItem_l~",priorContractLine_t + dend);}
+  if( rollToLine_t <>""){
+  sb33=stringbuilder(sb33,line._document_number,"~rollToLine_l~",rollToLine_t + dend);}
+  
+  // Start VIPER-862 - Allow Mass Update Edits to Line Item Start&End Dates/Qty/Special Metric & Usage Qty
+  
+  if(line._line_item_comment<>"" AND line._part_number <> custString)
+  {
+   teststring=line._line_item_comment;
+   
+   obj=json(teststring);
+   PartNumber=jsonget(obj,"PartNumber");
+   child=jsonget(obj,"child");
+   childObj=json(child);
+      
+   if(trim(string(nonStandardQty_t)) <> "" AND NOT isnull(nonStandardQty_t) and nonStandardQty_t <> 0)
+   {
+   jsonput(childObj,"UsageQuantity",nonStandardQty_t);
+   }
+   if(trim(contractStartDateMU_t) <> "" AND NOT isnull(contractStartDateMU_t))
+   {
+   jsonput(childObj,"startDate",datetostr(strtodate(contractStartDateMU_t,"yyyy-MM-dd HH:mm:ss"),"MM/dd/yyyy HH:mm:ss"));
+   }
+   if(trim(contractEndDateMU_t) <> "" AND NOT isnull(contractEndDateMU_t))
+   {
+   jsonput(childObj,"endDate",datetostr(strtodate(contractEndDateMU_t,"yyyy-MM-dd HH:mm:ss"),"MM/dd/yyyy HH:mm:ss"));
+   }
+   if(trim(string(price_quantityMU)) <> "" AND NOT isnull(price_quantityMU))
+   {
+   jsonput(childObj,"standardQuantity",price_quantityMU);
+   }
+   if(trim(nonStandardLicenseMetricMU_t) <> "" AND NOT isnull(nonStandardLicenseMetricMU_t))
+   {
+   jsonput(childObj,"specialMetricLicense",nonStandardLicenseMetricMU_t);
+   }
+   if(trim(specialMetricLicenseN_t) <> "" AND NOT isnull(specialMetricLicenseN_t))
+   {
+   jsonput(childObj,"specialMetric",specialMetricLicenseN_t);
+   }
+   jsonput(obj,"child",childObj);
+   sb42=stringbuilder(sb42,line._document_number,"~_line_item_comment~",jsontostr(obj)+ dend);
+   
+   }
+  // VIPER-862 - End
+  
+  ////End: Adding new Attributes for Mass update as part of BROCAD2-755 Enhancement done by Ravi
+  if(requestedDiscount_t <> 0){
+  sb34=stringbuilder(sb34,line._document_number,"~requestedDiscount_l~",string(requestedDiscount_t) + dend);}
+  //
+  
+  if(status_t == "PENDING_APPROVER" and find(line.approver_l,_system_user_login) > -1){ 
+   if( lineApprovalStatus_t <>""){
+    
+    sb35=stringbuilder(sb35,line._document_number,"~lineApprovalStatus_l~",lineApprovalStatus_t + dend);
+    sb36=stringbuilder(sb36,line._document_number,"~workflowStatus_l~",lineApprovalStatus_t + dend);
+   }
+    
+  }
+ }
+}
+  //VIPER-748 Calculating the difference and adding it to the first selected line to prevent round off issue
+  if( proposedPriceMU_t <> 0){
+  difference = proposedPriceMU_t - total;
+  
+  for line1 in transactionLine
+  {
+  if(line1.selectLineItem_l == true){
+  
+  
+  if(line1._model_name == "" AND line1._part_number<>"Cust" and line1.dropProduct_l<>true ){
+  if(totalExtPropPriceSelectedLines<>0){
+   lineproportion=line1.extProposedNetPriceRequested_l/totalExtPropPriceSelectedLines;
+  }
+  NewLinePrice=round(lineproportion*(proposedPriceMU_t),precision);
+  if(line1.extContractListPrice_l<>0 and line1.unroundedExtListPrice_l <> 0){
+   
+   NewrequestedDiscountpercent=(line1.unroundedExtListPrice_l-(NewLinePrice + difference))*100/line1.unroundedExtListPrice_l;
+  }
+  
+  result= result + line1._document_number + dlim + "proposedNetUnitPriceRequested_l" + dlim + String((NewLinePrice + difference)/line1._price_quantity) + dend;
+  result= result + line1._document_number + dlim + "proposedNetPriceRequestedHidden_ct" + dlim + string((NewLinePrice + difference)/line1._price_quantity) + dend;
+  result= result + line1._document_number + dlim + "requestedDiscount_l" + dlim + String(NewrequestedDiscountpercent) + dend;
+  result = result + line1._document_number + dlim + "customDiscountValue_l" + dlim + string(NewrequestedDiscountpercent) + dend;
+  result= result + line1._document_number + dlim + "extProposedNetPriceRequested_l" + dlim + String((NewLinePrice + difference)) + dend;
+  break;
+  }
+  }
+  }
+  }
+
+}
+}
+sb = sbappend(sb,sb1,sb2,sb3,sb4,sb5,sb6,sb7,sb8,sb9,sb10,sb11,sb12,sb13,sb14,sb15,sb16,sb17,sb18,sb18a,sb19,sb20,sb21,sb22,sb23,sb24,sb25,sb26,sb27,sb28,sb29,sb30,sb31,sb32,sb33,sb34,sb35,sb36,sb37,sb38,sb39,sb40,sb41,sb42,result);
+
+result= sbtostring(sb);
+return result;

@@ -1,0 +1,22 @@
+/********************************************************************************
+Function Name : Select all Line items
+Author : Nandhini Vurimella
+Description : To select line items.
+********************************************************************************/
+
+result="";
+dlim="~";
+dend="|";
+if(selectAllFlag_t == False){
+ for line in transactionLine{
+  result= result + line._document_number + dlim + "selectLineItem_l" + dlim + string(true) + dend;
+ }
+ result= result + _transaction_document_number + dlim + "selectAllFlag_t" + dlim + string(True) + dend;
+}
+else{
+ for line in transactionLine{
+  result= result + line._document_number + dlim + "selectLineItem_l" + dlim + string(false) + dend;
+ }
+ result= result + _transaction_document_number + dlim + "selectAllFlag_t" + dlim + string(False) + dend;
+}
+return result;

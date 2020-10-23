@@ -1,0 +1,543 @@
+/*********************************************************************
+              Action Name: Renewal Adhoc Opty Sync Creation
+              Description: Renewals: Create Oppty Program
+              Author: M Vamsi Krishna
+              JIRA - VIPER-915
+              Date: 25th May 2020
+              ******************************Change Log*****************************
+
+*********************************************************************/
+
+transactionID = "";
+source = "";
+CurrencyCode = currency_t;
+startDate = "";
+entitlementEndDate = "";
+Partner = partner2_t;
+endCustomerERPName = _transaction_customer_t_company_name;
+BillTo = eRPAccountNumberPurchaseCustomer_t;
+EndCust = customerERPId_t;
+renewalQtr = "";
+partyID1 = "";
+entitlementExpirationDt = "";
+effDate = contractStartDate_t;
+quoteNumber = transactionID_t;
+dealType = "cADRenewal";
+totalEAR = 0.0;
+Transaction_ID = bs_id;
+username1 = "";
+password1 = "";
+fileLocation = "";
+soapendpoint ="";
+usernameFlagUpdate ="";
+passwordFlagUpdate = "";
+fileLocationFlagUpdate = "";
+soapendpointFlagUpdate = "";
+Party_ID = "";
+opportunityID = "";
+opportunityNumber = "";
+Paymentterm = "";
+classification = "";
+parentId="";
+globalParentName = "";
+globalParentId = "";
+Program_ID = "";
+instOwnerName = "";
+shipToCoutry = "";
+operatingUnit = "";
+batchNumber = "";
+result_sb = stringbuilder();
+licenseeNum = "";
+
+
+if(isnull(opportunityID_t) or trim(opportunityID_t) == "")
+{
+//claculation for total EAR
+for line in transactionLine
+{
+ if(line.expiringAnnualRenewal_l > 0.0 and line.renewalCreatedBy_l == "Integration User")
+  {
+  
+  totalEAR = totalEAR + round(line.expiringAnnualRenewal_l,2);
+  
+  }
+}
+totalEARStr = formatascurrency(totalEAR,currency_t);
+
+entitlementExpirationDt = datetostr(minusdays(strtojavadate(effDate,"MM/dd/yyyy HH:mm:ss"),1),"yyyy-MM-dd");
+effDate = datetostr(strtojavadate(effDate,"MM/dd/yyyy HH:mm:ss"),"yyyy-MM-dd");
+
+//fetching Renewal Quater for the given enetitlement expiration date
+quarterResults = bmql("select QTR_NAME from RENEWAL_QTR_DATA where CALENDAR_DATE = $entitlementExpirationDt");
+ for quarter in quarterResults
+ {
+ renewalQtr = get(quarter,"QTR_NAME");
+ }
+ 
+dealType = "cADRenewal"; 
+
+
+
+
+transactionResult = bmql("select Transaction_ID,Quote_Number,Batch_Date,User,SOURCE,INST_OWNER_CUST_NUM,SHIP_TO_COUNTRY,OPERATING_UNIT,Batch_Number,LICENSEE_ACNT_NUM from RENEWAL_ADHOC_OPTY where Transaction_ID = $Transaction_ID");
+print transactionResult;
+print Transaction_ID;
+for transResult in transactionResult
+{
+transactionId = get(transResult,"Transaction_ID");
+quoteNumber = get(transResult,"Quote_Number");
+Program_ID = get(transResult,"User");
+source = get(transResult,"SOURCE");
+instOwnerName = get(transResult,"INST_OWNER_CUST_NUM");
+shipToCoutry = get(transResult,"SHIP_TO_COUNTRY");
+operatingUnit = get(transResult,"OPERATING_UNIT");
+batchNumber = get(transResult,"Batch_Number");
+licenseeNum = get(transResult,"LICENSEE_ACNT_NUM");
+
+quoteName = endCustomerERPName + " / " + source + " / " + renewalQtr  + " / " + totalEARStr;
+
+if(dealType=="cADStandard" or dealType=="cADEducation" or dealType=="cADProfessionalServices" or dealType=="cADRenewal")
+{
+ dealType="CA";
+}
+elif(dealType=="bSN" or dealType=="bSNRenewal")
+{
+ dealType="BSN";
+}
+elif(dealType=="classicBroadcomOnly")
+{
+ dealType="Broadcom";
+}
+else
+{
+ dealType="";
+}
+
+Credentials="";
+url="";
+
+//Rest API URL for creating a new opportunity
+print EndCust;
+print quoteNumber;
+print dealType;
+if(EndCust<>"" and quoteNumber<>"" and dealType<>"")
+{
+ results=bmql("select Username,Password,SoapEndpoint from INT_SYSTEM_DETAILS where System='Create_Opportunity'");
+ for res in results
+ {
+ Credentials_sb=stringbuilder();
+ Credentials_sb = sbappend(Credentials_sb, get(res,"Username"), ":", get(res,"Password"));
+ Credentials=sbtostring(Credentials_sb);
+ url=get(res,"SoapEndpoint");
+ 
+ 
+ }
+ GETURL_sb=stringbuilder();
+ GETURL_sb=sbappend(GETURL_sb,url,"crmRestApi/resources/11.13.18.02/accounts?q=OrganizationDEO_BRCM_ERPAccount_c='",EndCust,"'");
+ GETURL=sbtostring(GETURL_sb);
+ 
+ url_CreateOpportunity_sb=stringbuilder();
+ url_CreateOpportunity_sb=sbappend(url_CreateOpportunity_sb,url,"crmRestApi/resources/11.13.17.11/opportunities");
+ url_CreateOpportunity=sbtostring(url_CreateOpportunity_sb);
+ 
+ 
+//Rest API http method
+ http_Method="POST";
+
+//Rest API Header details
+ headersDict = dict("string"); 
+
+ put(headersDict,"Content-Type","application/json");
+
+ encodecredential=encodebase64(Credentials);
+ authstring="Basic " + encodecredential;
+
+
+ put(headersDict,"Authorization",authstring);
+ response=Dict("string");
+ response1 =Dict("string");
+ response = urldata(GETURL,"GET",headersDict, "");
+ rescheck = 0;
+ if(EndCust<>BillTo AND BillTo<>""){
+ print "Before Replace";
+ print GETURL;
+ GETURL = replace(GETURL, EndCust, BillTo);
+ print "After Replace";
+ print GETURL;
+ response1 = urldata(GETURL,"GET",headersDict, "");
+ rescheck=1;
+ }
+ 
+ if(isnull(response)<>true)
+ {
+ str= get(response,"Message-Body");
+ if(trim(str) <> "" AND NOT isnull(str))
+ {
+ jsonObj1=json(str);
+ 
+ Party_ID_array=jsonpathgetmultiple(jsonObj1,"$..PartyId");
+ RenewalOwnerArray=jsonpathgetmultiple(jsonObj1,"$..OrganizationDEO_BRCM_RenewalOwnerId_c");
+ Payment_termarray=jsonpathgetmultiple(jsonObj1,"$..OrganizationDEO_BRCM_PaymentTerms_c");
+ classification_array=jsonpathgetmultiple(jsonObj1,"$..OrganizationDEO_BRCM_Classification_c");
+ 
+ parentId_array=jsonpathgetmultiple(jsonObj1,"$..ParentAccountPartyId"); //endCustomerParentId_avg
+ globalParentName_array=jsonpathgetmultiple(jsonObj1,"$..OrganizationDEO_BRCM_GlobalParentName_c"); //endCustomerGlobalParentName_t
+ globalParentId_array=jsonpathgetmultiple(jsonObj1,"$..OrganizationDEO_BRCM_GlobalParentId_c"); //endCustomerGrandParentId_avg
+ 
+ 
+ 
+ if(jsonarraysize(Party_ID_array)>0)
+ {
+ 
+  Party_ID=jsonarrayget(Party_ID_array,0);
+  Paymentterm=jsonarrayget(Payment_termarray,0);
+  classification=jsonarrayget(classification_array,0);
+  if(isnull(Paymentterm) or trim(Paymentterm) == "")
+  {
+  Paymentterm = "NET 30 DAYS";
+  }
+  
+  parentId=jsonarrayget(parentId_array,0);
+  globalParentName=jsonarrayget(globalParentName_array,0);
+  globalParentId=jsonarrayget(globalParentId_array,0);
+  RenewalOwnerID=jsonarrayget(RenewalOwnerArray,0);
+  
+  if(RenewalOwnerID == "" or isnull(RenewalOwnerID))
+  {
+  
+  resultIntegrationUser = bmql("select PartyResourceId from BRCM_Users where Users = 'Integration'");
+  for resultUser in resultIntegrationUser
+   {
+   
+    RenewalOwnerID = get(resultUser,"PartyResourceId");
+    
+   }
+  }
+  print "RenewalOwnerID" + RenewalOwnerID;
+ jsonBodyString="";
+//Rest API body details
+ id=quoteNumber;
+ jsonBodyString_sb=stringbuilder();
+ //SYMINT-3751 added OwnerResourcePartyId to the json body
+ //Added for CA renewal as OwnerId is not being passed.
+ if(RenewalOwnerID<>"" and not isnull(RenewalOwnerID))
+ {
+ jsonBodyString_sb=sbappend(jsonBodyString_sb,"{\"Name\":\"Opportunity for " , quoteNumber+" / "+quoteName ,"\",\"TargetPartyId\":\"" , Party_ID  ,"\",\"BRCM_OpportunityType_New_c\":\""+dealType+"\",\"CurrencyCode\":\""+CurrencyCode+"\",\"EffectiveDate\":\""+effDate+"\",\"OwnerResourcePartyId\":",RenewalOwnerID,"}"); 
+  }
+ else
+ {
+ jsonBodyString_sb=sbappend(jsonBodyString_sb,"{\"Name\":\"Opportunity for " ,  quoteNumber+" / "+quoteName,"\",\"TargetPartyId\":\"" , Party_ID  ,"\",\"BRCM_OpportunityType_New_c\":\""+dealType+"\",\"CurrencyCode\":\""+CurrencyCode+"\",\"EffectiveDate\":\""+effDate+"\"}");
+ }
+ 
+ jsonBodyString=sbtostring(jsonBodyString_sb);
+ 
+//Function to post Rest API
+ response_CreateOpportunity=Dict("string");
+ response_CreateOpportunity = urldata(url_CreateOpportunity,http_Method,headersDict,jsonBodyString);
+ print "Request ";
+ print jsonBodyString;
+ print "Response";
+ print response_CreateOpportunity;
+ jsonResponse=get(response_CreateOpportunity,"Message-Body");
+ 
+  
+  
+//Fetch required details opportunityID/opportunityNumber from response post creating opportunity
+  if(isnull(jsonResponse)<>true)
+  {
+  jsonObj = json(jsonResponse);
+  
+  opportunityID = jsonget(jsonObj,"OptyId");
+  opportunityNumber = jsonget(jsonObj,"OptyNumber");
+  
+  
+  //Fetching the partner details(PartyId)
+  getPartnerPayload = dict("string");
+  defaultErrorMessage="";
+  results=bmql("select Username,Password,SoapEndpoint,File_Location from INT_SYSTEM_DETAILS where System='Renewal_Get_PartnerID'");
+  for res in results
+  {
+   username1 = get(res,"Username");
+   password1 = get(res,"Password");
+   fileLocation = get(res,"File_Location");
+   soapendpoint = get(res, "SoapEndpoint");
+  }
+  userpasscode=username1+":"+password1;
+  
+  put(getPartnerPayload,"partner", Partner);
+  getPartnerPayloadrequest=applytemplate(fileLocation,getPartnerPayload,defaultErrorMessage);
+  getPartnerPayloadrequest = replace(getPartnerPayloadrequest,"&lt;","<");
+  getPartnerPayloadrequest= replace(getPartnerPayloadrequest,"&gt;",">");
+  
+  headersDictpartner = dict("string"); 
+  str1=encodebase64(userpasscode);
+  auth="Basic" + " " + str1;
+  put(headersDictpartner,"Content-Type","text/xml;charset=UTF-8"); 
+  put(headersDictpartner,"Authorization",auth);
+  partnerresponse="";
+  //Trigger the web service to get Partner ID
+  
+  partnerresponse = urldatabypost(soapendpoint,getPartnerPayloadrequest, "error",headersDictpartner);
+  
+  
+  if(find(partnerresponse,"<ns1:PartyId>") > 0)
+  {
+  partnerStartPosition = find(partnerresponse, "<ns1:PartyId>");
+  partnerEndPosition = find(partnerresponse, "</ns1:PartyId>");
+  partnerId = substring(partnerresponse, partnerStartPosition+len("<ns1:PartyId>"), partnerEndPosition);
+   
+   
+   
+   if(len(partnerId)>0)
+   {
+   //partnerId=jsonarrayget(partnerId_array,0);
+    print partnerId;
+   partnerOpp_sb = stringbuilder();
+   partnerOpp_sb = sbappend(partnerOpp_sb,"{\"PartOrgPartyId\":",partnerId,",\"BRCRM_PARTNER_ROLE_V2_c\":\"Reseller\"}");
+   partnerOpp = sbtostring(partnerOpp_sb);
+   partnerUrl = url + "crmRestApi/resources/11.13.18.05/opportunities/"+opportunityNumber+"/child/RevenuePartnerPrimary"; 
+   partneradd = urldata(partnerUrl,"POST",headersDict,partnerOpp);
+   print get(partneradd,"Status-Code");
+   }
+  }
+  
+  //added Null Check
+  if(isnull(response1)<>true and rescheck==1)
+  {
+  str1= get(response1,"Message-Body");
+  if(Trim(str1) <> "" AND NOT isnull(str1))
+  {
+  jsonObj2=json(str1);
+  billto_Id_array=jsonpathgetmultiple(jsonObj2,"$..PartyId");
+  
+  if(jsonarraysize(billto_Id_array)>0)
+   {
+   billto_Id=jsonarrayget(billto_Id_array,0);
+   jsonBodyString_sb1=stringbuilder();
+   jsonBodyString_sb1=sbappend(jsonBodyString_sb1,"{\"BRCM_EndCustomerName_Id_c\":",billto_Id,"}");
+   response_Opportunity=Dict("string");
+   jsonBodyString1=sbtostring(jsonBodyString_sb1);
+   
+   urlsb=stringbuilder();
+   urlsb=sbappend(urlsb,url_CreateOpportunity,"/",opportunityNumber);
+   url_CreateOpportunity=sbtostring(urlsb);
+   response_Opportunity = urldata(url_CreateOpportunity,"PATCH",headersDict,jsonBodyString1);
+   }
+   }
+  }
+  
+  CurrencyCode=jsonget(jsonObj,"CurrencyCode");
+  
+  
+    
+   }
+ }
+ }
+}
+
+}
+
+//Web service trigger to update Renewal Job table
+
+   renewalJobUpdatePayload = dict("string");
+   renewaljobUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_JOB_UPDATE'");
+   for each in renewaljobUpdate
+   {
+    usernameFlagUpdate = get(each,"Username");
+    passwordFlagUpdate = get(each,"Password");
+    fileLocationFlagUpdate = get(each,"File_Location");
+    soapendpointFlagUpdate = get(each,"SoapEndpoint");
+   }
+   put(renewalJobUpdatePayload,"USERNAME", usernameFlagUpdate);
+   put(renewalJobUpdatePayload,"PASSWORD", passwordFlagUpdate);
+   currentsystemDate = datetostr(getdate());
+   recordUpdateString = "";
+   recordUpdateString = recordUpdateString +"<bm:each_record>";
+   recordUpdateString = recordUpdateString +"<bm:Quote_Number>"+quoteNumber+"</bm:Quote_Number>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Date>"+currentsystemDate+"</bm:Batch_Date>";
+   recordUpdateString = recordUpdateString +"<bm:User>"+Program_ID+"</bm:User>";
+   recordUpdateString = recordUpdateString +"<bm:Transaction_ID>"+transactionId+"</bm:Transaction_ID>";
+   recordUpdateString = recordUpdateString +"<bm:SOURCE>"+source+"</bm:SOURCE>";
+   recordUpdateString = recordUpdateString +"<bm:LICENSEE_ACNT_NUM>"+licenseeNum+"</bm:LICENSEE_ACNT_NUM>";
+   recordUpdateString = recordUpdateString +"<bm:INST_OWNER_CUST_NUM>"+instOwnerName+"</bm:INST_OWNER_CUST_NUM>";
+   recordUpdateString = recordUpdateString +"<bm:SHIP_TO_COUNTRY>"+shipToCoutry+"</bm:SHIP_TO_COUNTRY>";
+   recordUpdateString = recordUpdateString +"<bm:OPERATING_UNIT>"+operatingUnit+"</bm:OPERATING_UNIT>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Number>"+batchNumber+"</bm:Batch_Number>";
+   recordUpdateString = recordUpdateString +"<bm:OPTY_ID>"+opportunityID+"</bm:OPTY_ID>";
+   recordUpdateString = recordUpdateString +"<bm:ACCOUNT_TYPE>"+classification+"</bm:ACCOUNT_TYPE>";
+   recordUpdateString = recordUpdateString +"</bm:each_record>";
+   put(renewalJobUpdatePayload,"forLoop", recordUpdateString);
+   
+   defaultErrorMessage="";
+   quoteRequestRenewalJobUpdate=applytemplate(fileLocationFlagUpdate,renewalJobUpdatePayload,defaultErrorMessage);
+   quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&lt;","<");
+   quoteRequestRenewalJobUpdate= replace(quoteRequestRenewalJobUpdate,"&gt;",">");
+   quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&quot;","\"");
+    
+   
+   headerDict = dict("string");
+   //Trigger the web service to update BRCM_Renewal_Job table
+   res = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalJobUpdate, "",headerDict,true);
+   
+   //Web service trigger to update Renewal Job table
+
+   renewalJobUpdatePayload = dict("string");
+   renewaljobUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_ADHOC_TABLE_UPDATE'");
+   for each in renewaljobUpdate
+   {
+    usernameFlagUpdate = get(each,"Username");
+    passwordFlagUpdate = get(each,"Password");
+    fileLocationFlagUpdate = get(each,"File_Location");
+    soapendpointFlagUpdate = get(each,"SoapEndpoint");
+   }
+   put(renewalJobUpdatePayload,"USERNAME", usernameFlagUpdate);
+   put(renewalJobUpdatePayload,"PASSWORD", passwordFlagUpdate);
+   currentsystemDate = datetostr(getdate());
+   recordUpdateString = "";
+   recordUpdateString = recordUpdateString +"<bm:each_record>";
+   recordUpdateString = recordUpdateString +"<bm:Quote_Number>"+quoteNumber+"</bm:Quote_Number>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Date>"+currentsystemDate+"</bm:Batch_Date>";
+   recordUpdateString = recordUpdateString +"<bm:User>"+Program_ID+"</bm:User>";
+   recordUpdateString = recordUpdateString +"<bm:Transaction_ID>"+transactionId+"</bm:Transaction_ID>";
+   recordUpdateString = recordUpdateString +"<bm:SOURCE>"+source+"</bm:SOURCE>";
+   recordUpdateString = recordUpdateString +"<bm:LICENSEE_ACNT_NUM>"+licenseeNum+"</bm:LICENSEE_ACNT_NUM>";
+   recordUpdateString = recordUpdateString +"<bm:INST_OWNER_CUST_NUM>"+instOwnerName+"</bm:INST_OWNER_CUST_NUM>";
+   recordUpdateString = recordUpdateString +"<bm:SHIP_TO_COUNTRY>"+shipToCoutry+"</bm:SHIP_TO_COUNTRY>";
+   recordUpdateString = recordUpdateString +"<bm:OPERATING_UNIT>"+operatingUnit+"</bm:OPERATING_UNIT>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Number>"+batchNumber+"</bm:Batch_Number>";
+   recordUpdateString = recordUpdateString +"<bm:OPTY_ID>"+opportunityID+"</bm:OPTY_ID>";
+   recordUpdateString = recordUpdateString +"<bm:ACCOUNT_TYPE>"+classification+"</bm:ACCOUNT_TYPE>";
+   recordUpdateString = recordUpdateString +"<bm:PROCESSED>Opportunity Created and Synced</bm:PROCESSED>";
+   recordUpdateString = recordUpdateString +"</bm:each_record>";
+   put(renewalJobUpdatePayload,"forLoop", recordUpdateString);
+   
+   defaultErrorMessage="";
+   quoteRequestRenewalJobUpdate=applytemplate(fileLocationFlagUpdate,renewalJobUpdatePayload,defaultErrorMessage);
+   quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&lt;","<");
+   quoteRequestRenewalJobUpdate= replace(quoteRequestRenewalJobUpdate,"&gt;",">");
+   quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&quot;","\"");
+    
+   
+   headerDict = dict("string");
+   //Trigger the web service to update BRCM_Renewal_Job table
+   res = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalJobUpdate, "",headerDict,true);
+   
+}
+
+result_sb=stringbuilder();
+result_sb=sbappend(result_sb, "1","~_customer_id~",Party_ID,"|");
+result_sb=sbappend(result_sb, "1","~opportunityID_t~",opportunityID,"|");
+result_sb=sbappend(result_sb, "1","~opportunityNumber_t~",opportunityNumber,"|");
+result_sb=sbappend(result_sb, "1","~currency_t~",CurrencyCode,"|");
+result_sb=sbappend(result_sb, "1","~paymentTerms_t~",Paymentterm,"|");
+result_sb=sbappend(result_sb, "1","~core_t~",classification,"|");
+result_sb=sbappend(result_sb, "1","~endCustomerParentId_avg~",parentId,"|");
+result_sb=sbappend(result_sb, "1","~endCustomerGlobalParentName_t~",globalParentName,"|");
+result_sb=sbappend(result_sb, "1","~endCustomerGrandParentId_avg~",globalParentId,"|");
+}
+else
+{
+ transactionResult = bmql("select Transaction_ID,Quote_Number,Batch_Date,User,SOURCE,INST_OWNER_CUST_NUM,SHIP_TO_COUNTRY,OPERATING_UNIT,Batch_Number,LICENSEE_ACNT_NUM,ACCOUNT_TYPE from RENEWAL_ADHOC_OPTY where Transaction_ID = $Transaction_ID");
+ print transactionResult;
+ print Transaction_ID;
+  for transResult in transactionResult
+  {
+  transactionId = get(transResult,"Transaction_ID");
+  quoteNumber = get(transResult,"Quote_Number");
+  Program_ID = get(transResult,"User");
+  source = get(transResult,"SOURCE");
+  instOwnerName = get(transResult,"INST_OWNER_CUST_NUM");
+  shipToCoutry = get(transResult,"SHIP_TO_COUNTRY");
+  operatingUnit = get(transResult,"OPERATING_UNIT");
+  batchNumber = get(transResult,"Batch_Number");
+  licenseeNum = get(transResult,"LICENSEE_ACNT_NUM");
+  classification = get(transResult,"ACCOUNT_TYPE");
+  }
+  
+  //Web service trigger to update Renewal Job table
+
+   renewalJobUpdatePayload = dict("string");
+   renewaljobUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_JOB_UPDATE'");
+   for each in renewaljobUpdate
+   {
+    usernameFlagUpdate = get(each,"Username");
+    passwordFlagUpdate = get(each,"Password");
+    fileLocationFlagUpdate = get(each,"File_Location");
+    soapendpointFlagUpdate = get(each,"SoapEndpoint");
+   }
+   put(renewalJobUpdatePayload,"USERNAME", usernameFlagUpdate);
+   put(renewalJobUpdatePayload,"PASSWORD", passwordFlagUpdate);
+   currentsystemDate = datetostr(getdate());
+   recordUpdateString = "";
+   recordUpdateString = recordUpdateString +"<bm:each_record>";
+   recordUpdateString = recordUpdateString +"<bm:Quote_Number>"+quoteNumber+"</bm:Quote_Number>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Date>"+currentsystemDate+"</bm:Batch_Date>";
+   recordUpdateString = recordUpdateString +"<bm:User>"+Program_ID+"</bm:User>";
+   recordUpdateString = recordUpdateString +"<bm:Transaction_ID>"+transactionId+"</bm:Transaction_ID>";
+   recordUpdateString = recordUpdateString +"<bm:SOURCE>"+source+"</bm:SOURCE>";
+   recordUpdateString = recordUpdateString +"<bm:LICENSEE_ACNT_NUM>"+licenseeNum+"</bm:LICENSEE_ACNT_NUM>";
+   recordUpdateString = recordUpdateString +"<bm:INST_OWNER_CUST_NUM>"+instOwnerName+"</bm:INST_OWNER_CUST_NUM>";
+   recordUpdateString = recordUpdateString +"<bm:SHIP_TO_COUNTRY>"+shipToCoutry+"</bm:SHIP_TO_COUNTRY>";
+   recordUpdateString = recordUpdateString +"<bm:OPERATING_UNIT>"+operatingUnit+"</bm:OPERATING_UNIT>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Number>"+batchNumber+"</bm:Batch_Number>";
+   recordUpdateString = recordUpdateString +"<bm:OPTY_ID>"+opportunityID_t+"</bm:OPTY_ID>";
+   recordUpdateString = recordUpdateString +"<bm:ACCOUNT_TYPE>"+classification+"</bm:ACCOUNT_TYPE>";
+   recordUpdateString = recordUpdateString +"</bm:each_record>";
+   put(renewalJobUpdatePayload,"forLoop", recordUpdateString);
+   
+   defaultErrorMessage="";
+   quoteRequestRenewalJobUpdate=applytemplate(fileLocationFlagUpdate,renewalJobUpdatePayload,defaultErrorMessage);
+   quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&lt;","<");
+   quoteRequestRenewalJobUpdate= replace(quoteRequestRenewalJobUpdate,"&gt;",">");
+   quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&quot;","\"");
+    
+   
+   headerDict = dict("string");
+   //Trigger the web service to update BRCM_Renewal_Job table
+   res = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalJobUpdate, "",headerDict,true);
+   
+   //Web service trigger to update Renewal Job table
+
+   renewalJobUpdatePayload = dict("string");
+   renewaljobUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_ADHOC_TABLE_UPDATE'");
+   for each in renewaljobUpdate
+   {
+    usernameFlagUpdate = get(each,"Username");
+    passwordFlagUpdate = get(each,"Password");
+    fileLocationFlagUpdate = get(each,"File_Location");
+    soapendpointFlagUpdate = get(each,"SoapEndpoint");
+   }
+   put(renewalJobUpdatePayload,"USERNAME", usernameFlagUpdate);
+   put(renewalJobUpdatePayload,"PASSWORD", passwordFlagUpdate);
+   currentsystemDate = datetostr(getdate());
+   recordUpdateString = "";
+   recordUpdateString = recordUpdateString +"<bm:each_record>";
+   recordUpdateString = recordUpdateString +"<bm:Quote_Number>"+quoteNumber+"</bm:Quote_Number>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Date>"+currentsystemDate+"</bm:Batch_Date>";
+   recordUpdateString = recordUpdateString +"<bm:User>"+Program_ID+"</bm:User>";
+   recordUpdateString = recordUpdateString +"<bm:Transaction_ID>"+transactionId+"</bm:Transaction_ID>";
+   recordUpdateString = recordUpdateString +"<bm:SOURCE>"+source+"</bm:SOURCE>";
+   recordUpdateString = recordUpdateString +"<bm:LICENSEE_ACNT_NUM>"+licenseeNum+"</bm:LICENSEE_ACNT_NUM>";
+   recordUpdateString = recordUpdateString +"<bm:INST_OWNER_CUST_NUM>"+instOwnerName+"</bm:INST_OWNER_CUST_NUM>";
+   recordUpdateString = recordUpdateString +"<bm:SHIP_TO_COUNTRY>"+shipToCoutry+"</bm:SHIP_TO_COUNTRY>";
+   recordUpdateString = recordUpdateString +"<bm:OPERATING_UNIT>"+operatingUnit+"</bm:OPERATING_UNIT>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Number>"+batchNumber+"</bm:Batch_Number>";
+   recordUpdateString = recordUpdateString +"<bm:OPTY_ID>"+opportunityID_t+"</bm:OPTY_ID>";
+   recordUpdateString = recordUpdateString +"<bm:ACCOUNT_TYPE>"+classification+"</bm:ACCOUNT_TYPE>";
+   recordUpdateString = recordUpdateString +"<bm:PROCESSED>Opportunity is already Existing</bm:PROCESSED>";
+   recordUpdateString = recordUpdateString +"</bm:each_record>";
+   put(renewalJobUpdatePayload,"forLoop", recordUpdateString);
+   
+   defaultErrorMessage="";
+   quoteRequestRenewalJobUpdate=applytemplate(fileLocationFlagUpdate,renewalJobUpdatePayload,defaultErrorMessage);
+   quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&lt;","<");
+   quoteRequestRenewalJobUpdate= replace(quoteRequestRenewalJobUpdate,"&gt;",">");
+   quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&quot;","\"");
+    
+   
+   headerDict = dict("string");
+   //Trigger the web service to update BRCM_Renewal_Job table
+   res = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalJobUpdate, "",headerDict,true);
+}
+
+return sbtostring(result_sb);

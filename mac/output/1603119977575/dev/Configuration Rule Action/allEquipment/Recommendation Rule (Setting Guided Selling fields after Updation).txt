@@ -1,0 +1,6 @@
+/********************************************************************
+Jira Number : VIPER-803
+Description : Clearing the text area field after updation
+Author  : Adithya Suresh
+********************************************************************/
+return "";

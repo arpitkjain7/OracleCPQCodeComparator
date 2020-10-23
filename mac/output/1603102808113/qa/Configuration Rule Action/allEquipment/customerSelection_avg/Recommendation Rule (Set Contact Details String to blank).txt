@@ -1,0 +1,7 @@
+/*****************************************************************
+Function Name : Set Contact Details String to blank
+Name :Satyabrata Acharya
+Description : This Rule to Force set contact detail string
+*****************************************************************/ 
+
+return "";

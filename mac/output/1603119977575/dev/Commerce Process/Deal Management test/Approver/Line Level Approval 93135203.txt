@@ -1,0 +1,27 @@
+/******************************************************************************` 
+Author : Kavita Lolla
+User Story Summary : Dynamically assign approver
+Date : 24/01/2019
+******************************************************************************/
+ret = "";
+userID = "";
+sb = stringbuilder();
+for line in transactionLine{
+if(line._part_number <> ""){
+if(line.approver_l <> ""){
+approvers = split(line.approver_l,",");
+for str in approvers{
+if(NOT isnull(str) and str <> ""){
+sbappend(sb , "1~", str ,"~" , _system_company_name , "|");
+
+}
+}
+}
+}
+}
+ret = sbtostring(sb);
+if(endswith(ret,"|")){
+ret = substring(ret,0,len(ret)-1);
+}
+
+return ret;

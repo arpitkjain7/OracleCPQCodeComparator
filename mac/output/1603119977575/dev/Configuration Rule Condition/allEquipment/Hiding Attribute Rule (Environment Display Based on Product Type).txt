@@ -1,0 +1,20 @@
+/*****************************************************************
+Function Name : Environment Display Based on Product Type
+Name : Nandhini Vurimella
+Description : For Hiding Environment display based on Product Type
+*****************************************************************/
+if(partAttributeExtFetched_avg <> "") 
+{
+ partJson=json(partAttributeExtFetched_avg);
+ productType = jsonget(partJson,"Product Type");
+ environmentAllowed = trim(upper(jsonget(partJson,"Environment Allowed")));
+ if(environmentAllowed <> "N" and environmentAllowed <> "Y" and environmentAllowed <> "")
+ {
+  return false;
+ }
+ else
+ {
+  return true;
+ }
+}
+return false;

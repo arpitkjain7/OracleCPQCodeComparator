@@ -1,0 +1,38 @@
+/********************************************************************
+Function Name: Validate Contract Dates
+Description: This validation rule checks that whether the contract start date and contract end date for quote header and line item are valid
+Date: March 1 2019
+User Story: UID-26 
+Author: Raghav 
+/********************************************************************/
+dateFormat = "MM/dd/yyyy HH:mm:ss";
+/*if(contractStartDate_t <> "" and contractEndDate_t <> "")
+{
+ contractStartDateStr = substring(contractStartDate_t,0,10);
+ contractStartDateStr = contractStartDateStr+" 12:00:00";
+ contractEndDateStr = substring(contractEndDate_t,0,10);
+ contractEndDateStr = contractEndDateStr +" 12:00:00";
+ contractStartDateObj = strtodate(contractStartDateStr,dateFormat);
+ contractEndDateObj = strtodate(contractEndDateStr ,dateFormat);
+ if(comparedates(contractEndDateObj,contractStartDateObj) == -1)
+ {
+  return true;
+ } 
+}
+for line in TransactionLine
+{
+ if(line.contractStartDate_l <> "" and line.contractEndDate_l <> "")
+ {
+  lineContractStartDateStr = substring(line.contractStartDate_l,0,10);
+  lineContractStartDateStr = lineContractStartDateStr + " 12:00:00";
+  linecontractEndDateStr = substring(line.contractEndDate_l,0,10);
+  linecontractEndDateStr = linecontractEndDateStr +" 12:00:00";
+  linecontractStartDateObj = strtodate(lineContractStartDateStr,dateFormat);
+  linecontractEndDateObj = strtodate(linecontractEndDateStr,dateFormat);
+  if(comparedates(linecontractEndDateObj,linecontractStartDateObj) == -1)
+  {
+   return true;
+  }
+ }
+}*/
+return validateContractDates_t;

@@ -1,0 +1,275 @@
+//Utility Function: abo_apply
+//Input: baseBomIn(data Type : json), arrBomtoApply(data type: jsonarray)
+//output: resultBom (2 level hierarchy BOM)
+//
+//Purpose: 
+//    This utility has the ABO core apply logic, given a list of BOM configuration of same product instance, 
+//      it applies them on top of each other in the specified order and calculates the projected configuration BOM.
+//  Logic: Iterate through the list of arrBomtoApply, read action code and apply same on baseBom
+//  Assumption: All input/outputs are in flattened bom structure: a 2 level hiearchy where
+//        child/grandchildren are flatten into a single child level.
+//  Within this apply logic we will try to reuse node from the existing basebom and applyboms, 
+//      so input content will likely change since it is call by reference.
+
+//Constants declaration.
+//domain value for action Code field
+ADD = "ADD";   
+UPDATE = "UPDATE";
+DELETE = "DELETE";
+NO_OP = "NO_UPDATE";
+TERMINATE = "TERMINATE";
+//constants of frequently used attribute/field names in below code
+ATTRIBUTES = "attributes";
+ORIGINAL =  "Original";
+ACTION =  "oRCL_ABO_ActionCode_l";
+XAACTION = "actionCode";
+TRANSACTIONDATE ="requestDate_l";
+
+abocontext = util.abo_getContext();
+bDiagnosisOff=jsonget(abocontext, "AboDiagnosticDisabled", "boolean", true);
+
+callContext="apply";
+//Now starting the logic
+//step1  initialize baseBom info
+baseBom =  baseBomIn;
+if(not bDiagnosisOff){//logging the input only when diagnostic mode enabled
+   dummy=util.abo_addDiagnosticInfo(callContext+"_input_baseBom", baseBom,"addToSummary");
+   dummyjson=json(); jsonput(dummyjson, "BomArr", arrBomtoApply);
+   dummy=util.abo_addDiagnosticInfo(callContext+"_input_toApplyBomArr", dummyjson,"addToSummary");
+}
+if(isnull(arrBomtoApply) OR jsonarraysize(arrBomtoApply)==0){
+  if(not bDiagnosisOff){
+      dummy=util.abo_addDiagnosticInfo(callContext+"_returnBom", baseBom,"addToSummary");
+   }
+    return baseBom;//Note PacBom will be same as baseBom
+}
+ 
+if(util.abo_isjsonnull(basebom, "id"))//Id must key for Asset node
+{
+   //we will use first open order as base bom when there is no base bom(follow-on order case)
+   baseBom= jsonarrayget(arrBomToApply, 0, "json");
+   jsonarrayremove(arrBomToApply, 0);
+   rootActn =  jsonpathgetsingle(baseBom, "$.fields."+ ACTION);
+   if(rootActn <> ADD){
+      msg ="Failed to apply open order, can not find original create line, likely the original create line has been deleted after followon order line creation.";
+      if(not bDiagnosisOff) {
+          msg=msg+"==== Error during using 1st open order line as basebom as asset doesn't exist, first open order="+jsontostr(baseBom);    
+          dummy=util.abo_addDiagnosticInfo(callContext+":"+msg, baseBom,"");
+      }
+      throwError(msg);
+   }
+   //remove actionCode from baseBom
+   jsonpathremove(baseBom, "$.fields."+ ACTION);
+   jsonpathremove(baseBom, "$.children[*].fields."+ ACTION);   
+   
+}
+
+rootId=jsonget(baseBom, "id", "string");
+ 
+//Step 2 iterate through arrBomtoApply and apply changes to baseBom one by one
+sizeofArrBomtoApply =  jsonarraysize(arrBomtoApply) ;
+dummyArrBomtoApply=  string[sizeofArrBomtoApply];
+indexOfArrBomToApply =  0;
+for dummyBomIter in dummyArrBomtoApply{
+   oneBomtoApply =  jsonarrayget(arrBomtoApply, indexOfArrBomToApply, "json");
+   functionContext= callContext+":bomarr["+string(indexOfArrBomToApply)+"]";
+   indexOfArrBomToApply =  indexOfArrBomToApply+1;
+   if(not bDiagnosisOff){ dummy=util.abo_addDiagnosticInfo(functionContext+" being processed", oneBomtoApply,"");}
+   
+   //Step2.1  Basic check of root BOM status
+   //check whether rootId matches first, if not throw error
+   rootIdfromOneBomtoApply = jsonget(oneBomtoApply, "id", "string","");
+   if(rootIdfromOneBomtoApply<>rootId){      
+       msg=functionContext+":Error:the toAplyBom has different root id("+rootIdfromOneBomtoApply+") from basebom("+rootId+")";
+       dummy=util.abo_addDiagnosticInfo(msg, oneBomtoApply ,"");
+       throwError(msg,bDiagnosisOff);    
+   }
+   actionCodefromRoot = jsonpathgetsingle(oneBomtoApply, "$.fields."+ACTION, "string");
+   if(actionCodefromRoot == TERMINATE){ 
+       reqDate = jsonpathgetsingle(oneBomtoApply, "$.fields."+TRANSACTIONDATE, "string");
+       msg = "There is a pending terminate request for this product instance, you can not make change beyond "+reqDate+".";
+       if(not bDiagnosisOff){ 
+           msg=msg+"====="+functionContext+":Error:Root bom action=Terminate.";
+           dummy=util.abo_addDiagnosticInfo(msg, oneBomtoApply,"");
+        }       
+       throwError(msg);
+   }
+  // Step 2.2: Prepare mapId2Index. This maps Id to the index in baseBom's child array
+   baseBomChildArray =  jsonget(baseBom, "children", "jsonArray", jsonarray());  //reget childarray as it might have changed during last apply
+   sizeofBaseBomChdArr = jsonarraysize(baseBomChildArray);
+   baseBomTraverseArr =  string[sizeofBaseBomChdArr];
+
+   mapId2Index = json();
+   jsonput(mapId2Index, rootId,-1);
+   childIndex=0;   
+  
+   for item in baseBomTraverseArr{
+     if(childindex==sizeofBaseBomChdArr){
+        break;
+     }
+     BomItemContext=functionContext+".item["+string(childIndex)+"]";
+     oneBaseBomChd = jsonarrayget(baseBomChildArray, childIndex, "json");
+     childIndex =  childIndex+1;
+     if(util.abo_isjsonnull(oneBaseBomChd, "id")){
+        msg=BomItemContext+":Error:seting up initial map, id is empty.====="+ jsontostr(oneBaseBomChd);
+        dummy=util.abo_addDiagnosticInfo(msg, oneBaseBomChd,"");
+        throwError(msg,bDiagnosisOff);
+     }
+     id =  jsonget(oneBaseBomChd, "id", "string");
+     jsonput(mapId2Index, id, childIndex-1); 
+   }
+   //Step 2.3: Loop through BOM items inside toApplyBom and apply one by one.
+   oneBomtoApplyChildArr =  jsonget(oneBomtoApply, "children", "jsonArray", jsonarray());
+   sizeOfChildArr = jsonarraysize(oneBomtoApplyChildArr);
+   
+   //Note: Map is used instead of array for easy lookup. Key and value are the same." 
+   mapPendingtoAddparId = dict("string");//Add newly added node's Id here to later make sure parId exists.
+   mapIdToRemove = dict("string"); //remove the id from childList
+   dummyArrToTraveBomItem =  String[sizeofChildArr+1];  
+   indexOfOneBom =  -1;
+   
+   //loop thru and process self+children of oneBomtoApply
+   for bomIter in dummyArrToTraveBomItem{
+     //Step 2.3.1: Extract basic info from current BOM item
+     curBomItemToApply = json();
+     baseBomItem =json();
+     if(indexOfOneBom == -1 ){
+        curBomItemToApply=oneBomtoApply; 
+     }else{
+        curBomItemToApply=jsonarrayget(oneBomtoApplyChildArr,indexOfOneBom, "json");          
+     } 
+     BomItemContext=functionContext+".item["+string(indexOfOneBom)+"]";
+     indexOfOneBom = indexOfOneBom+1;  
+     
+     //extract parentId/Id
+      parentId =  jsonget(curBomItemToApply, "parentId", "string");
+      curNodeId =  jsonget(curBomItemToApply, "id", "string");
+     
+      //Read actionCode and apply change accordingly to resultBom
+      fields = jsonget(curBomItemToApply, "fields", "json", json());        
+      actionCode =  jsonget(fields, ACTION, "string", NO_OP);
+    
+     //Step 2.3.2: Handle delete case
+     if (actionCode == DELETE){
+          //all the nodes in mapIdtoRemove will be removed from baseBomChildArray together in the end.
+          jsonremove(mapId2Index, curNodeId);
+          put(mapIdToRemove,curNodeId, curNodeId);          
+          continue;
+     }      
+     
+     //Step 2.3.3: Common logic for non-delete cases
+     if(curNodeId<>rootId AND util.abo_isjsonnull(mapId2Index, curNodeId) AND actionCode <> ADD){
+        continue;  //if non-existing in base, we will ingore it.
+     }             
+
+     if(parentId<>"" AND parentId<>rootId AND util.abo_isjsonnull(mapId2Index, parentId)){
+         // put in a map to verify parent is present in final bom at end of processing.
+         put(mapPendingtoAddparId, parentId, parentId); 
+     }
+     
+     baseBomItem=json(); 
+     if(util.abo_isjsonnull( mapId2Index, curNodeId)<>true){      
+         if(curNodeId == rootId){ 
+            baseBomItem =  baseBom;
+         }else{
+           baseBomItemIndex =  jsonget(mapId2Index, curNodeId, "Integer");
+           baseBomItem = jsonarrayget(baseBomChildArray, baseBomItemIndex, "json");
+        }
+     }
+     baseBomId =  jsonget(baseBomItem, "id", "string", "");
+     baseBomparentId =  jsonget(baseBomItem, "parentId", "string", "");
+     
+
+     //We will carry over all fields by default from latest bom.
+     //This is used mostly for the update asset scenario, as the final BOM needs to have the latest pricing info.
+     //For apply during configurator launching, only very few fields get loaded to open order, and they usually have same value anyway.
+     //we will only cleanup the action code to avoid side effects
+     toApplyFields=jsonget(curBomitemToApply, "fields", "json", json());
+     jsonremove(toApplyFields, ACTION); 
+     
+     //Step 2.3.4: Handle add case   
+      if (actionCode == ADD){
+        if (indexOfOneBom == 0 ){ //root node. Note we already initialized baseBom. 
+           //baseBom either contains record from assetDB or first record from arrBomtoApply
+            msg = BomItemContext+":Error: Action=Add:"+"root item of toApplyBom has action=Add";
+            dummy=util.abo_addDiagnosticInfo(msg, curBomitemToApply,"");
+            throwError(msg , bDiagnosisOff);
+         } 
+         //Checks for multiple root BOMs
+         if (parentId == "" AND sizeofarray(jsonkeys(baseBom))<>0 ){//check to see if an additional root item exists
+            msg=BomItemContext+":Error: Action=Add: bomitem to apply has empty parent id and action=add";
+            dummy=util.abo_addDiagnosticInfo(msg, curBomitemToApply,"");            
+            throwError(msg, bDiagnosisOff);
+        }
+        if(baseBomId <> ""){      
+            msg=BomItemContext+":Error: Action=Add: the id is already present in base bom. Id="+baseBomId ;
+            dummy=util.abo_addDiagnosticInfo(msg, curBomitemToApply,"");     
+            throwError(msg , bDiagnosisOff);
+        }
+        if(util.abo_isjsonnull(curBomItemToApply, ATTRIBUTES)<>true){
+             //applyXA which will cleanup action code
+             baseBomItem  = util.abo_applyXA(curBomItemToApply, curBomItemToApply);            
+        }        
+
+         curBomItemToApply = jsonarrayappend(baseBomChildArray,curBomItemToApply);
+         jsonput(mapId2Index, curNodeId, jsonarraysize(baseBomChildArray));   
+         continue;           
+     } //end of add case
+     
+     //Step 2.3.5:Update & No-Update case
+     baseBomFieldJson =  jsonget(baseBomItem, "fields", "json", json());
+     baseFields=jsonput(baseBomItem,"fields", toApplyFields);
+     if(util.abo_isjsonnull(curBomItemToApply, ATTRIBUTES)<>true){
+         baseBomItem  = util.abo_applyXA(baseBomItem, curBomItemToApply);            
+     }
+     if (actionCode == NO_OP)
+     {
+        continue;
+     }
+        
+      //Step 2.3.6: This applies only to the Update case      
+      partNum =  jsonget(curBomItemToApply, "partNumber", "string");
+      jsonput(baseBomItem,"partNumber", partNum);
+      quantity =  jsonget(curBomItemToApply, "quantity", "string");
+      jsonput(baseBomItem,"quantity", quantity);        
+      //carry over the parentId change as well
+      jsonput(baseBomItem, "parentId", parentId);
+      
+    } //end of Step 2.3: loop through BOM items inside toApplyBom and apply one by one    
+    
+    //Step 2.4: Remove nodes to remove from baseBom by iterating from last to first
+   if(not bDiagnosisOff){
+        msg=functionContext+":removing pending-delete items.mapIdToRemove=";
+        dummy=util.abo_addDiagnosticInfo(msg +"checklog", json(),"");        
+   }    
+    sizeofBaseBomChdArr = jsonarraysize(baseBomChildArray);   
+    index =    sizeofBaseBomChdArr - 1;
+    dummyBaseBomArr =  string[sizeofBaseBomChdArr];
+    for oneItem in dummyBaseBomArr{
+         oneBaseBom =   jsonarrayget(baseBomChildArray, index, "json");
+         oneNodeId =  jsonget(oneBaseBom, "id", "string");
+         if(containsKey(mapIdToRemove, oneNodeId)){//Id found. Hence delete from baseBomChildArray
+             jsonarrayremove(baseBomChildArray,index);
+          }
+         index =  index-1;
+    }
+    //Step 2.5: Verify parent exist for newly added nodes
+   if(not bDiagnosisOff){
+        msg=functionContext+":verifying no dangling parent, mapPendingToAddparId=";
+        dummy=util.abo_addDiagnosticInfo(msg+"checklog",json() ,"");
+        print mapPendingToAddparId; //workaround as dictionary can not be conveted to json easily
+   }    
+    arrPendingtoAddparId =  keys(mapPendingToAddparId);
+    for oneParentId in arrPendingtoAddparId{
+      if(util.abo_isjsonnull(mapId2Index,oneParentId) AND oneParentId<>rootId){
+        msg=  functionContext+":Error: after applying all items, still some refered parent id don't exists in result bom, aka pendingParentId is not empty, offending parent id:"+oneParentId;
+        dummy=util.abo_addDiagnosticInfo(msg,json(),"");
+        throwError(msg ,bDiagnosisOff);                  
+      }
+    }
+ 
+}// end of Step 2: iterate through arrBomtoApply and apply changes to baseBom one by one
+if(not bDiagnosisOff){
+   dummy=util.abo_addDiagnosticInfo(callContext+"_returnBom", baseBom,"addToSummary");
+}
+return baseBom;

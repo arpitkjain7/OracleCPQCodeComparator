@@ -1,0 +1,17 @@
+/************************************************************************************************
+Author - Kavita Lolla
+Date - 25/02/2019
+UID - 187
+USer story summary - Deal desk history will be updated whenever the deal desk status is changed.
+*************************************************************************************************/
+currentDate = substring(_system_date,0,10);
+history = dealDesk_History_t;
+dealHistory = dealDeskHistory_t;
+if(dealDeskHistory_t <> dealDeskStatus_t){
+if(dealDeskStatus_t <> "")
+{
+ history = history   + currentDate + " : " + _system_user_name + " has updated the status to " + upper(dealDeskStatus_t) + ". | ";
+ dealHistory = dealDeskStatus_t;
+}
+}
+return "1~dealDesk_History_t~" + history + "|" + "1~dealDeskHistory_t~" + dealHistory +"|";

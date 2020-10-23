@@ -1,0 +1,1001 @@
+/************************************************
+/Rule Name: Create Quote
+/Description: On click of this action all the entitlements that are expiring in 90 or 180 days will be renewed
+/Author: M Vamsi Krishna
+/Creation Date: 21-Jan-2019
+History:
+ Date          Author            Comment 
+ 25/09/2019    M Vamsi   VIPER-452 Auto create Renewal quotes based on the accout classification 
+ 27/09/2019    Ravi   VIPER - 452 - Trigger Sync to Opty and Submit To Order actions based on account type 
+ 16/01/2020    Ravi   SYMINT-3713 - Auto populate Route to Market, eStore flag, Quote Output Type for SED renewals
+ 01/13/2020    M Vamsi   SYMINT-3142 - Fetch Site Address Details on System Generated Renewal Quotes for Core / Non Core and commercial accounts
+ 03/02/2020    M Vamsi   SYMINT-5528 - Support Provider - Systematically Populate on Renewal Quotes
+ 03/26/2020    Arjun   SYMINT-6695 - Replacing tag Supportprovider_l with supportSiteID_l
+ 04/16/2020    M Vamsi   VIPER-778 - Resolve 20A upgrade issue
+  06/15/2020    Shruti           VIPER-872-changes for stated renewal 
+
+*/
+
+//Variable Declaration
+batchNumber = ""; 
+previousGroupId = "";
+payload = dict("string");
+username = "";
+password = "";
+quoteNumber = "";
+fileLocation = "";
+soapendpoint = "";
+status = "IN_PROGRESS";
+autoRenewal = "";
+quoteName = "";
+transactionID = "";
+billToCustomer = "";
+billToCustomerNumber = "";
+soldToCustomer = "";
+soldToCustomerNumber = "";
+endCustomerERPName = "";
+endCustomerERPID = "";
+outputType = "";
+dealType = "";
+startDate = "";
+endDate = "";
+quoteEffectiveDate = "";
+quoteExpirationDate = "";
+billtocontactemail = "";
+sb = stringbuilder();
+shipToCountryMenu = "";
+linecurrency = "";
+endCustomerID = "";
+optyID = "";
+optyNumber = "";
+paymentTerm = "";
+coreAccount = "ZCA_CORE";
+paymentPlan = "";
+createdBy = "Integration User";
+autoBook = "false";
+eStoreEDI = "No";
+businessDivision = "";
+quoteAndContractValidation = "no";
+licenseeAccNum = "";
+LicenseeName = "";
+partyID1 = "";
+partnerName1 = "";
+statedRenewal = "";
+headersDict = dict("string"); 
+usernameFlagUpdate = "";
+passwordFlagUpdate = "";
+fileLocationFlagUpdate = "";
+soapendpointFlagUpdate = "";
+usernameFlagDeploy = "";
+passwordFlagDeploy = "";
+fileLocationFlagDeploy = "";
+soapendpointFlagDeploy = "";
+finalPartToadd = recordset();
+classificationCd = "";
+dealType1 = "";
+source = "";
+licenseeNum = "";
+licenseeNum1 = "";
+instOwnerName = "";
+shipToCoutry = "";
+operatingUnit = "";
+recordUpdateString = "";
+accounttype = "ZCA_CORE";
+soldtositenumber = "";
+billtositeNumber = "";
+billtocountry = "";
+shiptositeNumber = "";
+shiptocountry = "";
+shiptoCustomer = "";
+shipToCntctMail = "";
+endCustomerSiteNum = "";
+approvalDate = "";
+submittedDate = "";
+soldToCntctMail = "";
+createtransactionRequest = "";
+soldToContactName = "";
+shipToCustomerSite = "";
+shipToContactName  = "";
+partner2 = "";
+quoteOwner = "";
+productInstanceID = "";
+shipToAddress = "";
+supportProvider = "";
+   shipToAddress_2 = "";
+   shipToCity = "";
+   shipToState = "";
+   shipToZip = "";
+   shipToCountry = "";
+   billToAddress = "";
+   billToCity = "";
+   billToState = "";
+   billToZip = "";
+quoteOwnerMail = "integration.user@broadcom.com";
+newQuoteOwner = "";
+endCustomerParentId = "";
+endCustomerGlobalParentName = "";
+endCustomerGrandParentId = "";
+routeToMarket = "";
+RenewalBatchStart = datetostr(getdate());
+renewalResult = bmql("select Days_Before_Renewal from BRCM_Renewal_Before");
+ //Retrieve existing Batch Number and increment to create all renewal Quotes under the new batch Number for the current job
+    batchNumberResult = bmql("select Batch_Number from BRCM_Renewal_Batch");
+    for batch in batchNumberResult
+    {
+            batchNumber = get(batch,"Batch_Number");
+    }
+batchNumber = string(atoi(batchNumber)+1);
+
+
+//Fetching GROUP_ID from BRCM_Entitlements table 
+fetchGroups = bmql("select GROUP_ID from BRCM_Entitlement_6 where GROUP_ID <> 0 and QUOTE_NUMBER IS NULL");
+//print fetchGroups;
+for group in fetchGroups
+{
+ groupID = get(group, "GROUP_ID");
+ 
+ 
+ if(previousGroupId <> groupID)
+ {
+  sb = stringbuilder();
+  createtransactionRequest = "";
+  payload_1 =dict("string");
+  quoteRequest= "";
+  payload = dict("string");
+  partItemstring = "";
+  defaultErrorMessage_1="";
+  count = 1;
+  newQuoteOwner = "";
+  endCustomerParentId = "";
+  endCustomerGlobalParentName = "";
+  endCustomerGrandParentId = "";
+  //fetching all the required information from different tables to create quote based on GROUP_ID
+  //SYMINT-3142- Start - Fetching all the required address details from Asset_EXT table
+  //SYMINT-5528- Start - Fetching Support Provider details from Asset EXT tables
+  //06/15/2020    Shruti           VIPER-872-changes for stated renewal 
+
+  finalPartToadd = bmql("select BRCM_Assets_EXT_6.STATED_RENEWAL,BRCM_Assets_EXT_6.SUPPORT_PROVIDER,BRCM_Assets_6.CONTRACT_LINE_NUM,BRCM_Assets_6.SOURCE,BRCM_Assets_6.LICENSEE_ACNT_NUM,BRCM_Entitlement_6.CLASSIFICATION_CD,BRCM_Assets_EXT_6.VC_PRDCT_INSTS_ID,BRCM_Assets_EXT_6.SHIP_TO_CUST_NUMBER,BRCM_Assets_EXT_6.SHIP_TO_CNTCT_EMAIL,BRCM_Assets_EXT_6.ASSET_OWNER,BRCM_Assets_EXT_6.SOLD_TO_CNTCT_NAME , BRCM_Assets_EXT_6.SHIP_TO_CUST_NAME,BRCM_Assets_EXT_6.SHIP_TO_CNTCT_NAME,BRCM_Assets_EXT_6.PARTNER_2,BRCM_Assets_EXT_6.SHIP_TO_ADDRESS,BRCM_Assets_EXT_6.SHIP_TO_ADDRESS_2,BRCM_Assets_EXT_6.SHIP_TO_CITY,BRCM_Assets_EXT_6.SHIP_TO_STATE,BRCM_Assets_EXT_6.SHIP_TO_ZIP,BRCM_Assets_EXT_6.BILL_TO_ADDRESS,BRCM_Assets_EXT_6.BILL_TO_CITY,BRCM_Assets_EXT_6.BILL_TO_STATE,BRCM_Assets_EXT_6.BILL_TO_ZIP,BRCM_Assets_EXT_6.LICENSEE_NAME,BRCM_Assets_EXT_6.CONTRACT_END_DATE,BRCM_Part_Master.MPN,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Migration_Type,BRCM_Assets_EXT_6.Sell_To_Site_Number,BRCM_Assets_EXT_6.Bill_To_Site_Number,BRCM_Assets_EXT_6.Bill_To_Country,BRCM_Assets_EXT_6.Ship_To_Site_Number, BRCM_Part_Master.Replacement_Product,BRCM_Part_Master.Replacement_Pdt_Val,BRCM_Part_Master.Qty_Ratio_Conversion, BRCM_Part_Master.Upgrade_Material,BRCM_Assets_6.INST_POSTAL_CODE,BRCM_Assets_6.UNIT_PRICE,BRCM_Assets_6.LICENSE_TYPE,BRCM_Assets_6.EXP_ANNUAL_RENEWAL,BRCM_Assets_6.LICENSE_METRIC,BRCM_Assets_6.ENV_TYPE,BRCM_Assets_6.SPECIAL_METRIC_TYPE,BRCM_Assets_6.METRIC_QUANTITY,BRCM_Assets_6.INST_CITY,BRCM_Assets_EXT_6.OPERATING_SYS,BRCM_Assets_6.INST_ADDR1,BRCM_Assets_6.INST_ADDR2,BRCM_Assets_6.INST_ADDR3,BRCM_Assets_6.INST_COUNTRY,BRCM_Assets_6.INST_OWNER_CUST_NUM,BRCM_Assets_6.INST_OWNER_NAME,BRCM_Assets_6.SHIP_DATE,BRCM_Assets_6.EOS_DATE,BRCM_Assets_6.EXISTING_SUPPORT_TYP,BRCM_Assets_6.EXISTING_QUANTITY,BRCM_Assets_6.SERVICE_ITEM,BRCM_Assets_6.SERIAL_NUMBER,BRCM_Assets_6.CONTRACT_NUMBER,BRCM_Entitlement_6.ENTITLEMENT_START_DT,BRCM_Entitlement_6.ENTITLEMENT_EXP_DATE,BRCM_Assets_6.COVERED_ITEM,BRCM_Assets_6.COVERED_ITEM_DESC,BRCM_Assets_6.COVERED_PRDCT_FAMILY,BRCM_Assets_6.BILL_TO_CUST_NAME,BRCM_Assets_6.BILL_TO_CUST_NUMBER,BRCM_Assets_6.SOLD_TO_CUST_NAME,BRCM_Assets_6.SOLD_TO_CUST_NUMBER,BRCM_Assets_6.TOT_QUANTITY,BRCM_Assets_6.INSTANCE_IDENTIFIER,BRCM_Assets_6.SHIP_TO_COUNTRY,BRCM_Assets_6.OPERATING_UNIT,BRCM_Assets_EXT_6.LINE_CURRENCY,BRCM_Assets_EXT_6.BILL_TO_CNTCT_EMAIL,BRCM_Assets_EXT_6.SOLD_TO_CNTCT_EMAIL,BRCM_Assets_6.INST_OWN_SITE_NUM from BRCM_Entitlement_6 INNER JOIN BRCM_Assets_6 ON BRCM_Assets_6.SERIAL_NUMBER = BRCM_Entitlement_6.SERIAL_NUMBER and BRCM_Assets_6.CONTRACT_LINE_NUM = BRCM_Entitlement_6.CONTRACT_LINE_NUM and BRCM_Assets_6.CONTRACT_NUMBER = BRCM_Entitlement_6.CONTRACT_NUMBER INNER JOIN BRCM_Part_Master ON BRCM_Assets_6.SERVICE_ITEM = BRCM_Part_Master.MPN INNER JOIN BRCM_Assets_EXT_6 ON BRCM_Assets_6.SERIAL_NUMBER = BRCM_Assets_EXT_6.SERIAL_NUMBER and BRCM_Assets_6.CONTRACT_LINE_NUM = BRCM_Assets_EXT_6.CONTRACT_LINE_NUM and BRCM_Assets_6.CONTRACT_NUMBER = BRCM_Assets_EXT_6.CONTRACT_NUMBER where BRCM_Entitlement_6.QUOTE_NUMBER IS NULL and BRCM_Entitlement_6.ACTIVE_STATUS = 'Active' and BRCM_Assets_6.TOT_QUANTITY > 0 and BRCM_Assets_EXT_6.LINE_CURRENCY <> 'VES' and BRCM_Entitlement_6.GROUP_ID = $groupID");
+  //SYMINT-3142 - end
+  //SYMINT-5528- end
+  //Iterating over the resultset that was fetched.
+  
+  
+  for eachPart in finalPartToadd
+  {
+   // re-initializing variables for every quote
+   supportPart = "";
+   Quantity="";
+   quoteRequest= "";
+   jsonObj = json();
+   transactionID_t = "";
+   
+   transactionID="";
+   
+   
+   createtransactionRequest = "";
+   headersDict = dict("string"); 
+   currentsystemDate = datetostr(getdate());
+   contractStartDate_1 = "";
+   contractStartDate_1_str = "";
+   response="";
+   recordUpdateString = "";
+   linecurrency = "";
+   dealType = "";
+   licenseeNum ="";
+   licenseeNum1 = "";
+   partyID1 = "";
+   partnerName1 = "";
+   billCustNumber = "";
+   endCustomerID = "";
+   optyID = "";
+   optyNumber = "";
+   startDate = "";
+   paymentTerm = "";
+   outputType="";
+   billToCustomer = "";
+   quoteName = "";
+   billToCustomerNumber = "";
+   soldToCustomer = "";
+   soldToCustomerNumber = "";
+   quoteEffectiveDate = "";
+   contractStartDate_1 = "";
+   startDate = "";
+   endDate = "";
+   endCustomerERPName = "";
+   endCustomerERPID = "";
+   endOfsupportDate = "";
+   gBU_Driver = "";
+   quoteExpirationDate = "";
+   contractEndDate_1 = "";
+   contractheaderEndDate1 = "";
+   quotetype = "";
+   source = "";
+   ownerName = "";
+   shipToCoutry = "";
+   operatingUnit = "";
+   supportProvider = "";
+   instOwnerName = "";
+   billtocontactemail = "";
+   shipToCountryMenu = "";
+   status = "IN_PROGRESS";
+   paymentPlan = "";
+   createdBy = "Integration User";
+   autoBook = "false";
+   eStoreEDI = "No";
+   dealType1 = "";
+   lineApprovalStatus ="";
+   businessDivision = "";
+   coreAccount = "ZCA_CORE";
+   quoteAndContractValidation = "no";
+   classificationCd = "";
+   accounttype = "ZCA_CORE";
+   licenseeAccNum = "";
+   LicenseeName = "";
+   autoRenewal = "";
+   soldtositenumber = "";
+   billtositeNumber = "";
+   billtocountry = "";
+   shiptositeNumber = "";
+   shiptocountry = "";
+   shiptoCustomer = "";
+   shipToCntctMail = "";
+   endCustomerSiteNum = "";
+   //06/15/2020    Shruti           VIPER-872-changes for stated renewal 
+   statedRenewal = "";
+   approvalDate = "";
+   submittedDate = "";
+   soldToCntctMail = "";
+   soldToContactName = "";
+   shipToCustomerSite = "";
+   shipToContactName  = "";
+   partner2 = "";
+   quoteOwner = "";
+   productInstanceID = "";
+   routeToMarket = "";
+   shipToAddress = "";
+   shipToAddress_2 = "";
+   shipToCity = "";
+   shipToState = "";
+   shipToZip = "";
+   shipToCountry = "";
+   billToAddress = "";
+   billToCity = "";
+   billToState = "";
+   billToZip = "";
+   quoteOwnerMail = "integration.user@broadcom.com";
+   partNo = get(eachPart,"SERVICE_ITEM");
+   qty =get(eachPart, "TOT_QUANTITY");
+   linecurrency = get(eachPart,"LINE_CURRENCY");
+   classificationCd = get(eachPart,"CLASSIFICATION_CD");
+   if(get(eachPart,"ENTITLEMENT_EXP_DATE") <> "" and NOT isnull(get(eachPart,"ENTITLEMENT_EXP_DATE")))
+   {
+    contractStartDate = adddays(strtojavadate(get(eachPart,"ENTITLEMENT_EXP_DATE"),"yyyy-MM-dd"),1);
+    stringStartDate = datetostr(contractStartDate,"yyyy-MM-dd");
+    startDate = datetostr(contractStartDate,"yyyy-MM-dd");
+   }
+   if(get(eachPart,"SOURCE") == "BSN")
+   {
+    dealType = "bSNRenewal";
+   
+   }
+   elif(get(eachPart,"SOURCE") == "CA")
+   {
+    dealType = "cADRenewal";
+   
+   }
+   elif(get(eachPart,"SOURCE") == "SYM")
+   {
+    dealType = "cADRenewal";
+   }
+   dealType1 = dealType +"~"+ linecurrency +"~"+startDate;
+   licenseeNum = get(eachPart,"LICENSEE_ACNT_NUM");
+   //added as part of enhancement 5396
+   billCustNumber = get(eachPart,"BILL_TO_CUST_NUMBER");
+   licenseeNum1 = licenseeNum + "~" + billCustNumber;
+   partItemstring = partItemstring +"<bm:partItem>";
+   partItemstring = partItemstring +"<bm:part>"+partNo+"</bm:part>";
+   partItemstring = partItemstring +"<bm:quantity>"+qty+"</bm:quantity>";
+   partItemstring = partItemstring +"<bm:price_book_var_name>_default_price_book</bm:price_book_var_name>";
+   partItemstring = partItemstring +"</bm:partItem>";
+  
+  
+  
+   quoteEffectiveDate = datetostr(_current_date,"yyyy-MM-dd HH:mm:ss");
+   contractStartDate_1 = get(eachPart,"ENTITLEMENT_EXP_DATE");
+   if(contractStartDate_1 <> "" and NOT isnull(contractStartDate_1))
+   {
+    contractStartDate_1_str = datetostr(strtojavadate(contractStartDate_1,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+   }
+   stringStartDate = "";
+   if(contractStartDate_1 <> "" and NOT isnull(contractStartDate_1))
+   {
+    contractStartDate = adddays(strtojavadate(get(eachPart,"ENTITLEMENT_EXP_DATE"),"yyyy-MM-dd"),1);
+    stringStartDate = datetostr(contractStartDate,"yyyy-MM-dd");
+    startDate = datetostr(contractStartDate,"yyyy-MM-dd HH:mm:ss");
+    //Add 365 days to get Contract End Date
+    contractEndDate = adddays(strtojavadate(startDate,"yyyy-MM-dd"),365);
+    endDate = datetostr(contractEndDate,"yyyy-MM-dd HH:mm:ss");
+    //Changes made as part of VIPER - 281 - As Contract End date should always be a day less than contract start date
+    //Changes made as part of VIPER - 281 - Compare days,month of contract start and end date and take a day off from contract end date if contract start and end date has same days and month.
+    endMonth = substring(endDate,5,7);
+    endDays = substring(endDate,8,10);
+    startMonth = substring(startDate,5,7);
+    startDays = substring(startDate,8,10);
+    if( startDays == endDays and startMonth == endMonth)
+    {
+    contractEndDate = minusdays(contractEndDate,1);
+    endDate = datetostr(contractEndDate,"yyyy-MM-dd HH:mm:ss");
+    }
+    //Changes made as part of VIPER - 281 - end
+   }
+   
+   
+   billToCustomer = get(eachPart,"BILL_TO_CUST_NAME");
+   billToCustomerNumber = get(eachPart,"BILL_TO_CUST_NUMBER");
+   billtocontactemail = get(eachPart,"BILL_TO_CNTCT_EMAIL");
+   soldToCustomer = get(eachPart,"SOLD_TO_CUST_NAME");
+   soldToCustomerNumber = get(eachPart,"SOLD_TO_CUST_NUMBER");
+   endCustomerERPName = get(eachPart,"INST_OWNER_NAME");
+   endCustomerERPID = get(eachPart,"INST_OWNER_CUST_NUM");
+   endOfsupportDate = get(eachPart,"EOS_DATE");
+   instOwnerName = get(eachPart,"INST_OWNER_NAME");
+   licenseeNum = get(eachPart,"LICENSEE_ACNT_NUM");
+   linecurrency = get(eachPart,"LINE_CURRENCY");
+   //shipToCountryMenu = get(eachPart,"SHIP_TO_COUNTRY");
+   /*Bill to and Sold to Details for Order Submission*/
+   soldtositenumber = get(eachPart,"Sell_To_Site_Number");
+   billtositeNumber = get(eachPart,"Bill_To_Site_Number");
+   billtocountry = get(eachPart,"Bill_To_Country");
+   shiptositeNumber = get(eachPart,"Ship_To_Site_Number");
+   shipToCoutry = get(eachPart,"SHIP_TO_COUNTRY");
+   operatingUnit = get(eachPart,"OPERATING_UNIT");
+   shiptoCustomer = get(eachPart,"SHIP_TO_CUST_NUMBER");
+   shipToCntctMail = get(eachPart,"SHIP_TO_CNTCT_EMAIL");
+   soldToCntctMail = get(eachPart,"SOLD_TO_CNTCT_EMAIL");
+   endCustomerSiteNum = get(eachPart,"INST_OWN_SITE_NUM");
+   soldToContactName = get(eachPart,"SOLD_TO_CNTCT_NAME");
+   shipToCustomerSite = get(eachPart,"SHIP_TO_CUST_NAME");
+   shipToContactName  = get(eachPart,"SHIP_TO_CNTCT_NAME");
+   //06/15/2020    Shruti           VIPER-872-changes for stated renewal 
+   statedRenewal = get(eachPart,"STATED_RENEWAL");
+   partner2 = get(eachPart,"PARTNER_2");
+   productInstanceID = get(eachPart,"VC_PRDCT_INSTS_ID");
+   //SYMINT-3142 - Start - assigning values to variables
+   shipToAddress = get(eachPart,"SHIP_TO_ADDRESS");
+   shipToAddress_2 = get(eachPart,"SHIP_TO_ADDRESS_2");
+   shipToCity = get(eachPart,"SHIP_TO_CITY");
+   shipToState = get(eachPart,"SHIP_TO_STATE");
+   shipToZip = get(eachPart,"SHIP_TO_ZIP");
+   shipToCountry = get(eachPart,"SHIP_TO_COUNTRY");
+   billToAddress = get(eachPart,"BILL_TO_ADDRESS");
+   billToCity = get(eachPart,"BILL_TO_CITY");
+   billToState = get(eachPart,"BILL_TO_STATE");
+   billToZip = get(eachPart,"BILL_TO_ZIP");
+   //SYMINT-3142 - end
+   //SYMINT-5528 - Start - assigning values to variables
+   supportProvider = get(eachPart,"SUPPORT_PROVIDER");
+   //SYMINT-5528- end
+   //retrieving ship to country based on operating unit and deal type.
+   shipToOUResult = bmql("select ShipToCountry from OU_ShiptTo_Mapping where OU_Name = $operatingUnit and Group = $dealType");
+   for shipToOU in shipToOUResult
+   {
+    shipToCountryMenu = get(shipToOU,"ShipToCountry");
+   }
+   
+   if( dealType == "bSNRenewal")
+   {
+    source = "BSN";
+    dealType = "bSNRenewal";
+    outputType = "bSNRenewal";
+    businessDivision = "Broadcom/BSN";
+    quoteEffectiveDate_1 = "";
+    quoteExpirationDate = "";
+   if(quoteEffectiveDate <> "" and NOT isnull(quoteEffectiveDate))
+   {
+    quoteEffectiveDate_1 = substring(quoteEffectiveDate,0,10);
+    quoteExpirationDate = datetostr(adddays(strtojavadate(QuoteEffectiveDate,"yyyy-MM-dd HH:mm:ss"),90),"yyyy-MM-dd HH:mm:ss");
+   }
+   quoteName = endCustomerERPName + ":" + "Renewal" + ":" + stringStartDate;
+   }
+   //For CA Quotes assign endCustomerERPID as licenseAccountNo
+   if(dealType == "cADRenewal")
+   {
+    endCustomerERPID = get(eachPart,"LICENSEE_ACNT_NUM");
+    endCustomerERPName = get(eachPart,"LICENSEE_NAME");
+    businessDivision = "CA";
+    //print "========== inside cad renewal";
+    //print endCustomerERPName;
+    source = "CA";
+    dealType = "cADRenewal";
+    outputType = "cADirectDealRenewalOnly";
+   if(EndOfSupportDate <> "" and NOT isnull(EndOfSupportDate))
+   {
+    endOfSupportDate_1 = substring(EndOfSupportDate,0,10);
+   }
+   quoteName = endCustomerERPName + ":" + "Renewal" + ":" + stringStartDate;
+   
+   if(quoteEffectiveDate <> "" and NOT isnull(quoteEffectiveDate))
+   {
+    quoteExpirationDate = datetostr(adddays(strtojavadate(QuoteEffectiveDate,"yyyy-MM-dd HH:mm:ss"),365),"yyyy-MM-dd HH:mm:ss");
+   }
+   //added this for making quoteExpirationDate to same as support end date; Kacharya; Jira-572
+   if(strtojavadate(get(eachPart,"ENTITLEMENT_EXP_DATE"),"yyyy-MM-dd")<getDate())
+    {
+    quoteExpirationDate = datetostr(adddays(strtojavadate(QuoteEffectiveDate,"yyyy-MM-dd HH:mm:ss"),30),"yyyy-MM-dd HH:mm:ss");
+    }
+    else
+    {
+    quoteExpirationDate = datetostr(strtojavadate(get(eachPart,"ENTITLEMENT_EXP_DATE"),"yyyy-MM-dd"), "yyyy-MM-dd HH:mm:ss");
+    }
+   }
+   if(dealType == "cADRenewal" and get(eachpart,"CLASSIFICATION_CD") == "Commercial" and get(eachPart,"SOURCE") == "SYM")
+   {
+    approvalDate = datetostr(_current_date,"yyyy-MM-dd HH:mm:ss");
+    submittedDate = datetostr(_current_date,"yyyy-MM-dd HH:mm:ss");
+    source = "SYM";
+    accounttype = "Commercial";
+    coreAccount = "Commercial";
+    licenseeAccNum = endCustomerERPID;
+    LicenseeName = endCustomerERPName;
+    status = "ORDER_SUBMITTED";
+    paymentPlan = "paidInFull";
+    businessDivision = "Symantec"; 
+    quoteAndContractValidation = "yes";
+    autoBook = "true";
+    eStoreEDI = "Yes";
+    outputType = "Symantec Indirect Quote Output";
+    routeToMarket = "tier2";
+    quoteOwner = createdBy;
+    
+    /*
+    if(quoteEffectiveDate <> "" and NOT isnull(quoteEffectiveDate))
+    {
+     quoteExpirationDate = datetostr(adddays(strtojavadate(QuoteEffectiveDate,"yyyy-MM-dd HH:mm:ss"),60),"yyyy-MM-dd HH:mm:ss");
+    }
+    //added this for making quoteExpirationDate to same as support end date; Kacharya; Jira-572
+    if(strtojavadate(get(eachPart,"ENTITLEMENT_EXP_DATE"),"yyyy-MM-dd")<getDate())
+    {
+    quoteExpirationDate = datetostr(adddays(strtojavadate(QuoteEffectiveDate,"yyyy-MM-dd HH:mm:ss"),30),"yyyy-MM-dd HH:mm:ss");
+    }
+    else
+    {
+    quoteExpirationDate = datetostr(strtojavadate(get(eachPart,"ENTITLEMENT_EXP_DATE"),"yyyy-MM-dd"), "yyyy-MM-dd HH:mm:ss");
+    }
+    */
+    //Added this to set QuoteExpirationDate to Entitlement_Exp_Date + 90 by Arjun; VIPER-639
+    quoteExpirationDate = datetostr(adddays(strtojavadate(get(eachPart,"ENTITLEMENT_EXP_DATE"),"yyyy-MM-dd"),90), "yyyy-MM-dd HH:mm:ss");
+    //modification done to quote expiration date for Q1 and Q4 commercial; VIPER-687; Kacharya
+    //quoteExpirationDate = datetostr(adddays(strtojavadate(QuoteEffectiveDate,"yyyy-MM-dd HH:mm:ss"),120), "yyyy-MM-dd HH:mm:ss");
+   
+    if (status == "APPROVED")
+    {
+    
+     lineApprovalStatus = "APPROVED";
+    }
+   }
+   if(dealType == "cADRenewal" and get(eachPart,"SOURCE") == "SYM" and (get(eachpart,"CLASSIFICATION_CD") == "ZCA_CORE" OR get(eachpart,"CLASSIFICATION_CD") == "ZCA_NON_CORE"))
+   {
+    
+    source = "SYM";
+    status = "IN_PROGRESS";
+    routeToMarket = "tier2";
+    eStoreEDI = "Yes";
+    outputType = "Symantec Indirect Quote Output";
+    quoteOwnerMail = trim(get(eachPart,"ASSET_OWNER"));
+    if(quoteOwnerMail <> "")
+    {
+     quoteOwnerDetails = bmql("select Users, PartyResourceId from BRCM_Users where EMailID = $quoteOwnerMail");
+     for quoteOwnerDetail in quoteOwnerDetails
+     { partyID1 = get(quoteOwnerDetail,"PartyResourceId");
+      quoteOwner = get(quoteOwnerDetail,"Users");
+     }
+     if(quoteOwner <> "")
+     {
+     newQuoteOwner = quoteOwner+"~"+quoteOwnerMail;
+     }
+     else
+     {
+      quoteOwner = "Integration User";
+     }
+     
+    }
+    businessDivision = "Symantec";
+    quoteExpirationDate = "";
+    //added this for making quoteExpirationDate to same as support end date; Kacharya; Jira-572
+    if(strtojavadate(get(eachPart,"ENTITLEMENT_EXP_DATE"),"yyyy-MM-dd")<getDate())
+    {
+    quoteExpirationDate = datetostr(adddays(strtojavadate(QuoteEffectiveDate,"yyyy-MM-dd HH:mm:ss"),30),"yyyy-MM-dd HH:mm:ss");
+    }
+    else
+    {
+    quoteExpirationDate = datetostr(strtojavadate(get(eachPart,"ENTITLEMENT_EXP_DATE"),"yyyy-MM-dd"), "yyyy-MM-dd HH:mm:ss");
+    }
+    quoteName = endCustomerERPName + ":" + "Renewal" + ":" + stringStartDate;
+    
+   }
+ 
+  
+  autoRenewal = "no";
+  trans = "";
+  returnString = "";
+  
+   count = count +1;
+   line1 = get(eachPart, "INST_ADDR1");
+   line2 = get(eachPart, "INST_ADDR2");
+   line3 = get(eachPart, "INST_ADDR3");
+   fullAddress = line1 + ", "+line2 + ", "+line3;
+   fullAddress = substring(fullAddress, 0, 254);
+   existingQuantity = get(eachPart,"TOT_QUANTITY");
+   expAnnualrenewal = get(eachPart,"EXP_ANNUAL_RENEWAL");
+   if(atoi(existingQuantity) <> 0 and expAnnualrenewal <> "")
+   {
+    previousprice = round(atof(expAnnualrenewal)/atoi(existingQuantity),4);
+    
+    expAnnualrenewal = formatascurrency(atof(expAnnualrenewal), linecurrency);
+    
+   }
+   else
+   {
+    previousprice = 0.0;
+    expAnnualrenewal = formatascurrency(0.0, linecurrency);
+   } 
+   licenseType = get(eachPart,"LICENSE_TYPE");
+   licenseMetric = get(eachPart,"LICENSE_METRIC");
+   environmentCode = get(eachPart,"ENV_TYPE");
+   if(licenseType == "P" or licenseType == "p")
+   {
+           licenseType = "Perpetual";
+   }
+   if(licenseType == "S" or licenseType == "s")
+   {
+           licenseType = "Subscription";
+   }
+   if(licenseType == "L" or licenseType == "l")
+   {
+           licenseType = "UMF";
+   }
+   if(environmentCode == "PD" or environmentCode == "pd")
+   {
+           environmentCode = "Production";
+   }
+   if(environmentCode == "NP" or environmentCode == "np")
+   {
+           environmentCode = "Non Production";
+   }
+   if(environmentCode == "DR" or environmentCode == "dr")
+   {
+           environmentCode = "Disaster Recovery";
+   }
+   if(environmentCode == "PL" or environmentCode == "pl")
+   {
+           environmentCode = "Production Limited Use";
+   }
+   if(environmentCode == "NL" or environmentCode == "nl")
+   {
+           environmentCode = "Non Production Limited Use";
+   }
+   specialMetricType = get(eachPart,"SPECIAL_METRIC_TYPE");
+   metricQuantity = get(eachPart,"METRIC_QUANTITY");
+   //sb = sbappend(sb,"<bm:transactionLine bm:bs_id=\""+"CPQ-0000"+"\" bm:buyer_company_name=\"avagotechtest2\" bm:buyer_user_name=\"kmrinal\" bm:currency_pref=\""+linecurrency+"\" bm:data_type=\"2\" bm:document_name=\"Transaction Line\" bm:document_number=\""+string(count)+"\" bm:document_var_name=\"transactionLine\" bm:process_var_name=\"oraclecpqo\" bm:supplier_company_name=\"avagotechtest2\">");
+   sb = sbappend(sb, "<bm:transactionLine bm:bs_id=\""+"CPQ-0000"+"\" bm:buyer_company_name=\"avagotechtest2\" bm:buyer_user_name=\"Integration User\" bm:currency_pref=\""+linecurrency+"\" bm:data_type=\"2\" bm:document_name=\"Transaction Line\" bm:document_number=\""+string(count)+"\" bm:document_var_name=\"transactionLine\" bm:process_var_name=\"oraclecpqo\" bm:supplier_company_name=\"avagotechtest2\">");
+   //sb = sbappend(sb, "<bm:_document_number>"+jsonget(line,"_document_number")+"</bm:_document_number>");
+   sb = sbappend(sb, "<bm:_price_book_var_name>_default_price_book</bm:_price_book_var_name>");
+   sb = sbappend(sb,  "<bm:_price_quantity>"+get(eachPart,"TOT_QUANTITY")+"</bm:_price_quantity>");
+   //sb = sbappend(sb,  "<bm:existingQuantity_l>"+jsonget(line,"quantity")+"</bm:existingQuantity_l>");
+   sb = sbappend(sb,  "<bm:contractStartDate_l>"+startDate+"</bm:contractStartDate_l>");
+   sb = sbappend(sb,  "<bm:existingSupportStartDate_l>"+datetostr(strtojavadate(get(eachPart,"ENTITLEMENT_START_DT"),"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss")+"</bm:existingSupportStartDate_l>");
+   sb = sbappend(sb,  "<bm:existingSupportExpirationDate_l>"+contractStartDate_1_str+"</bm:existingSupportExpirationDate_l>");
+   sb = sbappend(sb,  "<bm:contractEndDate_l>"+endDate+"</bm:contractEndDate_l>");
+   //sb = sbappend(sb,  "<bm:contractEndDate_l>"+endDate+"</bm:contractEndDate_l>");
+   sb = sbappend(sb,  "<bm:priorContract>"+get(eachPart,"CONTRACT_NUMBER")+"</bm:priorContract>");
+   sb = sbappend(sb,  "<bm:mPN_l>"+get(eachPart,"MPN")+"</bm:mPN_l>");
+   sb = sbappend(sb,  "<bm:productName_l>"+get(eachPart,"Product_Name")+"</bm:productName_l>");
+   sb = sbappend(sb,  "<bm:migrationType_l>"+get(eachPart,"Migration_Type")+"</bm:migrationType_l>");
+   // sb = sbappend(sb,  "<bm:baseMaterial_1>"+jsonget(line,"baseMaterial")+"</bm:baseMaterial_1>");
+   sb = sbappend(sb,  "<bm:productReplacementCode1_l>"+get(eachPart,"Replacement_Product")+"</bm:productReplacementCode1_l>");
+   sb = sbappend(sb,  "<bm:coveredProduct_l>"+get(eachPart,"COVERED_ITEM")+"</bm:coveredProduct_l>");
+   sb = sbappend(sb,  "<bm:cPProductFamily_l>"+get(eachPart, "COVERED_ITEM_DESC")+"</bm:cPProductFamily_l>");
+   sb = sbappend(sb,  "<bm:productReplacementCode2_l>"+get(eachPart,"Replacement_Pdt_Val")+"</bm:productReplacementCode2_l>");
+   sb = sbappend(sb,  "<bm:quantityRatioConversion_l>"+get(eachPart,"Qty_Ratio_Conversion")+"</bm:quantityRatioConversion_l>");
+   sb = sbappend(sb,  "<bm:upgradeMaterial_l>"+get(eachPart,"Upgrade_Material")+"</bm:upgradeMaterial_l>");
+   sb = sbappend(sb,  "<bm:dateShipped_l>"+get(eachPart,"EOS_DATE")+"</bm:dateShipped_l>");
+   sb = sbappend(sb,  "<bm:serial_l>"+get(eachPart,"SERIAL_NUMBER")+"</bm:serial_l>");
+   sb = sbappend(sb,  "<bm:serialNumberTemporary_l>"+get(eachPart,"SERIAL_NUMBER")+"</bm:serialNumberTemporary_l>");
+   if(licenseType <> "" and NOT isnull(licenseType))
+   {
+    sb = sbappend(sb,  "<bm:licenseType_l>"+licenseType+"</bm:licenseType_l>");
+   }
+   sb = sbappend(sb,  "<bm:licenseMetric_l>"+licenseMetric+"</bm:licenseMetric_l>");
+   if(environmentCode <> "" and NOT isnull(environmentCode))
+   {
+    sb = sbappend(sb,  "<bm:enterEnvironment_l>"+environmentCode+"</bm:enterEnvironment_l>");
+   }
+   sb = sbappend(sb,  "<bm:nonStandardLicenseMetric_l>"+specialMetricType+"</bm:nonStandardLicenseMetric_l>");
+   sb = sbappend(sb,  "<bm:nonStandardQty_l>"+metricQuantity+"</bm:nonStandardQty_l>");
+   sb = sbappend(sb,  "<bm:priorContractLineItem_l>"+get(eachPart,"CONTRACT_LINE_NUM")+"</bm:priorContractLineItem_l>");
+   //sb = sbappend(sb,  "<bm:extProposedNetPriceRequested_l>"+jsonget(line,"previousprice")+"</bm:extProposedNetPriceRequested_l>");
+   sb = sbappend(sb,  "<bm:eOSDate_l>"+get(eachPart,"SHIP_DATE")+"</bm:eOSDate_l>");
+   sb = sbappend(sb,  "<bm:siteIDStreetAddress_l>"+fullAddress+"</bm:siteIDStreetAddress_l>");
+   sb = sbappend(sb,    "<bm:installedAtCustomerNumber_l>"+get(eachPart,"INST_OWNER_CUST_NUM")+"</bm:installedAtCustomerNumber_l>");  
+   sb = sbappend(sb,  "<bm:siteID_l>"+get(eachPart,"INST_OWN_SITE_NUM")+"</bm:siteID_l>");
+   sb = sbappend(sb,  "<bm:siteIDCityStateZip_l>"+get(eachPart,"INST_CITY")+"</bm:siteIDCityStateZip_l>");
+   sb = sbappend(sb,  "<bm:siteIDZip_l>"+get(eachPart,"INST_POSTAL_CODE")+"</bm:siteIDZip_l>");
+   sb = sbappend(sb,  "<bm:siteIDCountry_l>"+get(eachPart,"INST_COUNTRY")+"</bm:siteIDCountry_l>");
+   sb = sbappend(sb,  "<bm:supportType_l>"+get(eachPart,"EXISTING_SUPPORT_TYP")+"</bm:supportType_l>");
+   sb = sbappend(sb,  "<bm:previousPrice_l>"+formatascurrency(previousprice, linecurrency)+"</bm:previousPrice_l>");
+   sb = sbappend(sb,  "<bm:lineApprovalStatus_l>"+lineApprovalStatus+"</bm:lineApprovalStatus_l>");
+   sb = sbappend(sb,  "<bm:existingQuantity_l>"+get(eachPart, "EXISTING_QUANTITY")+"</bm:existingQuantity_l>");
+   sb = sbappend(sb,  "<bm:hiddenPrice_l>"+string(previousprice)+"</bm:hiddenPrice_l>");
+   sb = sbappend(sb,  "<bm:lineExpirationDate_l>"+quoteExpirationDate+"</bm:lineExpirationDate_l>");
+   sb = sbappend(sb,  "<bm:transactionTypeM_l>Renew</bm:transactionTypeM_l>");
+   sb = sbappend(sb,  "<bm:expiringAnnualRenewal_l>"+expAnnualrenewal+"</bm:expiringAnnualRenewal_l>");
+   sb = sbappend(sb,  "<bm:renewalCreatedBy_l>Integration User</bm:renewalCreatedBy_l>");
+   sb = sbappend(sb,  "<bm:itemInstanceId_l>"+productInstanceID+"</bm:itemInstanceId_l>");
+   //SYMINT-5528 - Start - Adding address variables to payload
+   //Replacing tag Supportprovider_l with supportSiteID_l for SYMINT-6695 by Arjun 26-Mar-20
+   sb = sbappend(sb,  "<bm:supportSiteID_l>"+supportProvider+"</bm:supportSiteID_l>");
+   //SYMINT-5528- end
+   sb = sbappend(sb, "</bm:transactionLine>");
+                
+  //}
+  //}
+  }
+  
+  //retrieving username and password for web service authentication, file loaction and enp point URL from data table for the corresponding function call 
+  result = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_CREATE_TRANSACTION'");
+  for r in result
+  {
+   username = get(r,"Username");
+   password = get(r,"Password");
+   fileLocation = get(r,"File_Location");
+   soapendpoint = get(r,"SoapEndpoint");
+  }
+  //Forming Create Transaction Payload
+  put(payload_1,"USERNAME", username);
+  put(payload_1,"PASSWORD", password);
+  put(payload_1,"PASSWORD", password);
+  put(payload_1,"forloop", partItemstring);
+  put(payload_1,"functionalcurrency",linecurrency);
+  
+  //Remove junk characters from payload
+  createtransactionRequest=applytemplate(fileLocation,payload_1,defaultErrorMessage_1);
+  createtransactionRequest = replace(createtransactionRequest,"&lt;","<");
+  createtransactionRequest= replace(createtransactionRequest,"&gt;",">");
+  createtransactionRequest = replace(createtransactionRequest,"&quot;","\"");
+  //Trigger the web service to create transaction
+  response = urldatabypost(soapendpoint,createtransactionRequest,"",headersDict,true);
+  
+  //Retrieving Transaction_ID from response after triggering Create Transaction Web service successfully
+  if(find(response,"Success") == -1 or response == "error")
+  {
+   transactionID = substring(response,find(response,"<faultstring>") + len("<faultstring>"),find(response,"</faultstring>"));
+   //Update Entitlement Table Quote Number field with Transaction id if Quote Creation is successful, if Quote is not created update the error message in Entitlement table so that this records will not be picked in future runs
+  //print transactionID;
+  renewalFlagUpdatePayload = dict("string");
+  resultFlagUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_FLAG_UPDATE_6'");
+  for flagUpdate in resultFlagUpdate
+  {
+   usernameFlagUpdate = get(flagUpdate,"Username");
+   passwordFlagUpdate = get(flagUpdate,"Password");
+   fileLocationFlagUpdate = get(flagUpdate,"File_Location");
+   soapendpointFlagUpdate = get(flagUpdate,"SoapEndpoint");
+  }
+  put(renewalFlagUpdatePayload,"USERNAME", usernameFlagUpdate);
+  put(renewalFlagUpdatePayload,"PASSWORD", passwordFlagUpdate);
+  recordUpdateString = "";
+  
+   for rt in finalPartToadd
+  {
+  
+   contractNumber = get(rt,"CONTRACT_NUMBER");
+   serialNumber = get(rt,"SERIAL_NUMBER");
+   instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+   contractlinenumber = get(rt,"CONTRACT_LINE_NUM");
+   recordUpdateString = recordUpdateString +"<bm:each_record>";
+   recordUpdateString = recordUpdateString +"<bm:SERIAL_NUMBER>"+serialNumber+"</bm:SERIAL_NUMBER>";
+   recordUpdateString = recordUpdateString +"<bm:CONTRACT_NUMBER>"+contractNumber+"</bm:CONTRACT_NUMBER>";
+   recordUpdateString = recordUpdateString +"<bm:QUOTE_NUMBER>"+transactionID+"</bm:QUOTE_NUMBER>";
+   recordUpdateString = recordUpdateString +"<bm:INSTANCE_IDENTIFIER>"+instanceIdentifier+"</bm:INSTANCE_IDENTIFIER>";
+   recordUpdateString = recordUpdateString +"<bm:CONTRACT_LINE_NUM>"+contractLineNumber+"</bm:CONTRACT_LINE_NUM>";
+   //recordUpdateString = recordUpdateString +"<bm:Quote_Type>"+quotetype+"</bm:Quote_Type>";
+   recordUpdateString = recordUpdateString +"</bm:each_record>";
+  }
+  put(renewalFlagUpdatePayload,"forLoop", recordUpdateString);
+  
+  defaultErrorMessage="";
+  quoteRequestRenewalFalgUpdate=applytemplate(fileLocationFlagUpdate,renewalFlagUpdatePayload,defaultErrorMessage);
+  quoteRequestRenewalFalgUpdate = replace(quoteRequestRenewalFalgUpdate,"&lt;","<");
+  quoteRequestRenewalFalgUpdate= replace(quoteRequestRenewalFalgUpdate,"&gt;",">");
+  quoteRequestRenewalFalgUpdate = replace(quoteRequestRenewalFalgUpdate,"&quot;","\"");
+  headersDict = dict("string"); 
+  
+  response="";
+  //Trigger the web service to update transaction ID or error message in entitlement table
+  response = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalFalgUpdate, "error",headersDict);
+  }
+  
+  //Get Update Transaction Web Service details from INT_SYSTEM_DETAILS data table
+  result = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_UPDATE_SYM'");
+  for r in result
+  {
+   username = get(r,"Username");
+   password = get(r,"Password");
+   fileLocation = get(r,"File_Location");
+   soapendpoint = get(r,"SoapEndpoint");
+  }
+  if (find(response,"Success") > 0)
+  {
+   pos = find(response,"<bm:transactionID_l>");
+   transactionID= substring(response,pos+20,find(response,"</bm:transactionID_l>"));
+  }
+  //Checking If Retrieved Transaction_ID is valid and Retrieve Quote Number with get transaction function
+  if(isnumber(transactionID))
+  {
+  transactionDetails = gettransaction(atoi(transactionID));
+  QuotenoStartPosition = find(transactionDetails, "<transactionID_t><![CDATA[");
+  QuotenoEndPosition = find(transactionDetails, "]]></transactionID_t>");
+  quoteNumber = substring(transactionDetails, QuotenoStartPosition+len("<transactionID_t><![CDATA["), QuotenoEndPosition);
+  
+  
+  
+  //Create Opportunity in OEC for the current Renewal Quote where Account type of the Customer is Non Core
+  if( classificationCd <> "Commercial")
+  {
+  dealType1= dealType1 + "~" +  partner2 + "~" + partyID1;
+  createOptyResponse = util.renewalQuoteCreateOpportunity_brcm(quoteNumber, dealType1, licenseeNum1);
+  
+   if(NOT isnull(createOptyResponse) and trim(createOptyResponse) <> "")
+   {
+    optydetails = split(createOptyResponse,"~");
+    endCustomerID = optydetails[0];
+    optyID = optydetails[1];
+    optyNumber = optydetails[2];
+    linecurrency = optydetails[3];
+    paymentTerm = optydetails[4];
+    coreAccount = optydetails[5];
+    endCustomerParentId = optydetails[6];
+    endCustomerGlobalParentName = optydetails[7];
+    endCustomerGrandParentId = optydetails[8];
+    accounttype = coreAccount;
+   }
+  }
+  }
+  //Quote Header Payload
+  put(payload,"USERNAME", username);
+  put(payload,"status", status);
+  put(payload,"autorenewalnotification", autoRenewal);
+  put(payload,"PASSWORD", password);
+  put(payload,"quoteName",quoteName);
+  put(payload,"bs_id",transactionID);
+  put(payload,"billtocustomername",billToCustomer);
+  put(payload,"billtocustomerno",billToCustomerNumber);
+  put(payload,"soldtocustomername",soldToCustomer);
+  put(payload,"soldtocustomerno",soldToCustomerNumber);
+  put(payload,"companyname",endCustomerERPName);
+  put(payload,"customerERPID",endCustomerERPID);
+  put(payload,"Transaction_ID",transactionID);
+  put(payload,"BuyerCompanyName",CustomerCompanyName);
+  put(payload,"SupplierCompanyName",SupplierCompanyName);
+  put(payload,"QuoteOutputType",outputType);
+  put(payload,"DealType",dealType);
+  put(payload,"contractstartdate",startDate);
+  put(payload,"contractenddate",endDate);
+  put(payload,"quoteEffectiveDate",quoteEffectiveDate);
+  put(payload,"quoteExpirationDate",quoteExpirationDate);
+  put(payload,"createdDate",quoteEffectiveDate);
+  put(payload,"closedate",startDate);
+  put(payload,"billtocontactemail",billtocontactemail);
+  //put(payload,"functionalcurrency",functionalcurrency);
+  put(payload,"forloop",sbtostring(sb));
+  put(payload,"shipToCountryMenu",shipToCountryMenu);
+  put(payload,"linecurrency",linecurrency);
+  put(payload,"functionalcurrency",linecurrency);
+  put(payload,"endCustomerID",endCustomerID);
+  put(payload,"optyID",optyID);
+  put(payload,"optyNumber",optyNumber);
+  put(payload,"paymentTerm",paymentTerm);
+  put(payload,"coreflag",coreAccount);
+  put(payload,"paymentPlan",paymentPlan);
+  put(payload,"createdBy",createdBy);
+  put(payload,"autoBook",autoBook);
+  put(payload,"eStoreEDI",eStoreEDI);
+  put(payload,"businessDivision",businessDivision);
+  put(payload,"quoteAndContractValidation",quoteAndContractValidation);
+  put(payload,"licenseeERPAccountno",licenseeAccNum);
+  put(payload,"LicenseeName",LicenseeName);
+  /*Order Submission Payload*/
+  put(payload,"soldtositenumber",soldtositenumber);
+  put(payload,"billtositeNumber",billtositeNumber);
+  put(payload,"billtocountry",billtocountry);
+  put(payload,"shiptositeNumber",shiptositeNumber);
+  put(payload,"shiptoCustomer",shiptoCustomer);
+  put(payload,"shipToCntctMail",shipToCntctMail);
+  put(payload,"endCustomerSiteNum",endCustomerSiteNum);
+  put(payload,"submittedDate",submittedDate);
+  put(payload,"approvalDate",approvalDate);
+  put(payload,"shipToCoutry",shipToCoutry);
+  put(payload,"soldToCntctMail",soldToCntctMail);
+  put(payload,"soldToContactName",soldToContactName);
+  put(payload,"shipToCustomerSite",shipToCustomerSite);
+  put(payload,"shipToContactName",shipToContactName);
+  put(payload,"partner2",partner2);
+  put(payload,"quoteOwner",quoteOwner); 
+  put(payload,"autoGeneratedRenewalHDRFlag","SYM");
+  put(payload,"quoteOwnerMail",quoteOwnerMail); 
+  put(payload,"newQuoteOwner",newQuoteOwner);
+ // 06/15/2020    Shruti           VIPER-872-changes for stated renewal 
+if(statedRenewal == "Yes - Removed Going Forward"){
+ statedRenewal = "yesRemovedGoingForward";
+}
+elif(statedRenewal == "Yes - Not Removed Going Forward"){
+ statedRenewal = "yesNotRemovedGoingForward";
+}
+  put(payload,"statedRenewal",statedRenewal);
+  put(payload,"endCustomerGlobalParentName",endCustomerGlobalParentName);
+  put(payload,"endCustomerParentId",endCustomerParentId);
+  put(payload,"endCustomerGrandParentId",endCustomerGrandParentId);
+  put(payload,"routeToMarket",routeToMarket);
+  //SYMINT-3142 - Start - Adding address variables to payload
+  put(payload,"shipToAddress",shipToAddress);
+  put(payload,"shipToAddress_2",shipToAddress_2);
+  put(payload,"shipToCity",shipToCity);
+  put(payload,"shipToState",shipToState);
+  put(payload,"shipToZip",shipToZip);
+  put(payload,"shipToCountry",shipToCountry);
+  put(payload,"billToAddress",billToAddress);
+  put(payload,"billToCity",billToCity);
+  put(payload,"billToState",billToState);
+  put(payload,"billToZip",billToZip);
+  //SYMINT-3142 - end
+  
+  
+  
+  defaultErrorMessage="";
+  quoteRequest1=applytemplate(fileLocation,payload,defaultErrorMessage);
+  quoteRequest1 = replace(quoteRequest1,"&lt;","<");
+  quoteRequest1= replace(quoteRequest1,"&gt;",">");
+  quoteRequest1 = replace(quoteRequest1,"&quot;","\"");
+  //VIPER - 778 - added logic to replace special character with "=" symbol
+  quoteRequest1 = replace(quoteRequest1,"&#x3D;","=");
+  quoteRequest1 = replace(quoteRequest1,"CPQ-0000",transactionID);
+  
+  
+  response="";
+  if(isnumber(transactionID))
+  {
+  //Trigger the web service to update transaction
+  response = urldatabypost(soapendpoint,quoteRequest1, "",headersDict,true);
+  
+  
+  if(find(response,"Success") == -1)
+  {
+   transactionID = substring(response,find(response,"<faultstring>") + len("<faultstring>"),find(response,"</faultstring>"));
+  }
+  
+  //Get Save Transaction Web Service details from INT_SYSTEM_DETAILS data table if update Transaction is successful
+  if(find(response,"Success") > 0)
+  {
+   result = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System ='SAVE_TRANSACTION'");
+   for r in result
+   {
+    username = get(r,"Username");
+    password = get(r,"Password");
+    fileLocation = get(r,"File_Location");
+    soapendpoint = get(r,"SoapEndpoint");
+   }
+   put(payload,"userName", username);
+   
+   put(payload,"password", password);
+   put(payload,"bs_id", transactionID);
+   quoteRequest2=applytemplate(fileLocation,payload,defaultErrorMessage);
+   //Trigger the web service to save transaction
+   response = urldatabypost(soapendpoint,quoteRequest2, "",headersDict,true);
+   if(find(response,"Success") == -1)
+   {
+    transactionID = substring(response,find(response,"<faultstring>") + len("<faultstring>"),find(response,"</faultstring>"));
+   }
+  
+  }
+  
+  //Update Entitlement Table Quote Number field with Transaction id if Quote Creation is successful, if Quote is not created update the error message in Entitlement table so that this records will not be picked in future runs
+  
+  renewalFlagUpdatePayload = dict("string");
+  resultFlagUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_FLAG_UPDATE_6'");
+  for flagUpdate in resultFlagUpdate
+  {
+   usernameFlagUpdate = get(flagUpdate,"Username");
+   passwordFlagUpdate = get(flagUpdate,"Password");
+   fileLocationFlagUpdate = get(flagUpdate,"File_Location");
+   soapendpointFlagUpdate = get(flagUpdate,"SoapEndpoint");
+  }
+  put(renewalFlagUpdatePayload,"USERNAME", usernameFlagUpdate);
+  put(renewalFlagUpdatePayload,"PASSWORD", passwordFlagUpdate);
+  recordUpdateString = "";
+  
+   for rt in finalPartToadd
+  {
+  
+   contractNumber = get(rt,"CONTRACT_NUMBER");
+   serialNumber = get(rt,"SERIAL_NUMBER");
+   instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+   contractlinenumber = get(rt,"CONTRACT_LINE_NUM");
+   recordUpdateString = recordUpdateString +"<bm:each_record>";
+   recordUpdateString = recordUpdateString +"<bm:SERIAL_NUMBER>"+serialNumber+"</bm:SERIAL_NUMBER>";
+   recordUpdateString = recordUpdateString +"<bm:CONTRACT_NUMBER>"+contractNumber+"</bm:CONTRACT_NUMBER>";
+   recordUpdateString = recordUpdateString +"<bm:QUOTE_NUMBER>"+transactionID+"</bm:QUOTE_NUMBER>";
+   recordUpdateString = recordUpdateString +"<bm:INSTANCE_IDENTIFIER>"+instanceIdentifier+"</bm:INSTANCE_IDENTIFIER>";
+   recordUpdateString = recordUpdateString +"<bm:CONTRACT_LINE_NUM>"+contractLineNumber+"</bm:CONTRACT_LINE_NUM>";
+   //recordUpdateString = recordUpdateString +"<bm:Quote_Type>"+quotetype+"</bm:Quote_Type>";
+   recordUpdateString = recordUpdateString +"</bm:each_record>";
+  }
+  put(renewalFlagUpdatePayload,"forLoop", recordUpdateString);
+  
+  defaultErrorMessage="";
+  quoteRequestRenewalFalgUpdate=applytemplate(fileLocationFlagUpdate,renewalFlagUpdatePayload,defaultErrorMessage);
+  quoteRequestRenewalFalgUpdate = replace(quoteRequestRenewalFalgUpdate,"&lt;","<");
+  quoteRequestRenewalFalgUpdate= replace(quoteRequestRenewalFalgUpdate,"&gt;",">");
+  quoteRequestRenewalFalgUpdate = replace(quoteRequestRenewalFalgUpdate,"&quot;","\"");
+  headersDict = dict("string"); 
+  
+  response="";
+  //Trigger the web service to update transaction ID or error message in entitlement table
+  response = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalFalgUpdate, "",headersDict,true);
+  
+  
+  //Update Renewal Job table with newly generated Quote info for tracking number of Quotes generated in current batch
+  if(isnumber(transactionID))
+  { 
+   renewalJobUpdatePayload = dict("string");
+   renewaljobUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_JOB_UPDATE'");
+   for each in renewaljobUpdate
+   {
+    usernameFlagUpdate = get(each,"Username");
+    passwordFlagUpdate = get(each,"Password");
+    fileLocationFlagUpdate = get(each,"File_Location");
+    soapendpointFlagUpdate = get(each,"SoapEndpoint");
+   }
+   put(renewalJobUpdatePayload,"USERNAME", usernameFlagUpdate);
+   put(renewalJobUpdatePayload,"PASSWORD", passwordFlagUpdate);
+   currentsystemDate = datetostr(getdate());
+   recordUpdateString = "";
+   recordUpdateString = recordUpdateString +"<bm:each_record>";
+   recordUpdateString = recordUpdateString +"<bm:Quote_Number>"+quoteNumber+"</bm:Quote_Number>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Date>"+currentsystemDate+"</bm:Batch_Date>";
+   recordUpdateString = recordUpdateString +"<bm:User>"+"Renewal Program 6"+"</bm:User>";
+   recordUpdateString = recordUpdateString +"<bm:Transaction_ID>"+transactionID+"</bm:Transaction_ID>";
+   recordUpdateString = recordUpdateString +"<bm:SOURCE>"+source+"</bm:SOURCE>";
+   recordUpdateString = recordUpdateString +"<bm:LICENSEE_ACNT_NUM>"+licenseeNum+"</bm:LICENSEE_ACNT_NUM>";
+   recordUpdateString = recordUpdateString +"<bm:INST_OWNER_CUST_NUM>"+instOwnerName+"</bm:INST_OWNER_CUST_NUM>";
+   recordUpdateString = recordUpdateString +"<bm:SHIP_TO_COUNTRY>"+shipToCoutry+"</bm:SHIP_TO_COUNTRY>";
+   recordUpdateString = recordUpdateString +"<bm:OPERATING_UNIT>"+operatingUnit+"</bm:OPERATING_UNIT>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Number>"+batchNumber+"</bm:Batch_Number>";
+   recordUpdateString = recordUpdateString +"<bm:OPTY_ID>"+optyID+"</bm:OPTY_ID>";
+   recordUpdateString = recordUpdateString +"<bm:ACCOUNT_TYPE>"+accounttype+"</bm:ACCOUNT_TYPE>";
+   recordUpdateString = recordUpdateString +"</bm:each_record>";
+   put(renewalJobUpdatePayload,"forLoop", recordUpdateString);
+   
+   defaultErrorMessage="";
+   quoteRequestRenewalJobUpdate=applytemplate(fileLocationFlagUpdate,renewalJobUpdatePayload,defaultErrorMessage);
+   quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&lt;","<");
+   quoteRequestRenewalJobUpdate= replace(quoteRequestRenewalJobUpdate,"&gt;",">");
+   quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&quot;","\"");
+   headersDict = dict("string"); 
+   
+   response="";
+   //Trigger the web service to update BRCM_Renewal_Job table
+   response = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalJobUpdate, "error",headersDict);
+  }
+ }
+ }
+ previousGroupId = groupID;
+}
+
+    
+   //Call Renewal Batch Update Util Function which updates Batch Number and Current Job Run time Stats to BRCM_Renewal_Batch data table
+    batchUpdateResponse = util.renewalBatchUpdate(batchNumber, RenewalBatchStart);    
+   //Call SynctoOpty Util to sync all the Quotes to OEC for all the Renewal Quotes generated in current Job
+   synctoopportunityResponce = util.autoCalltoSyncToOptySYM_brcm("Renewal Program 6"); 
+   renewalSubmitToOrderResponce = util.autoSubmitToOrderRenewalSMB("Renewal Program 6");
+
+    
+return recordUpdateString;

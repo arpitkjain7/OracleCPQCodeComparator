@@ -1,0 +1,20 @@
+/*****************************************************************
+ Author - Thushaara Vasantha
+ Date - 04/04/2019
+ UID - 200
+ User story summary - Send quote data from CPQ to CLM
+*****************************************************************
+Change Log: 
+SYMINT-2514  Integration with SOA when the line items are greater than 5000 Keerthivasan A
+****************************************************************/
+ret="";
+threshold=4990;
+// SYMINT-2514 : Adding condition to set the threshold of number of line items to be sent to SOA and CLM
+if(totalLineItems_t<threshold) {
+ret = commerce.cPQCLMIntegration();
+}
+else {
+ret = commerce.cPQSOAIntegration_brcm();
+}
+// End of SYMINT-2514
+return "1~returnValue~" + ret;

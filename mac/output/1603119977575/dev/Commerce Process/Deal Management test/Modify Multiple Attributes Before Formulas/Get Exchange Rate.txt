@@ -1,0 +1,26 @@
+/***********************************************************
+Function Name : Get Exchange Rate
+Name : Nandhini Vurimella
+Description : To get exchange rate
+**********************************************************/
+ret = "";
+conversionRate = "";
+
+if((_system_base_currency== oRCL_INT_TargetCurrency_t ) OR (oRCL_INT_TargetCurrency_t == "")) {
+ conversionRate = "1.0";
+} else {
+ params = dict("string");
+ put(params, "CURRENTCURRENCY", _system_base_currency);
+ put(params, "TARGETCURRENCY", oRCL_INT_TargetCurrency_t);
+ soapReturn = util.oRCL_INT_GetTemplates("test", "getExchangeRate", params);
+ path = string[1];
+ path[0] = "/soap:Envelope/soap:Body/bm:getExchangeRateResponse/bm:exchangeRate/bm:conversionRate";
+ getRate = readxmlsingle(soapReturn , path);
+ conversionRate = get(getRate, path[0]);
+ if(isnumber(conversionRate) == false){
+  //Error occured. Return 0 instead
+  conversionRate = "0.0";
+ }
+}
+
+return "1~oRCL_INT_ExchangeRate_t~" + conversionRate + "|";

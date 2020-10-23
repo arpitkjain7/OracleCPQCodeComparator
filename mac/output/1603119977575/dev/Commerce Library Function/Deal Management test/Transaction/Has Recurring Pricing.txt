@@ -1,0 +1,12 @@
+/*****************************************************************************************************
+Function Name : Has Recurring Pricing
+Author : Nandhini Vurimella.
+Description : Determines if the transaction has any recurring prices so that related columns can be hidden in the UI otherwise.
+*****************************************************************************************************/
+for line in transactionLine {
+ if(line.priceType_l == "Recurring") {
+  return true;
+ }
+}
+
+return false;

@@ -1,0 +1,47 @@
+/******************************************************************************` 
+Author : Kavita Lolla, Satyabrata Acharya
+User Story Summary : Webservice call to update the customer pricing for a part.
+Date : 24/01/2019
+******************************************************************************/
+flag =false;
+ValueString=Split(customerNo,"~");
+
+CustomerNum=ValueString[0];
+CPN=ValueString[1];
+CustomerName=ValueString[2];
+QuoteNum=ValueString[3];
+StartDate=ValueString[4];
+EndDate=ValueString[5];
+payload = dict("string");
+Price=String(itemPrice);
+finalString="";
+location="";
+recordset=bmql("SELECT Username,Password,File_Location,SoapEndpoint,SchemaLocation FROM INT_SYSTEM_DETAILS WHERE System='CUSTOMER_MODIFY1'");
+
+put(payload,"Details", customerNo);
+put(payload,"session_id",_user_session_id);
+for record in recordset{
+put(payload,"location", "https://avagotechtest.bigmachines.com/v2_0/receiver/dataTables/52833685");
+put(payload,"Username", get(record, "Username"));
+put(payload,"Password", get(record, "Password"));
+quoteRequest=applytemplate(get(record,"File_Location"),payload,"");
+quoteRequest=replace(quoteRequest, "&lt;", "<");
+quoteRequest=replace(quoteRequest, "&gt;", ">");
+
+finalString = urldatabypost(get(record,"SoapEndpoint"), quoteRequest, "Failed to Connect");
+
+}
+
+
+if (finalString <> "Failed to Connect") 
+{
+              finalString = finalString;
+              flag = true;
+}
+else
+{
+              finalString = "";
+              flag = false;
+}
+
+return flag;

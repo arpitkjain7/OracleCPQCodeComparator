@@ -1,0 +1,193 @@
+/********************************************************************
+Rule Name: Fetch Customer Details
+Description: This BML function is used to fetch Customer Details from Config after customer selection is done.
+Author: Kumar Satyabrata Acharya
+********************************************************************/
+result="";
+dlim="~";
+dend="|";
+BillToCity= billToCity_t;
+BillToCountry= billToCountry_t;
+BillToAddress= billToAddress_t;
+BillToState= billToState_t;
+BillToZip= billToZip_t;
+ShipToCity= "";
+ShipToCountry= "";
+ShipToAddress= "";
+ShipToState= "";
+ShipToZip= "";
+BillToContactWorkPhone=billToContactWorkPhone_t;
+BillToContactMobilePhone=billToContactMobilePhone_t;
+BillToContactName=billToContactName_t;
+BillToContactEmail=billToContactEmail_t;
+ShipToCustomer=_transaction_customer_t_company_name;
+ShipToERP=customerERPId_t;
+BillToCustomer=billToCustomer_t;
+BillToERP=eRPAccountNumberPurchaseCustomer_t;
+BillToCustomerId=billToCustomerId_t;
+SoldToCustomer=_transaction_customer_t_company_name;
+SoldToERP=customerERPId_t;
+SoldToContactName=soldToContactName_t;
+SoldToContactEmail=soldToContactEmail_t;
+SoldToContactWorkPhone=soldToContactWorkPhone_t;
+SoldToContactMobilePhone=soldToContactMobilePhone_t;
+EndCustomer=_transaction_customer_t_company_name;
+EndCustomerId=_transaction_customer_id;
+EndCustomerERP=customerERPId_t;
+BillToSiteNumber="";
+ShipToSiteNumber="";
+ShipToContactName=shipToContactName_t;
+ShipToContactEmail=shipToContactEmail_t;
+ShipToContactWorkPhone=shipToContactWorkPhone_t;
+ShipToContactMobilePhone=soldToContactMobilePhone_t;
+OperatingUnit=operatingUnit_t;
+SellToSiteNumber="";
+BillParentId=billToParentId_avg;
+BillGrandParentId=billToGrandParentId_avg;
+EndParentId=endCustomerParentId_avg;
+EndGrandParentId=endCustomerGrandParentId_avg;
+BillToParentName=billToParentName_avg;
+BillToGrandParentName=billToGrandParentName_avg;
+ShipToAddress2="";
+Customer="";
+ERP="";
+Id="";
+SoldToCustomerId=soldToCustomerAccountID_t;
+RestrictedCustomerFlag = "";
+Core = core_t;
+PartnerPartyNumber = partnerPartyNumber_t;
+if(_transaction_customer_id<>"")
+{
+EndCustomerId=_transaction_customer_id;
+}
+for line in transactionLine{
+if(line._part_number=="Cust" or line._model_name=="Customer Search"){
+obj=json();
+if(line._line_item_comment<>""){
+teststring=line._line_item_comment;
+obj=json(teststring);
+ShipTo=jsonget(obj,"SHIP_TO");
+BillTo=jsonget(obj,"BILL_TO");
+SellTo=jsonget(obj,"SOLD_TO");
+if(isnull(ShipTo)<>true)
+{
+ShipToContactName=jsonget(json(ShipTo), "Name");
+ShipToContactEmail=jsonget(json(ShipTo), "Email Id");
+ShipToContactMobilePhone=jsonget(json(ShipTo), "Mobile Phone");
+ShipToContactWorkPhone=jsonget(json(ShipTo), "Work Phone");
+ShipToCustomer=jsonget(json(ShipTo),"Customer Name");
+ShipToERP=jsonget(json(ShipTo),"Customer ERP Id");
+Customer=jsonget(json(ShipTo),"Customer Name");
+ERP=jsonget(json(ShipTo),"Customer ERP Id");
+Id=jsonget(json(ShipTo),"Customer Id");
+ShipToSiteNumber=jsonget(json(ShipTo), "Address Site Use Id");
+ShipToCity= jsonget(json(ShipTo), "City");
+ShipToCountry= jsonget(json(ShipTo), "Country");
+ShipToAddress= jsonget(json(ShipTo), "Address Line 1");
+ShipToAddress2= jsonget(json(ShipTo), "Address Line 2");
+ShipToState= jsonget(json(ShipTo), "State");
+ShipToZip= jsonget(json(ShipTo), "Postal Code");
+OperatingUnit=jsonget(json(ShipTo), "Operating Unit");
+RestrictedCustomerFlag=jsonget(json(ShipTo), "Restricted Customer Flag");
+}
+
+if(isnull(BillTo)<>true)
+{
+BillToCustomer=jsonget(json(BillTo),"Customer Name");
+BillToContactName=jsonget(json(BillTo),"Name");
+BillToContactEmail=jsonget(json(BillTo),"Email Id");
+BillToContactWorkPhone=jsonget(json(BillTo),"Work Phone");
+BillToContactMobilePhone=jsonget(json(BillTo),"Mobile Phone");
+BillToERP=jsonget(json(BillTo),"Customer ERP Id");
+BillToCustomerId=jsonget(json(BillTo),"Customer Id");
+BillToSiteNumber=jsonget(json(BillTo), "Address Site Use Id");
+BillToParentName=jsonget(json(BillTo), "Customer Parent");
+BillToGrandParentName=jsonget(json(BillTo), "Customer Grandparent");
+RestrictedCustomerFlag=jsonget(json(BillTo), "Restricted Customer Flag");
+Customer=jsonget(json(BillTo),"Customer Name");
+ERP=jsonget(json(BillTo),"Customer ERP Id");
+Id=jsonget(json(BillTo),"Customer Id");
+Core=jsonget(json(BillTo), "Core");
+PartnerPartyNumber = jsonget(json(BillTo), "Party Number");
+BillToCity= jsonget(json(BillTo), "City");
+BillToCountry= jsonget(json(BillTo), "Country");
+BillToAddress= jsonget(json(BillTo), "Address Line 1");
+BillToState= jsonget(json(BillTo), "State");
+BillToZip= jsonget(json(BillTo), "Postal Code");
+}
+if(isnull(SellTo)<>true)
+{
+SoldToCustomer=jsonget(json(SellTo),"Customer Name");
+SoldToCustomerId=jsonget(json(SellTo),"Customer Id");
+SoldToContactName=jsonget(json(SellTo),"Name");
+SoldToContactEmail=jsonget(json(SellTo),"Email Id");
+SoldToContactWorkPhone=jsonget(json(SellTo),"Work Phone");
+SoldToContactMobilePhone=jsonget(json(SellTo),"Mobile Phone");
+SoldToERP=jsonget(json(SellTo),"Customer ERP Id");
+SellToSiteNumber=jsonget(json(SellTo), "Address Site Use Id");
+RestrictedCustomerFlag=jsonget(json(SellTo), "Restricted Customer Flag");
+Customer=jsonget(json(SellTo),"Customer Name");
+ERP=jsonget(json(SellTo),"Customer ERP Id");
+Id=jsonget(json(SellTo),"Customer Id");
+}
+
+}
+
+}
+}
+
+result= result + "1" + dlim + "billToContactName_t" + dlim + BillToContactName + dend;
+result= result + "1" + dlim + "billToContactEmail_t" + dlim + BillToContactEmail + dend;
+result= result + "1" + dlim + "billToContactWorkPhone_t" + dlim + BillToContactWorkPhone + dend;
+result= result + "1" + dlim + "billToContactMobilePhone_t" + dlim + BillToContactMobilePhone + dend;
+result= result + "1" + dlim + "shipToPartyID_t" + dlim + ShipToERP + dend;
+
+result= result + "1" + dlim + "soldToContactName_t" + dlim + SoldToContactName + dend;
+result= result + "1" + dlim + "soldToContactEmail_t" + dlim + SoldToContactEmail + dend;
+result= result + "1" + dlim + "soldToContactWorkPhone_t" + dlim + SoldToContactWorkPhone + dend;
+result= result + "1" + dlim + "soldToContactMobilePhone_t" + dlim + SoldToContactMobilePhone + dend;
+result= result + "1" + dlim + "soldToCustomerAccountID_t" + dlim + SoldToCustomerId + dend;
+
+result= result + "1" + dlim + "shipToContactName_t" + dlim + ShipToContactName + dend;
+result= result + "1" + dlim + "shipToContactEmail_t" + dlim + ShipToContactEmail + dend;
+result= result + "1" + dlim + "shipToContactMobilePhone_t" + dlim + ShipToContactMobilePhone + dend;
+result= result + "1" + dlim + "shipToContactWorkPhone_t" + dlim + ShipToContactWorkPhone + dend;
+result= result + "1" + dlim + "_shipTo_t_city" + dlim + ShipToCity + dend;
+result= result + "1" + dlim + "_shipTo_t_state" + dlim + ShipToState + dend;
+result= result + "1" + dlim + "_shipTo_t_country" + dlim + ShipToCountry + dend;
+result= result + "1" + dlim + "_shipTo_t_address" + dlim + ShipToAddress + dend;
+result= result + "1" + dlim + "_shipTo_t_zip" + dlim + ShipToZip + dend;
+
+result= result + "1" + dlim + "billToCity_t" + dlim + BillToCity + dend;
+result= result + "1" + dlim + "billToState_t" + dlim + BillToState + dend;
+result= result + "1" + dlim + "billToCountry_t" + dlim + BillToCountry + dend;
+result= result + "1" + dlim + "billToAddress_t" + dlim + BillToAddress + dend;
+result= result + "1" + dlim + "billToZip_t" + dlim + BillToZip + dend;
+result= result + "1" + dlim + "_shipTo_t_address_2" + dlim + ShipToAddress2 + dend;
+
+result= result + "1" + dlim + "billToCustomer_t" + dlim + BillToCustomer + dend;
+result= result + "1" + dlim + "billToCustomerId_t" + dlim + BillToCustomerId + dend;
+result= result + "1" + dlim + "eRPAccountNumberPurchaseCustomer_t" + dlim + BillToERP + dend;
+result= result + "1" + dlim + "shipToCustomerSite_t" + dlim + ShipToCustomer + dend;
+result= result + "1" + dlim + "eRPAccountNumberShipTo_t" + dlim + SoldToERP + dend;
+result= result + "1" + dlim + "soldToCustomer_t" + dlim + SoldToCustomer + dend;
+result= result + "1" + dlim + "billToSiteNumber_t" + dlim + BillToSiteNumber + dend;
+result= result + "1" + dlim + "sellToSiteNumber_t" + dlim + SellToSiteNumber + dend;
+result= result + "1" + dlim + "shipToSiteNumber_t" + dlim + ShipToSiteNumber + dend;
+result= result + "1" + dlim + "billToParentId_avg" + dlim + BillToParentName + dend;
+result= result + "1" + dlim + "billToGrandParentId_avg" + dlim + BillToGrandparentName + dend;
+result= result + "1" + dlim + "operatingUnit_t" + dlim + OperatingUnit + dend;
+result= result + "1" + dlim + "partnerPartyNumber_t" + dlim + PartnerPartyNumber + dend;
+if(_transaction_customer_t_company_name==""){
+result= result + "1" + dlim + "endCustomerParentId_avg" + dlim + BillToParentName + dend;
+result= result + "1" + dlim + "endCustomerGrandParentId_avg" + dlim + BillToGrandparentName + dend;
+result= result + "1" + dlim + "_transaction_customer_t_company_name" + dlim + Customer+ dend;
+result= result + "1" + dlim + "_transaction_customer_id" + dlim + Id + dend;
+result= result + "1" + dlim + "customerERPId_t" + dlim +  ERP + dend;
+result= result + "1" + dlim + "restrictedCustomerFlag_t" + dlim + RestrictedCustomerFlag + dend;
+result= result + "1" + dlim + "core_t" + dlim + Core + dend;
+result= result + "1" + dlim + "operatingUnit_t" + dlim + OperatingUnit + dend;
+result= result + "1" + dlim + "partnerPartyNumber_t" + dlim + PartnerPartyNumber + dend;
+}
+
+return result;

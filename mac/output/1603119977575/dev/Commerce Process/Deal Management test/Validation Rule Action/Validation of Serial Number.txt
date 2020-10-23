@@ -1,0 +1,25 @@
+/********************************************************************
+Function Name: Validation of Serial Number
+Description:This rule validates if Serial Number is blank when Transaction Type is Renew, Upgrade or Capacity for SED Harware and Virtual Appliance Products as part of SYMINT-4214
+Author:   Keerthivasan
+History:     Date          Author                  Comment 
+    21-01-2020    Keerthivasan                       Initial Version
+********************************************************************/ 
+
+returnmsg=dict("dict<string>");
+PartError=dict("string");
+sb = stringbuilder();
+//assign Transaction Line no. with blank Serial Number to the error substring
+if (errorLineSerial_t <> "")
+{
+ sbappend(sb,"Serial # must be entered on line(s): " , substring(errorLineSerial_t,0,-2));
+}
+//Returning the error message by putting the value in dictionary
+
+error_Statement= sbtostring(sb);
+put(PartError, "message", error_Statement );
+put(PartError, "location", "Top");
+put(PartError, "operator", "=");
+put(PartError, "values", "");
+put(returnmsg, "validationOfSerial_t", PartError);
+return returnmsg;

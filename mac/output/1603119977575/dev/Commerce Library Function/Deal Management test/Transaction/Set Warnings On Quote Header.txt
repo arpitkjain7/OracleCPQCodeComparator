@@ -1,0 +1,88 @@
+/********************************************************************
+Function Name: Set Warnings On Quote Header 
+Description: This library function is used to set the warning attribute on quote header based on the condition.
+Author: Raghavendra
+Date: 11 March 2019
+********************************************************************/
+result="";
+dlim="~";
+dend="|";
+subresult = "";
+internalCommentsEmptyWarningMessage = "Internal comments is empty for the Quote.";
+headerContractStartDateEmptyWarningMessage = "Contract Start Date cannot be blank.";
+headerContractEndDateEmptyWarningMessage = "Contract End Date cannot be blank.";
+emptyContractStartDatesList = "";
+emptyContractEndDatesList = "";
+contractedOrPriorDealValueList="";
+specialMetricLicenseList="";
+isContractEndDateEmptyInLines = false;
+isContractStartDateEmptyInLines = false;
+iscontractedOrPriorDealValueNotSet=false;
+isspecialMetricLicense=false;
+if(trim(internalComments_t) == "")
+{
+ subresult = subresult + internalCommentsEmptyWarningMessage;
+}
+if(contractStartDate_t == "")
+{
+ subresult = subresult + headerContractStartDateEmptyWarningMessage;
+}
+if(contractEndDate_t == "")
+{
+ subresult = subresult + headerContractEndDateEmptyWarningMessage;
+}
+
+for line in transactionLine
+{
+ if(line._part_number <> "")
+ {
+  if(line.contractStartDate_l == "")
+  {
+   document_no = atoi(line._document_number)-1;
+   emptyContractStartDatesList = emptyContractStartDatesList + string(document_no) + ",";
+   isContractStartDateEmptyInLines = true;
+  }
+  if(line.contractEndDate_l == "")
+  {
+   document_no = atoi(line._document_number)-1;
+   emptyContractEndDatesList = emptyContractEndDatesList + string(document_no) + ",";
+   isContractEndDateEmptyInLines = true;
+  }
+  
+  if(line.transactionType_l=="Capacity Addition" and line.contractedOrPriorDealValue_l=="")
+  {
+   document_no = atoi(line._document_number)-1;
+   contractedOrPriorDealValueList = contractedOrPriorDealValueList + string(document_no) + ",";
+   iscontractedOrPriorDealValueNotSet = true;
+  }
+  
+  if(line.specialMetricLicense_l=="Yes")
+  {
+   document_no = atoi(line._document_number)-1;
+   specialMetricLicenseList = specialMetricLicenseList + string(document_no) + ",";
+   isspecialMetricLicense = true;
+  }
+  
+ }
+}
+
+if(isContractStartDateEmptyInLines)
+{
+ subresult = subresult + "Contract Start Date cannot be empty for Line(s) numbered "+emptyContractStartDatesList+".";
+}
+if(isContractEndDateEmptyInLines)
+{
+ subresult = subresult + "Contract End Date cannot be empty for Line(s) numbered "+emptyContractEndDatesList+".";
+}
+
+if(iscontractedOrPriorDealValueNotSet)
+{
+ subresult = subresult + "Contracted Rate Is mandatory for Capacity Addition for Line(s) numbered "+contractedOrPriorDealValueList+".";
+}
+
+if(isspecialMetricLicense)
+{
+ subresult = subresult + "Discount not allowed for Special Metric for Line(s) numbered "+specialMetricLicenseList+".";
+}
+result = result + _transaction_document_number + dlim + "lineItemsWarning_t" + dlim + subresult + dend;
+return result;

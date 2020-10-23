@@ -1,0 +1,22 @@
+/*****************************************************************
+
+Author : Shruti
+Description : This function is a used to trigger renewal quotes
+*/
+result = false;
+cnt = 0;
+size=range(renewalContractsArrayController_avg);
+for i in size{
+if(selectContract_avg[i]==true){
+if(selectPrimary_avg[i]==true){
+cnt = 1;
+break;
+}
+
+}
+}
+if(cnt ==1 and renewContracts_avg == true)
+ {
+result = true;
+ }
+return result;

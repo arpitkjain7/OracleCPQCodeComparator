@@ -1,0 +1,43 @@
+/*****************************************************************
+Function Name :Get Contract Details
+Author : Ravi Kumar
+Description : This function will fetch Contract Details from OEC for the Selected Customer
+History:     Date          Author                    Comment 
+           06/17/2020    Satyabrata Acharya         VIPER-888; Changes to enable search by contracts
+           06/30/2020    Satyabrata Acharya         VIPER-920; Removed BRCM_ContractStatus_c='ACTIVE' so that expired contract lines can also be fetched
+*****************************************************************/ 
+GETURL="";
+userpasscode = "";
+payload = dict("string");
+headersDict = dict("string"); 
+defaultErrorMessage="";
+Details=bmql("SELECT Username, Password, File_Location,RestEndpoint FROM INT_SYSTEM_DETAILS WHERE System='Renewal_Contract_Search'");
+print Details;
+for detail in Details{
+Username=get(detail,"Username");
+Password=get(detail,"Password");
+if(selectByCustomer_avg==true){
+//VIPER-920; Kumar Satyabrata Acharya; Removed BRCM_ContractStatus_c='ACTIVE' so that expired contract lines can also be fetched
+GETURL=get(detail,"RestEndpoint") + "?q=CustomerId="+ selectedCustomer_avg + ";BRCM_ContractStatus_c=Active%20OR%20Expired&limit=500&fields=BRCM_ContractNumber_c,EnteredCurrencyCode,EndDate,BRCM_ContractStatus_c,AssetAmount,BRCM_OperatingUnit_c,BRCM_SourceAttribute_c,CustomerId,PartyUniqueName&onlyData=true&orderBy=BRCM_ContractNumber_c:asc";
+}
+//VIPER-888; Kumar Satyabrata Acharya; Creating the GET URL for Search by Contract Number
+if(searchByContractNumber_avg==true){
+//VIPER-920; Kumar Satyabrata Acharya; Removed BRCM_ContractStatus_c='ACTIVE' so that expired contract lines can also be fetched
+GETURL=get(detail,"RestEndpoint") + "/?q=BRCM_ContractNumber_c="+ searchContractNumber_avg + ";BRCM_ContractStatus_c=Active%20OR%20Expired&limit=500&fields=BRCM_ContractNumber_c,EnteredCurrencyCode,EndDate,BRCM_ContractStatus_c,AssetAmount,BRCM_OperatingUnit_c,BRCM_SourceAttribute_c,CustomerId,PartyUniqueName&onlyData=true&orderBy=BRCM_ContractNumber_c:asc";
+}
+userpasscode=Username+":"+Password;
+}
+str1=encodebase64(userpasscode);
+auth="Basic" + " " + str1;
+put(headersDict,"Content-Type","application/json"); 
+put(headersDict,"Authorization",auth);
+response=Dict("string");
+response = urldata(GETURL,"GET",headersDict, "5000");
+jsonresponse=get(response,"Message-Body");
+jsonObj = json(jsonresponse);
+if(searchByContractNumber_avg==true){
+if(jsonpathgetsingle(jsonObj ,"$..count")=="0"){
+jsonresponse="Not Found";
+}
+}
+return jsonresponse;

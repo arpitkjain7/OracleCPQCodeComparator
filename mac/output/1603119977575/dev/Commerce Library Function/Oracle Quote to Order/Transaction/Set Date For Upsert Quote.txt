@@ -1,0 +1,10 @@
+/*****************************************************************************************************
+Function Name : Set Date For Upsert Quote
+Author : Nandhini Vurimella.
+Description : To Set the date upsert quote.
+*****************************************************************************************************/
+currentDate = getstrdate();
+dateSplit = split(currentDate, " ");
+dateSplit2 = split(dateSplit[0],"/");
+currentDate = dateSplit2[2] + "-" + dateSplit2[0] + "-" + dateSplit2[1] + "T" + dateSplit[1];
+return currentDate;

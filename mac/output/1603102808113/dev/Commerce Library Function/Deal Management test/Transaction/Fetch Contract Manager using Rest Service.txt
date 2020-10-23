@@ -1,0 +1,46 @@
+/*********************************************************************
+              Function Name: Fetch Contract Manager using Rest Service
+              Description: This library function is to fetch contract manager from OEC for setting DDR Owner field in Quote based on Core Account.
+              Author: Keerthivasan
+              User Story #: UID-179
+              Date: 3rd Mar 2019
+              ******************************Change Log*****************************
+              
+*********************************************************************/
+
+result = "";
+resourceName = "";
+encodedCredential = "";
+url = "";
+if(partnerPartyNumber_t <> ""){
+  resultSet = bmql("select SoapEndpoint,Username,Password from INT_SYSTEM_DETAILS where System = 'CONTRACT_MGR_FETCH'");
+  for record in resultSet
+  {
+    url = get(record,"SoapEndpoint");
+    encodedCredential = encodebase64(get(record,"Username") + ":" + get(record,"Password"));
+  }
+  url = replace(url, "partnerPartyNumber_t", partnerPartyNumber_t);
+  auth = "Basic" + " " + encodedCredential;
+  headersDict = dict("string"); 
+  put(headersDict,"Content-Type","application/json"); 
+  put(headersDict,"Authorization",auth);
+  response=Dict("string");
+  response = urldata(url,"GET",headersDict, "5000");
+  jsonResponse=get(response,"Message-Body");
+  jsonObject = json(jsonresponse);
+  jsonLine = jsonpathgetsingle(jsonObject, "$..items[?(@.MemberFunctionCode=='CONTRACT_MANAGER')]", "json");
+  if(isnull(jsonLine)){
+ resourceName ="";
+  } 
+  else{
+ resourceName =jsonget(jsonLine, "ResourceName", "string");
+ resourceName = resourceName + "(" + jsonget(jsonLine,"ResourceEmailAddress","string") + ")";
+  }
+
+  if(status_t == "APPROVED" and core_t == "ZCA_CORE" and dDRRequired_t)
+  {
+ result = result + "1~dDROwner_t~" + resourceName + "|";
+  
+  }
+} 
+return result;

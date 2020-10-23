@@ -1,0 +1,82 @@
+/**************************************************************************************************
+Function Name : Update Entitlement Data For Renewal
+Author : Keerthivasan / Raghav
+Date : 13th Feb 2019
+Descirption : Updates entitlement data on each line item for renewal quotes by fetching the data from brcm_assets table.
+**************************************************************************************************/
+
+result="";
+dlim="~";
+dend="|";
+
+
+for line in transactionLine
+{
+ partNumber = line._part_number;
+ serialNumber = line.serial_l;
+ endOfSupportDate = "";
+ dateShipped = "";
+ line1 = "";
+ line2 = "";
+ line3 = "";
+ fullAddress = "";
+ installedAtCustomerNumber = "";
+ siteId = "";
+ siteIdCity = "";
+ siteIdZip = "";
+ siteIdCountry = "";
+ 
+ number_of_days = 0.0;
+ number_of_days_int = 0;
+ 
+ if(serialNumber <> "")
+ {
+  resultSet = bmql("select INST_POSTAL_CODE,INST_CITY,INST_ADDR1,INST_ADDR2,INST_ADDR3,INST_COUNTRY,INST_OWNER_CUST_NUM,INST_OWNER_NAME,SHIP_DATE,EOS_DATE, SERIAL_NUMBER,EXISTING_SUPPORT_TYP,COVERED_PRODUCT_LINE,COVERED_PRDCT_FAMILY From BRCM_Assets where SERIAL_NUMBER = $serialNumber and SERVICE_ITEM = $partNumber");
+  contractStartDateObject = strtodate(line.contractStartDate_l,"yyyy-MM-dd %H:%M:%S");
+  contractEndDateObject = strtodate(line.contractEndDate_l,"yyyy-MM-dd %H:%M:%S");
+  number_of_days = getdiffindays(contractEndDateObject,contractStartDateObject);
+  number_of_days_int = round(number_of_days,0); 
+  serialNumber ="";
+  existingSupportType = "";
+  globalPaidSeats ="";
+  coveredProduct = "";
+  coveredProductFamily ="";
+  
+  for record in resultSet
+  {
+   endOfSupportDate = get(record,"EOS_DATE");
+   dateShipped = get(record,"SHIP_DATE");
+   line1 = get(record, "INST_ADDR1");
+   line2 = get(record, "INST_ADDR2");
+   line3 = get(record, "INST_ADDR3");
+   fullAddress = line1 + ", "+line2 + ", "+line3;
+   fullAddress = substring(fullAddress, 0, 254);
+   installedAtCustomerNumber = get(record,"INST_OWNER_CUST_NUM");
+   siteId = get(record,"INST_OWNER_NAME");
+   siteIdCity = get(record,"INST_CITY");
+   siteIdZip = get(record,"INST_POSTAL_CODE");
+   siteIdCountry = get(record,"INST_COUNTRY");
+   serialNumber = get(record,"SERIAL_NUMBER");
+   existingSupportType = get(record,"EXISTING_SUPPORT_TYP");
+   globalPaidSeats = get(record,"CAL_PAID_SEATS");
+   coveredProduct = get(record,"COVERED_PRODUCT_LINE");
+   coveredProductFamily = get(record,"COVERED_PRDCT_FAMILY");
+  }
+  
+  result = result + line._document_number + dlim + "dateShipped_l" + dlim + dateShipped + dend;
+  result = result + line._document_number + dlim + "eOSDate_l" + dlim + endOfSupportDate + dend;
+  result = result + line._document_number + dlim + "siteIDStreetAddress_l" + dlim + fullAddress + dend;
+  result = result + line._document_number + dlim + "installedAtCustomerNumber_l" + dlim + installedAtCustomerNumber + dend;
+  result = result + line._document_number + dlim + "siteID_l" + dlim + siteId + dend;
+  result = result + line._document_number + dlim + "siteIDCityStateZip_l" + dlim + siteIdCity + dend;
+  result = result + line._document_number + dlim + "siteIDZip_l" + dlim + siteIdZip + dend;
+  result = result + line._document_number + dlim + "siteIDCountry_l" + dlim + siteIdCountry + dend;
+  result = result + line._document_number + dlim + "totalNewSupportTermDays_t" + dlim + string(number_of_days_int) + dend;
+  result = result + line._document_number + dlim + "serial_l" + dlim + serialNumber + dend;
+  result = result + line._document_number + dlim + "existingSupportType_l" + dlim + existingSupportType + dend;
+  result = result + line._document_number + dlim + "globalPaidSeats_l" + dlim + globalPaidSeats + dend;
+  result = result + line._document_number + dlim + "coveredProduct_l" + dlim + coveredProduct + dend;
+  result = result + line._document_number + dlim + "cPProductFamily_l" + dlim + coveredProductFamily + dend;
+ }
+}
+return result;

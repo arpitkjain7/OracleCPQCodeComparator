@@ -1,0 +1,38 @@
+/********************************************************************
+Validation Name: Update HW Payment Plan
+Jira ID: VIPER-767
+Description: Update HW Payment Plan validation for SED hardware product
+Author: Arjun Singh
+Date: 08-Apr-2020
+Changes done by Shruti for hwpayment_Renew as part of VIPER-791 on 1st June and 12th June 2020
+*************************/
+
+result=dict("dict<string>");
+dic = dict("string");
+
+valuestr = "~paidInFull~yearly";
+//Check whether the line is Upgrade/New/Capacity
+//Changes done by Shruti for hwpayment_Renew as part of VIPER-791 on 1st June 2020 and 12th June 2020
+if(hwpaymentplan_notRenew_t=="yes" AND hwpaymentplan_Renew_t=="") {
+ valuestr = "~paidInFull";
+ put(dic,"message","Please Select Valid Payment Plan. Billing Schedule can only be Paid in Full for Symantec HW based SKUs for Transaction Type=New/Capacity/Upgrade");
+}
+//Check whether the line is Renew
+//Changes done by Shruti for hwpayment_Renew as part of VIPER-791 on 1st June 2020 and 12th june 2020
+if((hwpaymentplan_notRenew_t=="yes" AND hwpaymentplan_Renew_t=="yes") OR (hwpaymentplan_notRenew_t=="" AND hwpaymentplan_Renew_t=="yes"))
+{
+ //valuestr = "~paidInFull~yearly";
+ valuestr = "~paidInFull~yearly~quarterly~custom";
+ put(dic,"message","Please Select Valid Payment Plan.");
+ //put(dic,"message","Please Select Valid Payment Plan. Billing Schedule can only be Paid in Full or Yearly for Symantec HW based SKUs for Transaction Type=Renew");
+} 
+ 
+
+
+put(dic,"location","Top");
+put(dic,"operator","allow");
+put(dic,"values",valuestr);
+
+put(result,"paymentPlan_t",dic);
+
+return result;

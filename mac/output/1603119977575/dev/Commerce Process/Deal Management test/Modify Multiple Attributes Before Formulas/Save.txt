@@ -1,0 +1,73 @@
+/*********************************************************************
+Description: Update Sales Stage, Quote Expiration Date, Sales Org Details from BRCM Users, Primary quote and Payment Plan
+User Story #:
+History:     Date          Author              Comment 
+    01/12/2019    Raghavendra Kumar Kamparth   Modified the library as per best practices
+    05/09/2019    Satyabrata Acharya           Optimized code to align with best practices and used string builder
+    11/15/2019    M Vamsi        VIPER-502 - SYMANTEC: CPQ- Route New Product discounts at Header
+    
+**********************************************************************/
+
+result = "";
+sb5=stringbuilder();
+sb4=stringbuilder();
+sb3=stringbuilder();
+sb2=stringbuilder();
+sb1=stringbuilder();
+sb6=stringbuilder();
+one = "1";
+userLogIn = _system_user_login;
+exch="";
+salesStage = "";
+sb=stringbuilder();
+sbpaymentPlan=stringbuilder();
+
+if(getoldvalue(_system_current_document_currency_pref)<>_system_current_document_currency_pref){
+resultexchangerate=bmql("SELECT USD_To_Local_Curr from Exchange_Rate_Data WHERE Currency_Code=$_system_current_document_currency_pref");
+
+for exchange in resultexchangerate
+ {
+ exch=get(exchange, "USD_To_Local_Curr");
+ }
+ sb = stringbuilder(sb, "1", "~", "currencyExchange_t", "~", exch, "|");
+ 
+}
+
+// Updating value of Sales Stage field into editable version of same field
+if(quoteType_t=="renewalQuote")
+ {
+ salesStage = salesStageEditable_t;
+ sb = stringbuilder(sb, "1", "~", "salesStage_t", "~", salesStage, "|");
+ }
+if(status_t<>"APPROVED"){
+sb4=stringbuilder(sb4,commerce.updatinPerUnitPerListPriceAsPerSelections_brcm());
+}
+
+//Setting up paymentPlan as 'PaidInFull' for not CA Quotes
+if((dealType_t=="bSN" or dealType_t=="bSNRenewal" or dealType_t=="classicBroadcomOnly") AND quoteType_t<>"contractQuote" AND paymentPlan_t=="")
+ {
+ sbpaymentPlan = stringbuilder(result, "1", "~", "paymentPlan_t", "~", "paidInFull", "|");
+ 
+ }
+//Changes made as part of VIPER-502 - Start
+//Logic is to default the approver level 1, approver level 2 & approver level 3 with the user logged in and default the value of approvalLevelCompleted_avg to 1 if the value is -1.
+if((approverLevel1_t == "" or len(trim(approverLevel1_t))<1) and (status_t == "DRAFT" or status_t == "IN_PROGRESS"))
+ {
+  sb1 = stringbuilder(sb1,"1","~","approverLevel1_t","~",userLogIn,"|");
+ }
+if((approverLevel2_t == "" or len(trim(approverLevel2_t))<1) and (status_t == "DRAFT" or status_t == "IN_PROGRESS"))
+ {
+  sb2 = stringbuilder(sb2,"1","~","approverLevel2_t","~",userLogIn,"|");
+ }
+if((approverLevel3_t == "" or len(trim(approverLevel3_t))<1) and (status_t == "DRAFT" or status_t == "IN_PROGRESS"))
+ {
+  sb3 = stringbuilder(sb3,"1","~","approverLevel3_t","~",userLogIn,"|");
+ }
+if(approvalLevelCompleted_avg == -1)
+ {
+  sb6 = stringbuilder(sb6,"1","~","approvalLevelCompleted_avg","~",one,"|");
+ }
+//Changes made as part of VIPER-502 - End
+sb5=sbappend(sb,sb1,sb2,sb3,sb4,sb6,sbpaymentPlan);
+result=sbtostring(sb5);
+return result;

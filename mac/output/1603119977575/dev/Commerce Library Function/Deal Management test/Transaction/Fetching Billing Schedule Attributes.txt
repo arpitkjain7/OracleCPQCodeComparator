@@ -1,0 +1,169 @@
+/*****************************************************************
+ Author - Aditya Suresh/Thushaara
+ Date - 04/04/2019
+ UID - 200
+ USer story summary - Fetching Billing Schedule Attributes for CLM Integration
+*****************************************************************/
+result="";
+dlim="~";
+dend="|";
+dateFormat = "yyyy-MM-dd HH:mm:ss";
+
+billingSchedule = newBillingSchedule_t;
+
+filelocation = bmql("select File_Location from INT_SYSTEM_DETAILS where System = 'Billing_Schedule'");
+Filelocation1="";
+for record in filelocation{
+ Filelocation1 = get(record,"File_Location");
+} 
+ 
+ 
+ 
+defaultErrorMessage="";
+
+row = json();
+rowDate = "";
+rowLicenseFee = 0.0;
+rowMaintenanceFee = 0.0;
+rowCommittedPayments = 0.0;
+rowTotalFees = 0.0;
+quoteRequest = "";
+rowEducationFee = 0.0;
+
+if(paymentPlan_t == "paidInFull"){
+ row = jsonarrayget(newBillingSchedule_t, 0, "json");
+ rowScheduleID = jsonget(row,"scheduleID", "string","");
+ rowDate = jsonget(row,"billingDate", "string","");
+ rowLicenseFee = jsonget(row,"licenseFee", "float",0.0);
+ rowMaintenanceFee = jsonget(row,"maintenanceFee", "float",0.0);
+ rowCommittedPayments = jsonget(row,"committedPayments", "float",0.0);
+ rowTotalFees = jsonget(row,"totalFee", "float",0.0);
+ rowEducationFee = jsonget(row, "educationFee" , "float" , 0.0);
+ 
+ payload = dict("string");
+ put(payload,"scheduleID", rowScheduleID);
+ put(payload,"billingDate", rowDate);
+ put(payload,"totalFees", string(rowTotalFees));
+ put(payload,"educationFee",string(rowEducationFee));
+ put(payload,"maintenanceFee" , string(rowMaintenanceFee));
+ put(payload,"licenseFee" , string(rowLicenseFee));
+ 
+ quoteRequest = quoteRequest + applytemplate(Filelocation1,payload,defaultErrorMessage);
+ 
+ }
+
+if(paymentPlan_t == "yearly"){
+ addStartDate = strtodate(contractEndDate_t, dateFormat );
+ endDateObj = strtodate(contractEndDate_t, dateFormat );
+ startDateObj = strtodate(contractStartDate_t, dateFormat );
+ duration = getdiffindays(endDateObj,startDateObj);
+
+ noOfYears = integer(duration/365.5) + 1;
+ 
+ loop = range(noOfYears);
+ 
+ 
+ 
+ 
+ for line in loop{
+  row = jsonarrayget(newBillingSchedule_t, line, "json");
+  rowScheduleID = jsonget(row,"scheduleID", "string","");
+  rowDate = jsonget(row,"billingDate", "string","");
+  rowLicenseFee = jsonget(row,"licenseFee", "float",0.0);
+  rowMaintenanceFee = jsonget(row,"maintenanceFee", "float",0.0);
+  rowCommittedPayments = jsonget(row,"committedPayments", "float",0.0);
+  rowTotalFees = jsonget(row,"totalFee", "float",0.0);
+  rowEducationFee = jsonget(row, "educationFee" , "float" , 0.0);
+  
+  payload = dict("string");
+  put(payload,"scheduleID", rowScheduleID);
+  put(payload,"billingDate", rowDate);
+  put(payload,"totalFees", string(rowTotalFees));
+  put(payload,"educationFee",string(rowEducationFee));
+         put(payload,"maintenanceFee" , string(rowMaintenanceFee));
+         put(payload,"licenseFee" , string(rowLicenseFee));
+  
+ 
+  quoteRequest = quoteRequest + applytemplate(Filelocation1,payload,defaultErrorMessage);
+  
+   }
+}
+
+if(paymentPlan_t == "quarterly"){
+ days = dict("integer");
+ put(days,1,31);
+ put(days,2,28);
+ put(days,3,31);
+ put(days,4,30);
+ put(days,5,31);
+ put(days,6,30);
+ put(days,7,31);
+ put(days,8,31);
+ put(days,9,30);
+ put(days,10,31);
+ put(days,11,30);
+ put(days,12,31);
+ 
+ startDate = contractStartDate_t;
+ endDateObj = strtodate(contractEndDate_t, dateFormat );
+ startDateObj = strtodate(contractStartDate_t, dateFormat );
+ duration = getdiffindays(endDateObj,startDateObj);
+
+ noOfQuarters = integer(duration/91.4) + 1;
+ if(noOfQuarters == 0){
+  noOfQuarters = 1;
+ } 
+ loop = range(noOfQuarters);
+ 
+ for line in loop{
+  row = jsonarrayget(newBillingSchedule_t, line, "json");
+  rowScheduleID = jsonget(row,"scheduleID", "string","");
+  rowDate = jsonget(row,"billingDate", "string","");
+  rowLicenseFee = jsonget(row,"licenseFee", "float",0.0);
+  rowMaintenanceFee = jsonget(row,"maintenanceFee", "float",0.0);
+  rowCommittedPayments = jsonget(row,"committedPayments", "float",0.0);
+  rowTotalFees = jsonget(row,"totalFee", "float",0.0);
+  rowEducationFee = jsonget(row, "educationFee" , "float" , 0.0);
+  
+  payload = dict("string");
+  put(payload,"scheduleID", rowScheduleID);
+  put(payload,"billingDate", rowDate);
+  put(payload,"totalFees", string(rowTotalFees));
+  put(payload,"educationFee",string(rowEducationFee));
+         put(payload,"maintenanceFee" , string(rowMaintenanceFee));
+         put(payload,"licenseFee" , string(rowLicenseFee));
+ 
+  quoteRequest = quoteRequest + applytemplate(Filelocation1,payload,defaultErrorMessage);
+  
+    
+ }
+}
+
+if(paymentPlan_t == "custom"){
+ loop = range(billingScheduleController_t);
+ 
+ for line in loop{
+  row = jsonarrayget(newBillingSchedule_t, line, "json");
+  rowScheduleID = jsonget(row,"scheduleID", "string","");
+  rowDate = jsonget(row,"billingDate", "string","");
+  rowLicenseFee = jsonget(row,"licenseFee", "float",0.0);
+  rowMaintenanceFee = jsonget(row,"maintenanceFee", "float",0.0);
+  rowCommittedPayments = jsonget(row,"committedPayments", "float",0.0);
+  rowTotalFees = jsonget(row,"totalFee", "float",0.0);
+  rowEducationFee = jsonget(row, "educationFee" , "float" , 0.0);
+  
+  payload = dict("string");
+  put(payload,"scheduleID", rowScheduleID);
+  put(payload,"billingDate", rowDate);
+  put(payload,"totalFees", string(rowTotalFees));
+  put(payload,"educationFee",string(rowEducationFee));
+         put(payload,"maintenanceFee" , string(rowMaintenanceFee));
+         put(payload,"licenseFee" , string(rowLicenseFee));
+ 
+  quoteRequest = quoteRequest + applytemplate(Filelocation1,payload,defaultErrorMessage);
+  
+    
+ }
+ 
+}
+return quoteRequest;

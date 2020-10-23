@@ -1,0 +1,48 @@
+/*****************************************************************
+ Author - Thushaara Vaasantha
+ Date - 04/04/2019
+ UID - 200
+ USer story summary - Send quote data from CPQ to CLM
+*****************************************************************/ 
+ returnString = "";
+defaultErrorMessage="";
+payload=Dict("string");
+//retrieving username and password for web service authentication,file loaction and end point URL from data table for the corresponding function call 
+file= bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'Create_Sessionrequest'");
+Filelocation1="";
+Username1="";
+Password1="";
+SoapEndpoint1="";
+
+for record in file{
+ Filelocation1 = get(record,"File_Location"); 
+ Username1 = get(record,"Username"); 
+ Password1 = get(record,"Password"); 
+ SoapEndpoint1 = get(record,"SoapEndpoint"); 
+ }
+put(payload,"Password", Password1);
+put(payload,"File_Location", Filelocation1);
+put(payload,"SoapEndpoint", SoapEndpoint1);
+put(payload,"Username", Username1);
+
+returnString=returnString+ applytemplate(Filelocation1,payload,defaultErrorMessage);
+ 
+print returnString;
+
+headerDict = dict("string");
+put(headerDict, "Content-Type", "text/xml; charset=utf-8");
+put(headerDict, "SOAPAction", "\"urn:enterprise.soap.sforce.com/Soap/loginRequest\"");
+//service to create a session
+finalString = urldatabypost(SoapEndpoint1,returnString, "Failed to Connect", headerDict,true);
+xpaths = string[1];
+xpaths[0] = "/soapenv:Envelope/soapenv:Body/*[name()='loginResponse']/*[name()='result']/*[name()='sessionId']";
+output = readxmlsingle(finalString,xpaths);
+
+sessionId = "";
+for xpath in xpaths
+{ 
+ sessionId=get(output, xpath);
+}
+
+
+return sessionId;

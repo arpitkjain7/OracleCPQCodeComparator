@@ -1,0 +1,19 @@
+/***********************************************************
+Function Name :Display Date
+Name :Nandhini Vurimella
+Description : To display date
+**********************************************************/
+result = "";
+
+if(basisOfUpdation_t == "calendarDate"){
+contractApprvdTSDate = getdate();
+
+
+      contractApprvdTS = datetostr(contractApprvdTSDate);
+
+          result = result + "1" + "~CalendarDate_t~" + contractApprvdTS + "|";
+}
+
+result = result + commerce.updateContractEndDate();
+
+return result;

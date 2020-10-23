@@ -1,0 +1,46 @@
+/******************************************************************************` 
+Author : Kavita Lolla
+UID - 179
+User Story Summary : Webservice to fetch the group users and their emails 
+ to send notifications.
+Date : 04/03/2019
+******************************************************************************/
+payload = dict("string");
+put(payload,"sessionId", _user_session_id);
+xmlPayload = "";
+area = salesRegion;
+resultSet = bmql("select Sales_Region_Queue from BRCM_Sales_Region where Sales_Area = $area");
+for each in resultSet
+{
+ put(payload,"groupVarName",get(each,"Sales_Region_Queue"));
+}
+//retrieving username and password for web service authentication from data table for the corresponding function call
+recordset=bmql("SELECT Username,Password,File_Location,SoapEndpoint,SchemaLocation FROM INT_SYSTEM_DETAILS WHERE System='GROUP_USERS'");
+for record in recordset{
+ put(payload,"schemaLocation", get(record, "SchemaLocation"));
+ put(payload,"USERNAME", get(record, "Username"));
+ put(payload,"PASSWORD", get(record, "Password"));
+/* auth = username + ":" + password;
+ str1 = encodebase64(auth);
+ auth="Basic" + " " + str1;
+ headersDict = dict("string");
+ put(headersDict,"Content-Type","text/xml;charset=UTF-8"); 
+ put(headersDict,"Authorization",auth); 
+ */
+ 
+ put(payload,"companyName",_company_name);
+ quoteRequest=applytemplate(get(record,"File_Location"),payload,"");
+ //service to fetch user groups and their emails
+ xmlPayload = urldatabypost(get(record,"SoapEndpoint"), quoteRequest,"Failed to Connect");
+}
+xpath = String[1];
+xpath[0] = "/soapenv:Envelope/soapenv:Body/bm:getGroupsResponse/bm:groups/bm:group/bm:users/bm:user/bm:login";
+output = readxmlmultiple(xmlPayload,xpath);
+logins = get(output,xpath[0]);
+emails = "klolla@deloitte.com,";
+for login in logins
+{
+//identifying all the list of emails
+ emails = emails + util.emailUsingUSerLogin_avg(login) + ",";
+}
+return substring(emails, 0, -1);

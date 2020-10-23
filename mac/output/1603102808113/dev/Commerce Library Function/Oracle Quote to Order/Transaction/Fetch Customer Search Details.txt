@@ -1,0 +1,282 @@
+/********************************************************************
+Rule Name: Fetch Customer Details
+Description: This BML function is used to fetch Customer Details from Config after customer selection is done.
+Author: Kumar Satyabrata Acharya
+Date:   13th January 2019
+*******************************Change log****************************
+     Date            Author         Description
+ 25/07/2019 Satyabrata Acharya  BROCAD2-5502 - Restrict address selection to the same OU in quote header.
+ 10/28/2019 Satyabrata Acharya  SYMINT-1657 - added logic to blank out customer details values if operating unit is changed
+ ********************************************************************/
+ //Initializing the variables that we are going to use like Billto attribute, sold to and ship to attibutes,delimiters,result,etc
+result="";
+dlim="~";
+dend="|";
+BillToCity= billToCity_t;
+BillToCountry= billToCountry_t;
+BillToAddress= billToAddress_t;
+BillToState= billToState_t;
+BillToZip= billToZip_t;
+ShipToCity= _transaction_shipTo_t_city;
+ShipToCountry= _transaction_shipTo_t_country;
+ShipToAddress= _transaction_shipTo_t_address;
+ShipToState= _transaction_shipTo_t_state;
+ShipToZip= _transaction_shipTo_t_zip;
+BillToContactWorkPhone=billToContactWorkPhone_t;
+BillToContactMobilePhone=billToContactMobilePhone_t;
+BillToContactName=billToContactName_t;
+BillToContactEmail=billToContactEmail_t;
+ShipToCustomer=shipToCustomerSite_t;
+ShipToERP=shipToPartyID_t;
+BillToCustomer=billToCustomer_t;
+BillToERP=eRPAccountNumberPurchaseCustomer_t;
+BillToCustomerId=billToCustomerId_t;
+SoldToCustomer=soldToCustomer_t;
+SoldToERP=eRPAccountNumberShipTo_t;
+SoldToContactName=soldToContactName_t;
+SoldToContactEmail=soldToContactEmail_t;
+SoldToContactWorkPhone=soldToContactWorkPhone_t;
+SoldToContactMobilePhone=soldToContactMobilePhone_t;
+EndCustomer=_transaction_customer_t_company_name;
+EndCustomerId=_transaction_customer_id;
+EndCustomerERP=customerERPId_t;
+BillToSiteNumber=billToSiteNumber_t;
+ShipToSiteNumber=shipToSiteNumber_t;
+ShipToContactName=shipToContactName_t;
+ShipToContactEmail=shipToContactEmail_t;
+ShipToContactWorkPhone=shipToContactWorkPhone_t;
+ShipToContactMobilePhone=soldToContactMobilePhone_t;
+operatingUnit=operatingUnit_t;
+SellToSiteNumber=sellToSiteNumber_t;
+BillParentId=billToParentId_avg;
+BillGrandParentId=billToGrandParentId_avg;
+EndParentId=endCustomerParentId_avg;
+EndGrandParentId=endCustomerGrandParentId_avg;
+GlobalParentName=endCustomerGlobalParentName_t;
+BillToParentName=billToParentId_avg;
+BillToGrandParentName=billToGrandParentId_avg;
+ShipToAddress2=_transaction_shipTo_t_address_2;
+SoldToCustomerId=soldToCustomerAccountID_t;
+RestrictedCustomerFlag = string(restrictedCustomerFlag_t);
+RestrictedCustomerFlagBoolean = restrictedCustomerFlag_t;
+Core = core_t;
+PartnerPartyNumber = partnerPartyNumber_t;
+EndToCustomer = _transaction_customer_t_company_name;
+EndToCustomerId = _transaction_customer_id;
+EndToERP = customerERPId_t;
+EndToParentName = endCustomerParentId_avg;
+EndToGrandparentName = endCustomerGrandParentId_avg;
+SoldToAddress = _transaction_soldTo_t_address;
+SoldToCity = _transaction_soldTo_t_city;
+SoldToState = _transaction_soldTo_t_state;
+SoldToCountry = _transaction_soldTo_t_country;
+SoldToZip = _transaction_soldTo_t_zip;
+EndToSiteNumber = endCustomerSiteNumber_t;
+EndToAddress2 = _transaction_customer_t_address_2;
+EndToAddress = _transaction_customer_t_address;
+EndToCity = _transaction_customer_t_city;
+EndToState = endCustomerState_t;
+EndToCountry = endCustomerCountry_t;
+EndToZip = _transaction_customer_t_zip;
+PaymentTerms = paymentTerms_t;
+OperatingUnit_string = operatingUnit_t;
+newQuoteOwner = "";
+sb1=stringbuilder();
+//Jira# 5502 : Restrict address selection to the same OU in quote header
+operatingUnit = "";
+//this query fetched the OU as per the Ship to Country in order to compare in case OU was changed after customer selection.
+res = bmql("SELECT OU_Name FROM OU_ShiptTo_Mapping WHERE ShipToCountry = $shipToCountry_menu_t AND Group = $dealType_t");
+for value in res
+ {
+ operatingUnit = get(value,"OU_Name");
+ }
+//end of code for Jira# 5502
+//Checking null value of cutomer Id and also id part number not equals to cust then only creating Json Object
+if(_transaction_customer_id<>"")
+{
+ EndCustomerId=_transaction_customer_id;
+}
+//restricting customer search parts that get added after customer search and also restricting model lines in case of configured parts
+print model_name;
+print model_name;
+ if(part_number=="Cust" or model_name=="Customer Search")
+ {
+  obj=json();
+  //If line item coment not equal to null fetching value of BillTo,ShipTO,SellTo using jsonget function
+  
+  if(line_item_comment<>"") 
+  {
+  
+  print "line itme comment==========";
+  print line_item_comment;
+   teststring=line_item_comment;
+   
+   obj=json(teststring);
+   
+   ShipTo=jsonget(obj,"SHIP_TO");
+   
+   BillTo=jsonget(obj,"BILL_TO");
+   SellTo=jsonget(obj,"SOLD_TO");
+   EndTo=jsonget(obj,"END_TO");
+   quoteOwnerDetails=jsonget(obj,"Quote_Owner");
+   // This function is called only fo non-contract quote so adding the condtion 
+   //Jira# 5502 operating unit check is to make sure address parsing is done only when OU was not changed after customer selection
+   if(quoteType_t<>"contractQuote" AND operatingUnit_t==operatingUnit){
+   //Checking if there is value in ship to then fetching all the values from ship to like name,email id,etc using jsonget
+   if(isnull(ShipTo)<>true)
+   {
+    
+    ShipToContactName=jsonget(json(ShipTo), "Name");
+    ShipToContactEmail=jsonget(json(ShipTo), "Email Id");
+    ShipToContactMobilePhone=jsonget(json(ShipTo), "Mobile Phone");
+    ShipToContactWorkPhone=jsonget(json(ShipTo), "Work Phone");
+    
+    ShipToCustomer=jsonget(json(ShipTo),"Customer Name");
+    ShipToERP=jsonget(json(ShipTo),"Customer ERP Id");
+    ShipToSiteNumber=jsonget(json(ShipTo), "Address Site Use Id");
+    ShipToCity= jsonget(json(ShipTo), "City");
+    ShipToCountry= jsonget(json(ShipTo), "Country");
+    ShipToAddress= jsonget(json(ShipTo), "Address Line 1");
+    ShipToAddress2= jsonget(json(ShipTo), "Address Line 2");
+    ShipToState= jsonget(json(ShipTo), "State");
+    ShipToZip= jsonget(json(ShipTo), "Postal Code");
+    OperatingUnit_string=jsonget(json(ShipTo), "Operating Unit");
+    RestrictedCustomerFlag=jsonget(json(ShipTo), "Restricted Customer Flag");
+   }
+   //Checking if there is value in Bill to then fetching all the values from ship to like name,email id,etc using jsonget
+
+   if(isnull(BillTo)<>true)
+   {
+    BillToCustomer=jsonget(json(BillTo),"Customer Name");
+    BillToContactName=jsonget(json(BillTo),"Name");
+    BillToContactEmail=jsonget(json(BillTo),"Email Id");
+    BillToContactWorkPhone=jsonget(json(BillTo),"Work Phone");
+    BillToContactMobilePhone=jsonget(json(BillTo),"Mobile Phone");
+    BillToERP=jsonget(json(BillTo),"Customer ERP Id");
+    BillToCustomerId=jsonget(json(BillTo),"Customer Id");
+    BillToSiteNumber=jsonget(json(BillTo), "Address Site Use Id");
+    BillToParentName=jsonget(json(BillTo), "Customer Parent");
+    BillToGrandParentName=jsonget(json(BillTo), "Customer Grandparent");
+    RestrictedCustomerFlag=jsonget(json(BillTo), "Restricted Customer Flag");
+    //Core=jsonget(json(BillTo), "Core");
+    PartnerPartyNumber = jsonget(json(BillTo), "Party Number");
+    BillToCity= jsonget(json(BillTo), "City");
+    BillToCountry= jsonget(json(BillTo), "Country");
+    BillToAddress= jsonget(json(BillTo), "Address Line 1");
+    BillToState= jsonget(json(BillTo), "State");
+    BillToZip= jsonget(json(BillTo), "Postal Code");
+   }
+   //Checking if there is value in Sell to then fetching all the values from ship to like name,email id,etc using jsonget
+   if(isnull(SellTo)<>true)
+   {
+    SoldToCustomer=jsonget(json(SellTo),"Customer Name");
+    SoldToCustomerId=jsonget(json(SellTo),"Customer Id");
+    SoldToContactName=jsonget(json(SellTo),"Name");
+    SoldToContactEmail=jsonget(json(SellTo),"Email Id");
+    SoldToContactWorkPhone=jsonget(json(SellTo),"Work Phone");
+    SoldToContactMobilePhone=jsonget(json(SellTo),"Mobile Phone");
+    SoldToERP=jsonget(json(SellTo),"Customer ERP Id");
+    SellToSiteNumber=jsonget(json(SellTo), "Address Site Use Id");
+    RestrictedCustomerFlag=jsonget(json(SellTo), "Restricted Customer Flag");
+    SoldToAddress = jsonget(json(SellTo), "Address Line 1");
+    SoldToCity = jsonget(json(SellTo), "City");
+    SoldToState = jsonget(json(SellTo), "State");
+    SoldToCountry = jsonget(json(SellTo), "Country");
+    SoldToZip = jsonget(json(SellTo), "Postal Code");
+//    PartnerPartyNumber = jsonget(json(SellTo), "Party Number");
+   }
+   }
+   //Checking if there is value in End to then fetching all the values from ship to like name,email id,etc using jsonget
+   
+   if(isnull(EndTo)<>true)
+   {
+    EndToCustomer = jsonget(json(EndTo),"Customer Name");
+    EndToCustomerId = jsonget(json(EndTo),"Customer Id");
+    EndToERP = jsonget(json(EndTo),"Customer ERP Id");
+    EndToParentName = jsonget(json(EndTo),"Customer Parent");
+    EndToGrandparentName = jsonget(json(EndTo),"Customer Grandparent");
+    GlobalParentName=jsonget(json(EndTo),"Global Parent Name");
+    RestrictedCustomerFlag=jsonget(json(EndTo), "Restricted Customer Flag");
+    Core=jsonget(json(EndTo), "Core");
+    PartnerPartyNumber = jsonget(json(EndTo), "Party Number");
+    PaymentTerms = jsonget(json(EndTo), "Payment Terms");
+    //if(businessDivision_t=="Symantec"){
+    EndToSiteNumber = jsonget(json(EndTo), "End Customer Site Number");
+    EndToAddress2 = jsonget(json(EndTo), "End Customer Address 2");
+    EndToAddress = jsonget(json(EndTo), "End Customer Address");
+    EndToCity = jsonget(json(EndTo), "End Customer City");
+    EndToState = jsonget(json(EndTo), "End Customer State");
+    EndToCountry = jsonget(json(EndTo), "End Customer Country");
+    EndToZip = jsonget(json(EndTo), "End Customer Zip");
+    //}
+
+   }
+   
+   if(isnull(quoteOwnerDetails)<>true)
+   {
+   print "==============";
+   
+   print "quoteOwnerDetails";
+   print "==============";
+    quoteOwnerName = jsonget(json(quoteOwnerDetails), "QuoteOwner");
+    quoteOwnerEmail = jsonget(json(quoteOwnerDetails), "Quoteemail"); 
+    
+    newQuoteOwner = quoteOwnerName + "~" + quoteOwnerEmail;
+   }
+
+  }
+
+ }
+ //Creating string builder to return the value and checking the quote type as it should not equal to contract quote
+ if(quoteType_t<>"contractQuote"){
+ if(endCustomerSelectFlag_t == False){ 
+////Jira# 5502 making all the fields blank if OU was changed and customer was not reselected.
+if(operatingUnit_t==OperatingUnit_string){
+sb1=stringbuilder(result,"1" , dlim , "billToContactEmail_t" , dlim , BillToContactEmail , dend, "1" , dlim , "billToContactWorkPhone_t" , dlim , BillToContactWorkPhone , dend, "1" , dlim , "billToContactName_t" , dlim , BillToContactName , dend, "1" , dlim , "billToContactMobilePhone_t" , dlim , BillToContactMobilePhone , dend, "1" , dlim , "shipToPartyID_t" , dlim , ShipToERP , dend, "1" , dlim , "soldToContactName_t" , dlim , SoldToContactName , dend, "1" , dlim , "soldToContactEmail_t" , dlim , SoldToContactEmail , dend, "1" , dlim , "soldToContactWorkPhone_t" , dlim , SoldToContactWorkPhone , dend, "1" , dlim , "soldToContactMobilePhone_t" , dlim , SoldToContactMobilePhone , dend, "1" , dlim , "soldToCustomerAccountID_t" , dlim , SoldToCustomerId , dend, "1" , dlim , "shipToContactName_t" , dlim , ShipToContactName , dend, "1" , dlim , "shipToContactEmail_t" , dlim , ShipToContactEmail , dend, "1" , dlim , "shipToContactMobilePhone_t" , dlim , ShipToContactMobilePhone , dend, "1" , dlim , "shipToContactWorkPhone_t" , dlim , ShipToContactWorkPhone , dend, "1" , dlim , "_shipTo_t_city" , dlim , ShipToCity , dend, "1" , dlim , "_shipTo_t_state" , dlim , ShipToState , dend, "1" , dlim , "_shipTo_t_country" , dlim , ShipToCountry , dend, "1" , dlim , "_shipTo_t_address" , dlim , ShipToAddress , dend, "1" , dlim , "_shipTo_t_zip" , dlim , ShipToZip , dend, "1" , dlim , "billToCity_t" , dlim , BillToCity , dend, "1" , dlim , "billToState_t" , dlim , BillToState , dend, "1" , dlim , "billToCountry_t" , dlim , BillToCountry , dend, "1" , dlim , "billToAddress_t" , dlim , BillToAddress , dend, "1" , dlim , "billToZip_t" , dlim , BillToZip , dend, "1" , dlim , "_shipTo_t_address_2" , dlim , ShipToAddress2 , dend, "1" , dlim , "billToCustomer_t" , dlim , BillToCustomer , dend, "1" , dlim , "billToCustomerId_t" , dlim , BillToCustomerId , dend, "1" , dlim , "eRPAccountNumberPurchaseCustomer_t" , dlim , BillToERP , dend, "1" , dlim , "shipToCustomerSite_t" , dlim , ShipToCustomer , dend, "1" , dlim , "eRPAccountNumberShipTo_t" , dlim , SoldToERP , dend, "1" , dlim , "soldToCustomer_t" , dlim , SoldToCustomer , dend, "1" , dlim , "billToSiteNumber_t" , dlim , BillToSiteNumber , dend, "1" , dlim , "sellToSiteNumber_t" , dlim , SellToSiteNumber , dend, "1" , dlim , "shipToSiteNumber_t" , dlim , ShipToSiteNumber , dend, "1" , dlim , "billToParentId_avg" , dlim , BillToParentName , dend, "1" , dlim , "billToGrandParentId_avg" , dlim , BillToGrandparentName , dend, "1" , dlim , "shipToCountry_t" , dlim , ShipToCountry , dend, "1" , dlim , "_transaction_soldTo_t_city" , dlim , SoldToCity , dend, "1" , dlim , "_transaction_soldTo_t_address" , dlim , SoldToAddress , dend, "1" , dlim , "_transaction_soldTo_t_state" , dlim , SoldToState , dend, "1" , dlim , "_transaction_soldTo_t_zip" , dlim , SoldToZip , dend, "1" , dlim , "_transaction_soldTo_t_country" , dlim , SoldToCountry , dend);
+sb1=stringbuilder(sb1, "1", dlim, "endCustomerSelectFlag_t",dlim, "false",dend,"1" , dlim , "endCustomerParentId_avg" , dlim , EndToParentName , dend, "1" , dlim , "endCustomerGrandParentId_avg" , dlim , EndToGrandparentName , dend, "1" , dlim , "endCustomerGlobalParentName_t" , dlim , GlobalParentName , dend, "1" , dlim , "_transaction_customer_t_company_name" , dlim , EndToCustomer, dend, "1" , dlim , "_transaction_customer_id" , dlim , EndToCustomerId , dend,"1" , dlim , "customerERPId_t" , dlim ,  EndToERP  , dend, "1" , dlim , "core_t" , dlim , Core , dend, "1" , dlim ,"restrictedCustomerFlag_t" , dlim , RestrictedCustomerFlag , dend, "1" , dlim , "partnerPartyNumber_t" , dlim , PartnerPartyNumber , dend, "1" , dlim , "paymentTerms_t" , dlim , PaymentTerms , dend, "1" , dlim , "endCustomerSiteNumber_t" , dlim , EndToSiteNumber , dend, "1" , dlim , "_transaction_customer_t_address_2" , dlim , EndToAddress2, dend, "1" , dlim , "_transaction_customer_t_address" , dlim , EndToAddress , dend, "1" , dlim , "_transaction_customer_t_city" , dlim , EndToCity, dend, "1" , dlim , "endCustomerState_t" , dlim , EndToState , dend, "1" , dlim , "endCustomerCountry_t" , dlim ,  EndToCountry  , dend,"1" , dlim , "_transaction_customer_t_zip" , dlim , EndToZip , dend);
+}
+if(operatingUnit_t<>OperatingUnit_string){
+sb1=stringbuilder(result, "1" , dlim , "billToContactEmail_t" , dlim , "", dend, "1" , dlim , "billToContactWorkPhone_t" , dlim , "" , dend, "1" , dlim , "billToContactName_t" , dlim , "" , dend, "1" , dlim , "billToContactMobilePhone_t" , dlim , "" , dend, "1" , dlim , "shipToPartyID_t" , dlim , "" , dend, "1" , dlim , "soldToContactName_t" , dlim , "" , dend, "1" , dlim , "soldToContactEmail_t" , dlim , "" , dend, "1" , dlim , "soldToContactWorkPhone_t" , dlim , "" , dend, "1" , dlim , "soldToContactMobilePhone_t" , dlim , "" , dend, "1" , dlim , "soldToCustomerAccountID_t" , dlim , "" , dend, "1" , dlim , "shipToContactName_t" , dlim , "" , dend, "1" , dlim , "shipToContactEmail_t" , dlim , "" , dend, "1" , dlim , "shipToContactMobilePhone_t" , dlim , "" , dend, "1" , dlim , "shipToContactWorkPhone_t" , dlim , "" , dend, "1" , dlim , "_shipTo_t_city" , dlim , "" , dend, "1" , dlim , "_shipTo_t_state" , dlim , "" , dend, "1" , dlim , "_shipTo_t_country" , dlim , "" , dend, "1" , dlim , "_shipTo_t_address" , dlim , "" , dend, "1" , dlim , "_shipTo_t_zip" , dlim , "" , dend, "1" , dlim , "billToCity_t" , dlim , "" , dend, "1" , dlim , "billToState_t" , dlim , "" , dend, "1" , dlim , "billToCountry_t" , dlim , "" , dend, "1" , dlim , "billToAddress_t" , dlim , "" , dend, "1" , dlim , "billToZip_t" , dlim , "" , dend, "1" , dlim , "_shipTo_t_address_2" , dlim , "" , dend, "1" , dlim , "billToCustomer_t" , dlim , "" , dend, "1" , dlim , "billToCustomerId_t" , dlim , "" , dend, "1" , dlim , "eRPAccountNumberPurchaseCustomer_t" , dlim , "" , dend, "1" , dlim , "shipToCustomerSite_t" , dlim , "" , dend, "1" , dlim , "eRPAccountNumberShipTo_t" , dlim , "" , dend, "1" , dlim , "soldToCustomer_t" , dlim , "" , dend, "1" , dlim , "billToSiteNumber_t" , dlim , "" , dend, "1" , dlim , "sellToSiteNumber_t" , dlim , "" , dend, "1" , dlim , "shipToSiteNumber_t" , dlim , "" , dend, "1" , dlim , "billToParentId_avg" , dlim , "" , dend, "1" , dlim , "billToGrandParentId_avg" , dlim , "" , dend, "1" , dlim , "shipToCountry_t" , dlim , "" , dend, "1" , dlim , "_transaction_soldTo_t_city" , dlim , "" , dend, "1" , dlim , "_transaction_soldTo_t_address" , dlim , "" , dend, "1" , dlim , "_transaction_soldTo_t_state" , dlim , "" , dend, "1" , dlim , "_transaction_soldTo_t_zip" , dlim , "" , dend, "1" , dlim , "_transaction_soldTo_t_country" , dlim , "" , dend);
+}
+result=sbtostring(sb1);
+//sb1=stringbuilder();
+}
+if(Core=="Commercial")
+{
+sb1=stringbuilder(result,"1",dlim,"licenseeName_t",dlim,EndToCustomer,dend,"1",dlim,"licenseeERPAccount_t",dlim,EndToERP,dend);
+result=sbtostring(sb1);
+}
+
+}
+
+if(endCustomerSelectFlag_t == True){
+ret = "";
+sb = stringbuilder();
+if(customerERPId_t <> EndToERP){
+ if(copiedAndCustChanged_t == "Copied")
+ {
+  sbappend(sb, "1~copiedAndCustChanged_t~CustChanged|");
+  sbappend(sb, "1~opportunityID_t~|");
+  sbappend(sb, "1~opportunityName_t~|");
+  sbappend(sb, "1~opportunityNumber_t~|");
+  sbappend(sb, "1~opportunityOwner_t~|");
+  ret = sbtostring(sb);
+ }
+}
+// Returning the result by using stringbuilder to increace performance 
+ sb1=stringbuilder(ret, "1", dlim, "endCustomerSelectFlag_t",dlim, "false",dend,"1" , dlim , "endCustomerParentId_avg" , dlim , EndToParentName , dend, "1" , dlim , "endCustomerGrandParentId_avg" , dlim , EndToGrandparentName , dend, "1" , dlim , "endCustomerGlobalParentName_t" , dlim , GlobalParentName , dend, "1" , dlim , "_transaction_customer_t_company_name" , dlim , EndToCustomer, dend, "1" , dlim , "_transaction_customer_id" , dlim , EndToCustomerId , dend,"1" , dlim , "customerERPId_t" , dlim ,  EndToERP  , dend, "1" , dlim , "core_t" , dlim , Core , dend, "1" , dlim ,"restrictedCustomerFlag_t" , dlim , RestrictedCustomerFlag , dend, "1" , dlim , "partnerPartyNumber_t" , dlim , PartnerPartyNumber , dend, "1" , dlim , "paymentTerms_t" , dlim , PaymentTerms , dend, "1" , dlim , "endCustomerSiteNumber_t" , dlim , EndToSiteNumber , dend, "1" , dlim , "_transaction_customer_t_address_2" , dlim , EndToAddress2, dend, "1" , dlim , "_transaction_customer_t_address" , dlim , EndToAddress , dend, "1" , dlim , "_transaction_customer_t_city" , dlim , EndToCity, dend, "1" , dlim , "endCustomerState_t" , dlim , EndToState , dend, "1" , dlim , "endCustomerCountry_t" , dlim ,  EndToCountry  , dend,"1" , dlim , "_transaction_customer_t_zip" , dlim , EndToZip , dend);
+ if(Core=="Commercial"){
+ sb1=sbappend(sb1,"1",dlim,"licenseeName_t",dlim,EndToCustomer,dend,"1",dlim,"licenseeERPAccount_t",dlim,EndToERP,dend);
+ }
+ 
+ result=sbtostring(sb1);
+}
+//SYMINT-1657 added logic to blank out customer details values if operating unit is changed
+if(operatingUnit_t<>operatingUnit){
+sb1=stringbuilder(result, "1",dlim,"licenseeName_t",dlim,"",dend,"1",dlim,"licenseeERPAccount_t",dlim,"",dend, "1" , dlim , "endCustomerParentId_avg" , dlim , "" , dend, "1" , dlim , "endCustomerGrandParentId_avg" , dlim , "" , dend, "1" , dlim , "endCustomerGlobalParentName_t" , dlim , "" , dend, "1" , dlim , "_transaction_customer_t_company_name" , dlim , "", dend, "1" , dlim , "_transaction_customer_id" , dlim , "" , dend,"1" , dlim , "customerERPId_t" , dlim ,  ""  , dend, "1" , dlim , "core_t" , dlim , "" , dend, "1" , dlim ,"restrictedCustomerFlag_t" , dlim , "" , dend, "1" , dlim , "partnerPartyNumber_t" , dlim , "" , dend, "1" , dlim , "paymentTerms_t" , dlim , "" , dend, "1" , dlim , "endCustomerSiteNumber_t" , dlim , "" , dend, "1" , dlim , "_transaction_customer_t_address_2" , dlim , "", dend, "1" , dlim , "_transaction_customer_t_address" , dlim , "" , dend, "1" , dlim , "_transaction_customer_t_city" , dlim , "", dend, "1" , dlim , "endCustomerState_t" , dlim , "" , dend, "1" , dlim , "endCustomerCountry_t" , dlim ,  ""  , dend,"1" , dlim , "_transaction_customer_t_zip" , dlim , "" , dend, "1" , dlim , "billToContactEmail_t" , dlim , "", dend, "1" , dlim , "billToContactWorkPhone_t" , dlim , "" , dend, "1" , dlim , "billToContactName_t" , dlim , "" , dend, "1" , dlim , "billToContactMobilePhone_t" , dlim , "" , dend, "1" , dlim , "shipToPartyID_t" , dlim , "" , dend, "1" , dlim , "soldToContactName_t" , dlim , "" , dend, "1" , dlim , "soldToContactEmail_t" , dlim , "" , dend, "1" , dlim , "soldToContactWorkPhone_t" , dlim , "" , dend, "1" , dlim , "soldToContactMobilePhone_t" , dlim , "" , dend, "1" , dlim , "soldToCustomerAccountID_t" , dlim , "" , dend, "1" , dlim , "shipToContactName_t" , dlim , "" , dend, "1" , dlim , "shipToContactEmail_t" , dlim , "" , dend, "1" , dlim , "shipToContactMobilePhone_t" , dlim , "" , dend, "1" , dlim , "shipToContactWorkPhone_t" , dlim , "" , dend, "1" , dlim , "_shipTo_t_city" , dlim , "" , dend, "1" , dlim , "_shipTo_t_state" , dlim , "" , dend, "1" , dlim , "_shipTo_t_country" , dlim , "" , dend, "1" , dlim , "_shipTo_t_address" , dlim , "" , dend, "1" , dlim , "_shipTo_t_zip" , dlim , "" , dend, "1" , dlim , "billToCity_t" , dlim , "" , dend, "1" , dlim , "billToState_t" , dlim , "" , dend, "1" , dlim , "billToCountry_t" , dlim , "" , dend, "1" , dlim , "billToAddress_t" , dlim , "" , dend, "1" , dlim , "billToZip_t" , dlim , "" , dend, "1" , dlim , "_shipTo_t_address_2" , dlim , "" , dend, "1" , dlim , "billToCustomer_t" , dlim , "" , dend, "1" , dlim , "billToCustomerId_t" , dlim , "" , dend, "1" , dlim , "eRPAccountNumberPurchaseCustomer_t" , dlim , "" , dend, "1" , dlim , "shipToCustomerSite_t" , dlim , "" , dend, "1" , dlim , "eRPAccountNumberShipTo_t" , dlim , "" , dend, "1" , dlim , "soldToCustomer_t" , dlim , "" , dend, "1" , dlim , "billToSiteNumber_t" , dlim , "" , dend, "1" , dlim , "sellToSiteNumber_t" , dlim , "" , dend, "1" , dlim , "shipToSiteNumber_t" , dlim , "" , dend, "1" , dlim , "billToParentId_avg" , dlim , "" , dend, "1" , dlim , "billToGrandParentId_avg" , dlim , "" , dend, "1" , dlim , "shipToCountry_t" , dlim , "" , dend, "1" , dlim , "_transaction_soldTo_t_city" , dlim , "" , dend, "1" , dlim , "_transaction_soldTo_t_address" , dlim , "" , dend, "1" , dlim , "_transaction_soldTo_t_state" , dlim , "" , dend, "1" , dlim , "_transaction_soldTo_t_zip" , dlim , "" , dend, "1" , dlim , "_transaction_soldTo_t_country" , dlim , "" , dend);
+result=sbtostring(sb1);
+//sb1=stringbuilder();
+}
+
+
+return result;

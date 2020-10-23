@@ -1,0 +1,25 @@
+/********************************************************************
+Function Name: Constrain Start End Dates
+Description: This Constraint rule checks that whether the effective start date and end date during product configuration are valid
+Date: March 4 2019
+User Story: UID-26 
+Author: Raghav 
+Modified by Arjun on Issue Tracker ID-463
+/********************************************************************/
+
+ret=false;
+
+if(transactionsType_avg <> "" and showHideButton_avg=="SHOW")
+{
+
+
+//if(datetostr(effectiveDateNa_avg, "yyyy-MM-dd HH:mm:ss") <> "" or datetostr(endDateNa, "yyyy-MM-dd HH:mm:ss") <> "")
+if(datetostr(effectiveDateNa_avg, "yyyy-MM-dd HH:mm:ss") <> "" and datetostr(endDateNa, "yyyy-MM-dd HH:mm:ss") <> "")
+{
+ if(effectiveDateNa_avg > endDateNa)
+ {
+  ret=true;
+ } 
+}
+}
+return ret;

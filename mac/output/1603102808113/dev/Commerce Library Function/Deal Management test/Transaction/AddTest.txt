@@ -1,0 +1,89 @@
+PCStr       = " ";   
+    
+       partNo        = "ATASPV990";
+       partName      = "CA WORKLOAD AUTOMATION AE PRODUCTION SERVERS";
+       quantity      = "5";
+       licenceType   = "Perpetual";
+       ltransactionType = "New";
+       lenterEnvironment = "Production";
+       llicenseType = "Perpetual";
+       lsupportType = "ES";
+       lstandardQuantity = "2";
+       lexistingQuantity = "3";
+       lProductType = "Software";
+       selectProdNumber = "true";
+       select = "true";
+
+       CStartDate = datetostr(strtojavadate("2020-01-09 00:00:00","yyyy-MM-dd HH:mm:ss"),"MM/dd/yyyy HH:mm:ss");
+       CEndDate = datetostr(strtojavadate("2020-01-09 00:00:00","yyyy-MM-dd HH:mm:ss"),"MM/dd/yyyy HH:mm:ss");
+       supportPart = "SUPPORT-E";
+      
+  modelVarName = "agileOperations_cad";
+  segmentName = "cAD";
+  productLineName = "enterpriseSoftware";
+             
+        PCStr = PCStr+"\"productGroup_avg\":\""+lProductType;
+        PCStr = PCStr+"\",\"selectProductByNumberFlag_avg\":\""+selectProdNumber;
+        PCStr = PCStr+"\",\"selectProductByNumber_avg\":\""+partNo;
+        PCStr = PCStr+"\",\"quantity_avg\":\""+quantity;
+        PCStr = PCStr+"\",\"select_avg\":\""+select;
+        PCStr = PCStr+"\",\"transactionsType_avg\":\""+ltransactionType;
+        PCStr = PCStr+"\",\"enterEnvironment_avg\":\""+lenterEnvironment;
+        PCStr = PCStr+"\",\"selectLicenseType_avg\":\""+licenceType;
+        PCStr = PCStr+"\",\"supportType_avg\":\""+lsupportType;
+        PCStr = PCStr+"\",\"supportPartsPicklist_avg\":\""+supportPart;
+        PCStr = PCStr+"\",\"effectiveDateNa_avg\":\""+CStartDate;
+        PCStr = PCStr+"\",\"endDateNa\":\""+CEndDate;
+        PCStr = PCStr+"\",\"standardNewAdditionalNa_avg\":\""+lstandardQuantity;
+        PCStr = PCStr+"\",\"standardExistingNa_avg\":\""+lexistingQuantity;
+        PCStr = PCStr+"\",\"PartNumber_avg\":\""+partNo;
+        PCStr = PCStr+"\",\"selectedProductNumberInt_avg\":\""+partNo;
+        PCStr = PCStr+"\",\"selectedProductName_avg\":\""+partName;
+        PCStr = PCStr+"\"" + ",";
+
+        PCStr          = substring(PCStr,1,(len(PCStr)-1)); 
+        PCStr          = "{" + PCStr + "}";
+  //print PCStr;
+  PCJson=json(PCStr);
+  pricebook = "_default_price_book";
+  
+  
+
+  /*PCStr1       = " ";
+
+        PCStr1 = PCStr1+"\"partNumber\":\""+partNo;
+        PCStr1 = PCStr1+"\",\"quantity\":\""+quantity;
+        PCStr1 = PCStr1+"\"";
+        PCStr1 = "{" + PCStr1 + "}";
+        //print PCStr1;
+        
+        items1=jsonarray();
+        jsonarrayappend(items1,PCStr1);
+        PCJson1=json(PCStr1);*/
+
+
+modelLine1 = json();
+jsonput(modelLine1, "_model_variable_name",modelVarName);
+jsonput(modelLine1, "_model_product_line_var_name",productLineName);
+jsonput(modelLine1, "_model_segment_var_name",segmentName);
+jsonput(modelLine1, "_price_unit_price_each","99.0");
+jsonput(modelLine1, "_price_quantity","4");
+jsonput(modelLine1, "_config_attr_values",PCJson);
+
+
+//print modelLine1;
+
+items = jsonarray();
+jsonarrayappend(items, modelLine1);
+resultAttributeArray = string[3];
+resultAttributeArray[0] = "_document_number";
+resultAttributeArray[1] = "_model_variable_name";
+resultAttributeArray[2] = "_price_quantity";
+ 
+
+resultarray = addtotransaction(items, "_default_price_book", resultAttributeArray);
+print resultArray;
+//resarr=addpartstotransaction(items1,"_default_price_book");
+//print resarr;
+
+return "";

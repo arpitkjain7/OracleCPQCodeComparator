@@ -1,0 +1,49 @@
+/*********************************************************************
+              Function Name: Set Quantity
+              Description: This condition will set Quanity
+              Author: Arjun
+              Date: 18th Mar 2019
+              ******************************Change Log*****************************
+            Name:-Arjun
+  Jira ID:- VIPER-263
+  Date:- 29-Jul-2019
+  Description:- Added the blank check for Part Number which we get from Parent Child String because StandardQuanity key are not present in ParentChildString Json when the Part Number is not selected (i.e. PartNumber is blank) due to which these recommendation rule error out and also added the select checkbox check to avoid the rule to run for all the arrayline.
+    
+*********************************************************************/
+result = quantity_avg;
+qty=0;
+jsonObj = json();
+
+if(parentChildString_avg <> "" AND parentChildString_avg<>" "){
+jsonObj = json(parentChildString_avg);
+}
+
+
+
+index = sizeofarray(result);
+
+ if(index > 0)
+ { 
+ i=0;
+ 
+ for each in result{
+ 
+ qty=0;
+ 
+ PartNumber=jsonpathgetsingle(jsonObj,"$."+string(i)+".PartNumber","string","");
+ 
+ // added the blank check for PartNumber for VIPER-263 by Arjun on 29-Jul-2019. Because StandardQuanity key are not present in ParentChildString Json when the Part Number is not selected (i.e. PartNumber is blank) due to which these recommendation rule error out.
+ if(PartNumber<>"" and select_avg[i]==true)
+ {
+ qty = atoi(jsonpathgetsingle(jsonObj,"$."+string(i)+".child.standardQuantity","string",""));
+ print qty;
+ }
+ if(qty<>0 and qty<>result[i])
+ {
+ result[i]=qty;
+ }
+ 
+ i=i+1;
+ }
+ }  
+return result;

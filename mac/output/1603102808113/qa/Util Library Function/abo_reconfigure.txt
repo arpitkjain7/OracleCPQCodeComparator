@@ -1,0 +1,121 @@
+//Function Name: abo_reconfigure
+//    input: lineBomId(String), lineTrx_Date(String), bs_Id(String), line_Num(String). 
+//    output:resultMap
+// Description:
+//    This is the entry BML for ABO reconfig operation.This BML captures logic specific to ABO reconfig flow, 
+//    This is invoked from the reconfig action of both main doc and sub doc.
+// Details:
+//     This will calculate PAC BOM and config BOM and set them in user session map to be picked up by configurator.
+
+abocontext = util.abo_getContext();
+bDiagnosisOff=jsonget(abocontext, "AboDiagnosticDisabled", "boolean", true);  
+callContext="reconfig";
+CREATED="CREATED";
+MODIFY = "MODIFY";
+
+if(not bDiagnosisOff){//log input
+  inputJson=json();
+  jsonput(inputJson,"assetkey", lineBomId);
+  jsonput(inputJson,"lineTxnDate", lineTrx_date);
+  jsonput(inputJson, "bs_id", bs_id);
+  jsonput(inputJson, "line_num", line_Num);
+  dummy=util.abo_addDiagnosticInfo(callContext+"_input", inputJson,"addToSummary");
+}
+
+//step1  collect input and add default vaule to make it easier to process later
+lineNum = atoi(line_Num);
+lineTrxDate =  getDate(false);
+if(lineTrx_Date<>""){
+    lineTrxDate = strtojavadate(lineTrx_Date, "MM/dd/yyyy");
+}
+strTransDate = datetostr(lineTrxDate, "yyyy-MM-dd HH:mm:ss"); 
+
+//read the value of current process info from the aboContext 
+curProcessInfo=jsonget(abocontext, "curProcessInfo", "json", json());
+isExternal=jsonget(curProcessInfo, "isExternal", "string");
+curProcessName=jsonget(curProcessInfo, "commerceProcessName", "string");
+
+//step2  retrieve fulfillment/action info & BOM from the reconfig line to allow early validation
+currentQuoteBom = json();
+fulfillmentStatus = "";
+actionCodeConfigBom = "";
+site_url =  jsonpathgetsingle(abocontext, "$.siteInfo.siteUrl");
+
+if(isExternal == "true"){// if it is an external process, retrieve the BOM from the config integration table
+   currentQuoteBom = getconfigbom(lineNum,true /*flatten*/ );   
+   
+   //fulfillment status is not available in bom, so we will retrieve from configBomInstannce
+   configUrl = site_url + "/rest/v3/configBomInstance/" + line_Num; 
+   configPayload =json();
+   responseConfigBom =  util.abo_invokeRESTService("Get",configUrl,configPayload);
+   fulfillmentStatus = jsonpathgetsingle(responseConfigBom , "$.fulfillmentStatus.lookupCode","String");  
+   actionCodeConfigBom = jsonget(responseConfigBom , "actionCode", "String", ""); 
+   
+} else {//internal process, retrieve bom from cpq commerce via getbom api
+   lineField =  string[3];
+   lineField[0]="oRCL_ABO_ActionCode_l";
+   lineField[1] = "itemInstanceName_l";
+   lineField[2] = "requestDate_l";
+   lineField[3] = "fulfillmentStatus_l";   
+   currentQuoteBom =   getbom(atoi(bs_Id), lineNum, lineField, 
+                                                  false,  //validate
+                                                  true,  //flatten
+                                                  true); //isSalesBom
+              
+   //retrieve  fulfillmentStatus for internal orders
+   fieldJson = jsonget(currentQuoteBom, "fields","json", json());
+   fulfillmentStatus = jsonget(fieldJson, "fulfillmentStatus_l","String");
+   actionCodeConfigBom = jsonget(fieldJson, "oRCL_ABO_ActionCode_l","string", "");
+}
+
+//step3  validate to see whether current line is still allowed to reconfig   
+if ( (fulfillmentStatus <> CREATED) AND (isnull(fulfillmentStatus)==false))  {
+   throwerror("This configuration is no longer eligible for reconfiguration since it is in being fulfilled/fulfilled state.");
+}
+
+curActionInfo = jsonpathgetsingle(abocontext, "$.ALL_ACTIONS."+actionCodeConfigBom, "json", json());
+curActionCategory = jsonget(curActionInfo, "CATEGORY", "string", MODIFY);
+if(curActionCategory <> MODIFY){ 
+  actionDisplayName = jsonget(curActionInfo, "DISPLAY", "string", actionCodeConfigBom); 
+  throwerror("This configuration with action of "+actionDisplayName+" cannot be reconfigured."); 
+}
+ 
+//step4  getting ProjectedAssetState(without current line ) and projected Config BOM(with current line) 
+pacBomflat = util.abo_generatePAC(lineBomId, lineTrxDate, bs_Id, lineNum, "RECONFIG");
+if(not bDiagnosisOff){
+  dummy=util.abo_addDiagnosticInfo(callContext+"_afterGenPacBom", pacBomflat,"");
+}   
+configBomFlat = jsoncopy(pacBomflat);
+arrToApply =  jsonarray();
+jsonarrayappend(arrToApply, currentQuoteBom);
+
+configBomFlat =util.abo_apply(configBomFlat, arrToApply);
+
+
+//step 5, now prepare the configBom to be in the format configurator expects
+configBom = convertbomtohier(configBomFlat);
+
+//Include instruction to preseve inputBom for config launch
+jsonput(configBom, "instruction", "preserveInputBom");
+
+//step 6 place the configbom and pacBom into session cache to be looked up by configurator,
+usersessionremove ("bm_abo_pac_root_json");
+usersessionremove (BM_SALES_ROOT_BOM_ITEM);
+
+//Store pacBom in global map
+usersessionset("bm_abo_pac_root_json", pacBomflat);
+//set configBom in session scope from where ConfigUI reads BOM
+usersessionset(BM_SALES_ROOT_BOM_ITEM,configBom);
+
+//lookup the model information for the part number
+resultMap = dict("string");
+partNumber =  jsonget(configBom, "partNumber", "string");
+resultMap = util.abo_getProductModelInfo(partNumber);
+put(resultMap,"bomkey",lineBomId);
+
+if(not bDiagnosisOff){
+   dummy=util.abo_addDiagnosticInfo(callContext+"_output_pacBom", pacBomflat,"addToSummary");
+   dummy=util.abo_addDiagnosticInfo(callContext+"_output_configBom", configBom,"addToSummary");
+}
+
+return resultMap;

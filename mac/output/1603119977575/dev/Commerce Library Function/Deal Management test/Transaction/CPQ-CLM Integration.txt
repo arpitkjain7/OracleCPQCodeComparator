@@ -1,0 +1,63 @@
+/*****************************************************************
+ Author - Thushaara Vasantha
+ Date - 04/04/2019
+ UID - 200
+ USer story summary - Send quote data from CPQ to CLM
+*****************************************************************
+SYMINT-2200  MSP / XSP Sales Type related changes in CPQ    Added Payload to send to CLM when Route to Market is MSP          Keerthivasan A
+*****************************************************************/
+//Intializing the variables used in creating payload and headers dictionary
+result="";
+quoteRequest = "";
+defaultErrorMessage="";
+payload = dict("string");
+url="";
+Filelocation1="";
+finalString="";
+headersDict = dict("string");
+
+//Checking agreement type not null and rout to marke has value "tier1" then calling the integration file location using BMQL as it is stored in Data table
+if (agreementType_t <> "" and agreementSubtype_t <> ""){
+
+if (routeToMarket_t=="tier1") {
+filelocation = bmql("select File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'Integration'");
+for record in filelocation{
+ Filelocation1 = get(record,"File_Location");
+ url=get(record,"SoapEndpoint");}}
+//If route to market has value "tier 2" then the below integration file is called 
+elif(routeToMarket_t=="tier2"){
+filelocation = bmql("select File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'Integration_CLM'");
+for record in filelocation{
+ Filelocation1 = get(record,"File_Location");
+ url=get(record,"SoapEndpoint");}}
+//If route to market has value "MSP" then the below integration file is called
+//SYMINT-2200  Added condition to include Payload to send to CLM when Route to Market is MSP
+elif(routeToMarket_t=="mSP"){
+filelocation = bmql("select File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'Integration_CLM_MSP'");
+for record in filelocation{
+ Filelocation1 = get(record,"File_Location");
+ url=get(record,"SoapEndpoint");}}
+// End of SYMINT-2200
+//If route to market has other value then below integration fiel is being invoked 
+else{
+filelocation = bmql("select File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'Integration_CLM_Direct'");
+
+// for each record in the result set we are creating payload and sending necessary data like billing schedule , session id,etc
+
+for record in filelocation{
+ Filelocation1 = get(record,"File_Location");
+ url=get(record,"SoapEndpoint");}} 
+ 
+billingRequest = commerce.fetchingBillingScheduleAttributes();//calling the library function
+put(payload,"Billing_Schedule", billingRequest);//  creating the payload
+sessionId = util.cLMCreateSession_avg();
+put(payload,"sessionId",sessionId);
+headersDict = dict("string"); 
+put(headersDict,"Content-Type","text/xml;charset=UTF-8"); 
+put(headersDict, "SOAPAction", "\"http://soap.sforce.com/schemas/class/AgreementCreationService\""); 
+quoteRequest = applytemplate(Filelocation1,payload,defaultErrorMessage); // applying a set of token value pairs to template using applytemplate function
+quoteRequest=replace(quoteRequest, "&lt;", "<");
+quoteRequest=replace(quoteRequest, "&gt;", ">");
+finalString = urldatabypost(url,quoteRequest, "Failed to Connect", headersDict,true); //posting the webservice using urldatabypost function
+}
+return finalString;

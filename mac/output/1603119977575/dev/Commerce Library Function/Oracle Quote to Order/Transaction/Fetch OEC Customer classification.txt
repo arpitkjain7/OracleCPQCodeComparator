@@ -1,0 +1,59 @@
+//************************************************************************************************************
+//** Description: Function fetch the updated value of Account classification from OEC.
+//**
+//** History:     Date          Author                     Story  -  Comment 
+//**              ------------- -----------------------    -------------------------------------------------------------
+//**              11/14/2019     Shivendra Sharma       Fetches Account classification value using rest API for VIPER-450
+//************************************************************************************************************
+
+//Initializing the variables
+result = "";
+dlim="~";
+dend="|";
+customerId = _transaction_customer_id;
+custClassification = core_t;
+creds= "";
+endPoint = "";
+
+if(customerId <> ""){
+
+// Fetching the credential and path of rest end point, file manager from data table
+res = bmql("select Username, Password, RestEndpoint from INT_SYSTEM_DETAILS where System = 'Create_Opportunity'");
+
+for each in res{
+ creds_sb = stringbuilder();
+ creds_sb = sbappend(creds_sb, get(each,"Username"), ":", get(each,"Password"));
+ creds = sbtostring(creds_sb);
+
+ endPoint = get(each,"RestEndpoint");
+ endPoint_sb = stringbuilder();
+ //creating Rest URL
+ endPoint_sb = sbappend(endPoint_sb, endPoint,"/crmRestApi/resources/latest/accounts?q=PartyId="+customerId+"&fields=OrganizationDEO_BRCM_Classification_c&onlyData=True");
+ endPoint = sbtostring(endPoint_sb);
+  
+}
+
+headers = dict("string");
+put(headers, "content-type", "application/json");
+encodedcreds = encodebase64(creds);
+authString = "Basic " + encodedcreds;
+put(headers,"Authorization",authString);
+
+//Rest API call to fetch response based on party ID
+oecResponse = dict("string");
+oecResponse = urldata(endPoint,"GET",headers,"");
+
+//Converting the response string into json and fetching account classification value
+if(NOT isnull(oecResponse))
+{
+  responseBody= get(oecResponse, "Message-Body");
+  responseBodyJson = json(responseBody);
+  custClassArray = jsonpathgetmultiple(responseBodyJson, "$..OrganizationDEO_BRCM_Classification_c");
+  if(NOT isjsonnull(custClassArray,0)){
+  custClassification = jsonarrayget(custClassArray,0);
+  }
+}
+}
+//result = result + _transaction_document_number + dlim + "core_t" + dlim + custClassification + dend;
+result = custClassification;
+return result;

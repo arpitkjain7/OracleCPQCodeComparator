@@ -1,0 +1,53 @@
+/**********************************************************************************************/
+/*Author - Ravi Kumar               */
+/*Date - 24/09/2019               */
+/*User story summary - For SMB Renewal Contracts Quotes Should be Order Submitted Automaticaly*/
+/**********************************************************************************************/
+batchNumber = "";
+payload = dict("string");
+username = "";
+password = "";
+fileLocation = "";
+soapendpoint = "";
+//Pick the Batch Number and Incriment it to get current Batch 
+result1 = bmql("select Batch_Number from BRCM_Renewal_Batch");
+for res in result1
+{
+batchNumber = get(res, "Batch_Number");
+}
+//NewbatchNumber = string(atoi(batchNumber)+1);
+//print "New Batch Number";
+//print NewbatchNumber;
+res1 = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'Renewal_Submit_To_Order'");
+print res1;
+for each in res1
+{
+username = get(each,"Username");
+password = get(each,"Password");
+fileLocation = get(each,"File_Location");
+soapendpoint = get(each,"SoapEndpoint");
+}
+renewalJobres = bmql("select Transaction_ID, Quote_Number from BRCM_Renewal_Job where Batch_Number = $batchNumber and ACCOUNT_TYPE = 'Commercial' and User = $Program_ID");
+print "Renewal Job Res";
+print renewalJobres;
+for result in renewalJobres
+{
+transactionID = get(result, "Transaction_ID");
+put(payload,"USERNAME", username);
+put(payload,"PASSWORD", password);
+put(payload,"bm_id", transactionID);
+defaultErrorMessage="";
+request=applytemplate(fileLocation,payload,defaultErrorMessage);
+request = replace(request,"&lt;","<");
+request= replace(request,"&gt;",">");
+request = replace(request,"&quot;","\"");
+headersDict = dict("string"); 
+response="";
+print "Request";
+print request;
+response = urldatabypost(soapendpoint,request, "",headersDict,true);
+print "Response";
+print response;
+payload = dict("string");
+}
+return "";

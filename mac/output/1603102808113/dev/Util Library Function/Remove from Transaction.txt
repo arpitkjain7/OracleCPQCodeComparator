@@ -1,0 +1,129 @@
+/*********************************************************************
+Function Name:Split Quote  
+Description:Remove transaction for Split Quote 
+Author: Ramesh Nellimarla
+User Story #:UID 212
+Date: 30th jan 2019
+******************************Change Log*****************************
+             
+*********************************************************************/
+/*
+payload = dict("string");
+returnString = " ";
+strdocNum = " ";
+
+arr        = split(transactionID,"|");
+transID    = arr[0];
+sessionid  = arr[1];
+company    = arr[2];
+
+
+
+for each in documentNumArray
+{
+line = json(each);
+strdocNum = strdocNum + jsonget(line,"documentNum") + ",";
+}
+
+strdocNum = substring(strdocNum ,1,(len(strdocNum)-1));
+
+
+//===============================Web Service Version-2.0========================================
+
+returnString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\">";
+returnString = returnString +  "<soapenv:Header>";
+returnString = returnString + "<wsse:Security xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\" xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\">";
+returnString = returnString +"<wsse:UsernameToken wsu:Id=\"UsernameToken-2\">";
+returnString = returnString +"<wsse:Username>"+"Integration"+"</wsse:Username>";
+returnString = returnString +"<wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">"+"Glory@2019"+"</wsse:Password>";
+returnString = returnString +"</wsse:UsernameToken>";
+returnString = returnString +"</wsse:Security>";
+returnString = returnString +"</soapenv:Header>";
+returnString = returnString + "<soapenv:Body>";
+returnString = returnString + "<bm:removeFromTransaction xmlns:bm=\"http://xmlns.oracle.com/cpqcloud/commerce/oraclecpqo\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">";
+returnString = returnString + "<bm:items>";
+returnString = returnString + "<bm:item>";
+returnString = returnString + "<bm:document_number>" + strdocNum + "</bm:document_number>";
+returnString = returnString + "</bm:item>";
+returnString = returnString + "</bm:items>";
+returnString = returnString + "<bm:transaction>";
+returnString = returnString + "<bm:process_var_name>"+"oraclecpqo"+"</bm:process_var_name>";
+returnString = returnString + "<bm:id>"+ transID + "</bm:id>";
+returnString = returnString + "<bm:action_data>";
+returnString = returnString + "<bm:document_var_name>" + "transaction" + "</bm:document_var_name>";
+returnString = returnString + "</bm:action_data>";
+returnString = returnString + "</bm:transaction>";
+returnString = returnString + "</bm:removeFromTransaction>";
+returnString = returnString  + "</soapenv:Body>";
+returnString = returnString  + "</soapenv:Envelope>";
+
+//===================================================================================================
+
+//===============================Web Service Version-1.0===============================================
+/* 
+returnString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\">";
+returnString = returnString  + "<soapenv:Header>";
+returnString = returnString  + "<bm:userInfo xmlns:bm=\"urn:soap.bigmachines.com\">";
+returnString = returnString  + "<bm:sessionId>" + sessionid + "</bm:sessionId>";
+returnString = returnString  + "</bm:userInfo>";
+returnString = returnString  + "<bm:category xmlns:bm=\"urn:soap.bigmachines.com\">Commerce</bm:category>";
+returnString = returnString  + "<bm:xsdInfo xmlns:bm=\"urn:soap.bigmachines.com\">";
+returnString = returnString  + "<bm:schemaLocation>https://avagotechtest2.bigmachines.com/bmfsweb/avagotechtest2/schema/v1_0/commerce/oraclecpqo.xsd</bm:schemaLocation>";
+returnString = returnString  + "</bm:xsdInfo>";
+returnString = returnString  + "</soapenv:Header>";
+returnString = returnString  + "<soapenv:Body>";
+returnString = returnString  + "<bm:removeFromTransaction xmlns:bm=\"urn:soap.bigmachines.com\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">";
+returnString = returnString  + "<bm:items>";
+returnString = returnString  + "<bm:item>";
+returnString = returnString  + "<bm:document_number>" + strdocNum + "</bm:document_number>";
+returnString = returnString  + "</bm:item>";
+returnString = returnString  + "</bm:items>";
+returnString = returnString  + "<bm:transaction>";
+returnString = returnString  + "<bm:process_var_name>"+"oraclecpqo"+"</bm:process_var_name>";
+returnString = returnString  + "<bm:id>"+ transID + "</bm:id>";
+returnString = returnString  + "<bm:action_data>";
+returnString = returnString  + "<bm:document_var_name>" + "transaction" + "</bm:document_var_name>";
+returnString = returnString  + "</bm:action_data>";
+returnString = returnString  + "</bm:transaction>";
+returnString = returnString  + "</bm:removeFromTransaction>";
+returnString = returnString  + "</soapenv:Body>";
+returnString = returnString  + "</soapenv:Envelope>";
+*/
+//============================================================================================
+/*
+url = "https://"+company+".bigmachines.com/v2_0/receiver/commerce/oraclecpqo";
+fileLocation1="/bmfsweb/"+company+"/image/Integration/updateTransaction_save.xml";
+ENDPOINTURL="https://"+company+".bigmachines.com/v2_0/receiver/commerce/oraclecpqo";
+
+finalString = urldatabypost(url, returnString, "Failed to Connect");
+
+
+
+if (finalString <> "Failed to Connect") 
+{
+       
+       returnString = "Deletion Successful";
+              finalString = finalString;
+              flag = true;
+              /*defaultErrorMessage= "Error While deleting transaction";
+              auth = "BASIC";
+              put(payload,"USERNAME", "Integration");
+              put(payload,"bs_id",transactionID);
+              quoteRequest1=applytemplate(fileLocation1,payload,defaultErrorMessage);
+              headersDict = dict("string"); 
+              put(headersDict,"Content-Type","text/xml;charset=UTF-8"); 
+              put(headersDict,"Authorization",auth);
+
+              response = urldatabypost(ENDPOINTURL,quoteRequest1, "error",headersDict);*/
+/*
+}
+else
+{ 
+       
+       returnString = "Deletion Failed";
+              finalString = "";
+}
+
+return returnstring ;
+*/
+return "";

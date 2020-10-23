@@ -1,0 +1,7 @@
+/*****************************************************************************************************
+Function Name : Tax Exempt
+Author : Nandhini Vurimella.
+Description : Updates a transaction's tax exempt status at the line level based on the transaction level status.  
+              This is used to default this value on the line based upon the value set by the user on the transaction header.
+*****************************************************************************************************/
+return taxExempt_t;

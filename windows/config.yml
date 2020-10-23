@@ -1,0 +1,12 @@
+dev:
+    name: "Development"
+    url: "https://avagotechdev1.bigmachines.com"
+    username: "Integration"
+    password: "Prod@2019"
+
+qa:
+    name: "QA"
+    url: "https://avagotechtest3.bigmachines.com"
+    username: "Integration"
+    password: "Training@2019"
+

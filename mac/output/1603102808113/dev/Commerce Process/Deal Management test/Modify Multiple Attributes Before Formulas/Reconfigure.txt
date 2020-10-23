@@ -1,0 +1,50 @@
+/***********************************************************
+Function Name : Reconfigure
+Name : Nandhini Vurimella
+Description : ABO Script
+**********************************************************/
+//////// BEGINING of ABO SCRIPT//////////////////
+context = util._ORCL_ABO.abo_initializeContext("oraclecpqo");
+if(sizeofarray(jsonkeys(context)) > 0){  
+ for line in transactionLine {      
+    if(line._document_number==_system_current_document_number){
+       if(line.fulfillmentStatus_l <> "CREATED" AND line.fulfillmentStatus_l <> "") {
+                throwError("You cannot reconfigure this line as it is in a fulfilled/being fulfilled/cancelled state.");            
+       } 
+       if ( line.oRCL_ABO_ActionCode_l == "ADD"  OR  line.oRCL_ABO_ActionCode_l == "UPDATE"  
+          OR line.oRCL_ABO_ActionCode_l == "NO_UPDATE"){    
+          res = util._ORCL_ABO.abo_reconfigure(line.itemInstanceId_l, line.requestDate_l, _system_buyside_id, _system_current_document_number);          
+       }
+       break;
+    }
+   }
+}  
+ /////////////////////END OF ABO SCRIPT//////////////////////
+
+ 
+return "";
+/***********************************************************
+Function Name : Reconfigure
+Name : Nandhini Vurimella 
+Description : ABO Function
+**********************************************************/
+
+context = util._ORCL_ABO.abo_initializeContext("oraclecpqo");
+if(sizeofarray(jsonkeys(context)) > 0){  
+  for line in transactionLine {  
+     if(line._document_number==_system_selected_document_number){
+         if(line.fulfillmentStatus_l <> "CREATED" AND line.fulfillmentStatus_l <> "") {
+          throwError("You cannot reconfigure this line as it is in a fulfilled/being fulfilled/cancelled state.");         
+         }   
+       
+       if (line.oRCL_ABO_ActionCode_l == "ADD"  OR  line.oRCL_ABO_ActionCode_l == "UPDATE"  
+          OR line.oRCL_ABO_ActionCode_l == "NO_UPDATE" ){         
+           res = util._ORCL_ABO.abo_reconfigure(line.itemInstanceId_l, line.requestDate_l, _system_buyside_id, _system_selected_document_number);
+       }
+       break;
+     }
+   }
+}
+
+
+ return "";

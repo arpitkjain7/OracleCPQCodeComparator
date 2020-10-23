@@ -1,0 +1,38 @@
+/**********************************************************************************************
+Name:- DiffinPartPrice
+Description:- To fetch the difference between final upgrade SKU and Current SKU base price for Software upgrade product
+Jira Id:- SYMINT-4174
+Date:-21-Jan-2020
+Author:- Arjun Singh
+**********************************************************************************************/
+result=dict("string");
+
+part1_int=0.0;
+part2_int=0.0;
+
+diffPrice=0.0;
+
+partarray=string[]{part1,part2};
+
+
+//fetching the Base price from pricing table
+res = bmql("SELECT MPN,Base_Price FROM BRCM_Part_Master_Prc WHERE MPN in $partarray");
+for each in res
+{
+ if(get(each,"MPN") == part1)
+ {
+  part1_int = atof(get(each,"Base_Price"));
+ }
+ if(get(each,"MPN") == part2)
+ {
+  part2_int = atof(get(each,"Base_Price"));
+ }
+}
+
+
+//getting the difference between the prices of the parts
+diffPrice = part1_int-part2_int;
+
+put(result,"Item1",string(diffPrice));
+
+return result;

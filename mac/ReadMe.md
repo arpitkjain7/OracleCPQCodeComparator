@@ -10,3 +10,5 @@ Enviornoment Setup:
 
 1. modify the enviornoment details on your "config.yml" file
 2. run "./run.sh"
+3. Open "http://127.0.0.1:8000/docs#" on your browser and locate for fucntion "/extract_scripts"
+4. Enter your env details as provided in config.yml (case sensitive) and execute

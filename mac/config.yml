@@ -1,17 +1,11 @@
 dev:
     name: "Development"
-    url: "https://avagotechdev1.bigmachines.com"
-    username: "Integration"
-    password: "Prod@2019"
+    url: "env url"
+    username: "username"
+    password: "password"
 
 qa:
     name: "QA"
-    url: "https://avagotechtest3.bigmachines.com"
-    username: "Integration"
-    password: "Training@2019"
-
-prod:
-    name: "QA"
-    url: "https://avagotechtest3.bigmachines.com"
-    username: "Integration"
-    password: "Training@2019"
+    url: "env url"
+    username: "username"
+    password: "password"

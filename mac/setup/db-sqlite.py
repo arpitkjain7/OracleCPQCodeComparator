@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect("cpq_code_compare.db")
+conn = sqlite3.connect("../cpq_code_compare.db")
 
 print("Opened database successfully")
 

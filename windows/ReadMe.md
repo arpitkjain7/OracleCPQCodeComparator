@@ -2,9 +2,8 @@ Installation Steps:
 
 1. Clone the repository on your local
 2. Navigate to setup/setup.sh
-3. run "./setup.sh"
-4. run "python db.py"
-5. Ready to use the app
+3. run "bash setup.sh"
+4. Ready to use the app
 
 Enviornoment Setup:
 

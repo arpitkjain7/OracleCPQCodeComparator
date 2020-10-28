@@ -2,4 +2,4 @@
 echo "Installing all dependencies"
 pip install -r requirements.txt
 echo "Init Postgres DB"
-python db.py
+python db-sqlite.py

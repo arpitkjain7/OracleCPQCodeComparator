@@ -160,6 +160,7 @@ def CompareFolders(source_path, target_path, source_env, target_env, root_dir):
 def pre_process(Input):
     output = Input.replace("/", "_")
     output = output.replace("?", "_")
+    output = output.replace('"', "_")
     return output
 
 

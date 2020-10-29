@@ -514,6 +514,7 @@ def CompareWrapper(source_env: str, target_env: str, headless: bool):
         log_file_path = os.path.join(os.getcwd(), "logs", "LogFile.log")
         logging.basicConfig(filename=log_file_path, level=logging.DEBUG, filemode="w")
         output_dir_path = os.path.join(os.getcwd(), "output")
+        os.makedirs(output_dir_path, exist_ok=True)
         if os.path.isdir(output_dir_path):
             output_batch_path = os.path.join(output_dir_path, str(batch_id))
             source_thread = threading.Thread(

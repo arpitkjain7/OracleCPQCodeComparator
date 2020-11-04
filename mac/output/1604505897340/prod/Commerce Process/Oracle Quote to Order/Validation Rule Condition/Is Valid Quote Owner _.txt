@@ -1,0 +1,20 @@
+/********************************************************************
+Function Name: Is Valid Quote Owner
+Description: This Rule is used to check whether the given owner is a valid user of cpq.
+Author: Keerthivasan
+Date: 23-March-2019
+********************************************************************/
+newOwner = newQuoteOwner_t;
+split_arr = split(newOwner , "~");
+email_id = split_arr[1];
+resultSet = bmql("select Users from BRCM_Users where EMailID=$email_id");
+count = 0;
+for each in resultSet{
+  newOwner = get(each,"Users");
+  count = count + 1;
+}
+if(count == 0)
+{ 
+ return true;
+}
+return false;

@@ -1,0 +1,6 @@
+/********************************************************************
+Function Name : Support Product Validation
+Name : Nandhini Vurimella
+Description : for support product validation
+********************************************************************/
+return false;

@@ -1,0 +1,47 @@
+/*****************************************************************
+Author - Ravi Kumar
+Date - 24/06/2019
+Defect No - 18 (12/03/2019)
+User story summary - Reset workflow status and approval details on Revise Quote and bring QUote to IN-Progress state..
+New Action Created by Ravi on 6-24-2019 when Quote is Revised Version should not be Created.
+*****************************************************************/
+result = "";
+payload = dict("string");
+username = "";
+password = "";
+fileLocation = "";
+soapendpoint = "";
+sb=stringbuilder();
+sb1=stringbuilder();
+sb2=stringbuilder();
+sb3=stringbuilder();
+for line in transactionLine
+{
+ sb = stringbuilder(sb, line._document_number, "~", "workflowStatus_l", "~", "", "|");
+ sb1 = stringbuilder(sb, line._document_number, "~", "lineApprovalStatus_l", "~", "", "|");
+ sb2 = stringbuilder(sb, line._document_number, "~", "approver_l", "~", _system_user_login, "|");
+ 
+}
+sb3 = sbappend(sb,sb1,sb2);
+res1 = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'Reset_Approval_Details'");
+for each in res1
+{
+username = get(each,"Username");
+password = get(each,"Password");
+fileLocation = get(each,"File_Location");
+soapendpoint = get(each,"SoapEndpoint");
+}
+put(payload,"USERNAME", username);
+put(payload,"PASSWORD", password);
+put(payload,"bm_id", bs_id);
+defaultErrorMessage="";
+request=applytemplate(fileLocation,payload,defaultErrorMessage);
+request = replace(request,"&lt;","<");
+request= replace(request,"&gt;",">");
+request = replace(request,"&quot;","\"");
+headersDict = dict("string"); 
+response="";
+response = urldatabypost(soapendpoint,request, "error",headersDict);
+//
+result=sbtostring(sb3);
+return result;

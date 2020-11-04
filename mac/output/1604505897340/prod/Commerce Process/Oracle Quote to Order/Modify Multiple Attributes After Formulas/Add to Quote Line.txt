@@ -1,0 +1,12 @@
+/*********************************************************************
+Function Name: add quote lines
+Description: This after formula function is used to make the importQuoteDetails attribute empty
+User Story #:UID-101
+Date: 25th feb 2019
+******************************Change Log*****************************
+
+            
+*********************************************************************/
+result = "";
+result = "1~importQuoteDetails_t~ ";
+return result;

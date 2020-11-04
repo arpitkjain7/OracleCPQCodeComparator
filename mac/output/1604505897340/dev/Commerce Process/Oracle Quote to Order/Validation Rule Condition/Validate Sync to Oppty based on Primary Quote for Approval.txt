@@ -1,0 +1,18 @@
+/********************************************************************
+Validation Name: Sync to opty validation on Submit to Approval
+Jira ID: SYMINT-6866
+Description: Auto Sync to opty. 
+Author: Arjun Singh
+Date: 27-Mar-2020
+*************************/
+
+if(primaryQuote_t<>oldValPrimaryQuote_t and core_t<>"Commercial")
+{
+return true;
+}
+if(syncToOpptyFlagApproval_t==false and core_t<>"Commercial")
+{
+return true;
+}
+
+return false;

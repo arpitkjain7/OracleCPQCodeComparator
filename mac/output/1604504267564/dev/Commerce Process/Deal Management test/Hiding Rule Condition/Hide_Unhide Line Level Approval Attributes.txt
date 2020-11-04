@@ -1,0 +1,10 @@
+/********************************************************************
+Function Name: Option to group Quote Line Columns and hide/unhide them on UI
+Description: This rule shows the approval attributes as part of VIPER-366
+Author:   Danish
+********************************************************************/
+hideUnhide = split(HideUnhide_t,"~");
+if(findinarray(hideUnhide,"approvalAttributes") == -1){
+ return true;
+}
+return false;

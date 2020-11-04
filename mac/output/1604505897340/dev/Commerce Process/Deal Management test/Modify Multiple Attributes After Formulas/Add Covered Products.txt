@@ -1,0 +1,30 @@
+/********************************************************************
+Function Name : Add Covered Product Action
+Name : Nandhini Vurimella.
+Description : To Add Covered Products.
+********************************************************************/
+supportSKU = "";
+parentPart = "";
+supportPartArray = string[];
+parentPartArray = string[];
+value = "";
+for line in transactionLine
+{
+
+partNumber = line._part_number;
+
+
+ result = bmql("select Parent_Part_Num from BRC_Support_Parts where Support_Part_Num = $partNumber");
+ 
+ for res in result
+ {
+    parentPart = get(res,"Parent_Part_Num");
+    value = parentPart + "$$" + "1";
+    append(parentPartArray,value);
+  
+ }
+ 
+ 
+}
+re = util.addLineItemToTransaction(parentPartArray, bs_id);
+return "1~import~1";

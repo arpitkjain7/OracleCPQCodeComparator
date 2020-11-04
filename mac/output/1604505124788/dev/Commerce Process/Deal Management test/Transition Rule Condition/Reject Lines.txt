@@ -1,0 +1,30 @@
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = false;
+for line in transactionLine
+{
+ if(line.workflowStatus_l == "rejected")
+ {
+  flag = true;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = false;
+for line in transactionLine
+{
+ if(line.workflowStatus_l == "rejected")
+ {
+  flag = true;
+ }
+}
+return flag;

@@ -233,6 +233,8 @@ def Script_Extraction_Source(
         # driver_Source = webdriver.Chrome(
         #     "/Users/arpitkjain/Desktop/CPQ/cpq_code_comparison/setup/chromedriver"
         # )
+        print("Source env")
+        print(Source_URL)
         driver_Source.set_page_load_timeout(200)
         driver_Source.get(Source_URL)
         logging.info("Logging into Source Environment")
@@ -315,6 +317,116 @@ def Script_Extraction_Source(
         driver_Source.close()
 
 
+def Script_Extraction_Prod(
+    batch_id,
+    Localfilepath,
+    Target_URL,
+    Target_Username,
+    Target_Password,
+    Target_Env,
+    headless,
+):
+
+    if headless:
+        options = Options()
+        options.add_argument("--headless")
+        driver_Prod = webdriver.Chrome(
+            os.path.join(os.getcwd(), "setup", "chromedriver"), chrome_options=options,
+        )
+    else:
+        driver_Prod = webdriver.Chrome(
+            os.path.join(os.getcwd(), "setup", "chromedriver")
+        )
+    driver_Prod.set_page_load_timeout(2000)
+    driver_Prod.get(Target_URL)
+    logging.info("Logging into Target Environment")
+    # Global Search on BML
+    element = WebDriverWait(driver_Prod, 10).until(
+        EC.presence_of_element_located((By.XPATH, "//input[@name='username']"))
+    )
+    # elem = driver_Prod.find_element_by_xpath("//input[@name='username']")
+    element.clear()
+    element.send_keys(Target_Username)
+    elem = driver_Prod.find_element_by_xpath("//input[@type='submit']")
+    elem.click()
+    password = EC.element_to_be_clickable((By.XPATH, "//input[@name='password']",))
+    password_input = WebDriverWait(driver_Prod, 30).until(password)
+    password_input.clear()
+    password_input.send_keys(Target_Password)
+    checkbox = driver_Prod.find_element_by_xpath("//input[@class='form-check-input']")
+    checkbox.click()
+    driver_Prod.implicitly_wait(200)
+    signIn = EC.element_to_be_clickable((By.XPATH, "//input[@type='submit']",))
+    signInButton = WebDriverWait(driver_Prod, 30).until(signIn)
+    signInButton.click()
+    logging.info("Navigating to Admin screen")
+    driver_Prod.implicitly_wait(200)
+    DevTools = EC.element_to_be_clickable(
+        (
+            By.XPATH,
+            "//div//h2[text()='Developer Tools']//following::a[text()='Global Search on BML']",
+        )
+    )
+    BML = WebDriverWait(driver_Prod, 30).until(DevTools)
+    BML.click()
+
+    Search = EC.element_to_be_clickable((By.XPATH, "//*[@name='search_string']"))
+    Search_String = WebDriverWait(driver_Prod, 30).until(Search)
+    Search_String.send_keys("*")
+
+    Search_button = driver_Prod.find_element_by_xpath("//a[text()='Search']")
+    Search_button.click()
+    logging.info("Searching for scripts")
+    Scripts = driver_Prod.find_element_by_xpath("//table//form")
+    NumOfScripts = Scripts.find_elements(By.TAG_NAME, "table")
+    NumOfScripts = len(NumOfScripts)
+    logging.info(f"Extracting {NumOfScripts} scripts from Dev")
+
+    n = 3
+    while n < NumOfScripts - 3:
+        scriptHeadXPATH = "//table//form//table[" + str(n) + "]//tr[1]//td"
+        scriptHead = driver_Prod.find_element_by_xpath(scriptHeadXPATH)
+        scriptHeadData = scriptHead.text
+        scriptXPATH = "//table//form//table[" + str(n) + "]//tr[2]//td"
+        script = driver_Prod.find_element_by_xpath(scriptXPATH)
+        scriptData = script.text
+        scriptHeadData = scriptHeadData.split(":")
+        ScriptNumber = pre_process(scriptHeadData[0]).strip()
+        print(ScriptNumber)
+        ScriptName = pre_process(scriptHeadData[-1]).strip()
+        Master = scriptHeadData[0].split("      ")
+        Level0 = pre_process(Master[1]).strip()
+        m = 1
+        level_dict = {}
+        while m < len(scriptHeadData) - 1:
+            Level = pre_process(scriptHeadData[m]).strip()
+            level_dict.update({"Level" + str(m): Level})
+            m += 1
+        filepath = FolderCreation(
+            Env=Target_Env,
+            filepath=Localfilepath,
+            Level0=Level0,
+            Level1=level_dict.get("Level1"),
+            Level2=level_dict.get("Level2"),
+        )
+        if filepath != "Duplicate":
+            filename = filepath + "/" + ScriptName + ".txt"
+            if os.path.exists(filename):
+                f = open(filename, mode="a+")
+                f.write("\n")
+                f.write(scriptData)
+            else:
+                f = open(filename, mode="w+")
+                f.write(scriptData)
+        n += 1
+    driver_Prod.close()
+
+
+# except Exception as Error:
+#     update_batch(batch_id=str(batch_id), status="Error", error=str(Error))
+#     driver_Prod.close()
+
+
 def Script_Extraction_Target(
     batch_id,
     Localfilepath,
@@ -325,6 +437,8 @@ def Script_Extraction_Target(
     headless,
 ):
     try:
+        print("Target env")
+        print(Target_URL)
         if headless:
             options = Options()
             options.add_argument("--headless")
@@ -518,30 +632,58 @@ def CompareWrapper(source_env: str, target_env: str, headless: bool):
         os.makedirs(output_dir_path, exist_ok=True)
         if os.path.isdir(output_dir_path):
             output_batch_path = os.path.join(output_dir_path, str(batch_id))
-            source_thread = threading.Thread(
-                target=Script_Extraction_Source,
-                args=(
-                    batch_id,
-                    output_batch_path,
-                    Source_URL,
-                    Source_Username,
-                    Source_Password,
-                    source_env,
-                    headless,
-                ),
-            )
-            target_thread = threading.Thread(
-                target=Script_Extraction_Target,
-                args=(
-                    batch_id,
-                    output_batch_path,
-                    Target_URL,
-                    Target_Username,
-                    Target_Password,
-                    target_env,
-                    headless,
-                ),
-            )
+            if source_env.lower() in ("prod", "production"):
+                source_thread = threading.Thread(
+                    target=Script_Extraction_Prod,
+                    args=(
+                        batch_id,
+                        output_batch_path,
+                        Source_URL,
+                        Source_Username,
+                        Source_Password,
+                        source_env,
+                        headless,
+                    ),
+                )
+            else:
+                source_thread = threading.Thread(
+                    target=Script_Extraction_Source,
+                    args=(
+                        batch_id,
+                        output_batch_path,
+                        Source_URL,
+                        Source_Username,
+                        Source_Password,
+                        source_env,
+                        headless,
+                    ),
+                )
+            if target_env.lower() in ("prod", "production"):
+                target_thread = threading.Thread(
+                    target=Script_Extraction_Prod,
+                    args=(
+                        batch_id,
+                        output_batch_path,
+                        Target_URL,
+                        Target_Username,
+                        Target_Password,
+                        target_env,
+                        headless,
+                    ),
+                )
+            else:
+                target_thread = threading.Thread(
+                    target=Script_Extraction_Target,
+                    args=(
+                        batch_id,
+                        output_batch_path,
+                        Target_URL,
+                        Target_Username,
+                        Target_Password,
+                        target_env,
+                        headless,
+                    ),
+                )
             logging.info(
                 f"Comparing {target_env} environment with {source_env} environment"
             )

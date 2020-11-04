@@ -1,0 +1,82 @@
+/************************************************
+Rule Name: Merge Quote
+Description: This action implicitly call Merge Quote Library function 
+that adds standalone line items from child to parent quote
+Author: M Vamsi Krishna
+Creation Date: 22-FEB-2019
+*************************************************/
+ sb = stringbuilder();
+ jsonObj = json();
+ obj=json();
+ count = 0;
+ 
+/* for line in transactionLine
+{
+//childObj = jsonget(json(line._line_item_comment),"child");
+//requestedDisc = jsonget(json(childObj),"requestedDisc");
+//lineItemComment = line._line_item_comment;
+//lineItemComment = substring(line._line_item_comment,1,len(line._line_item_comment)-1);
+//print lineItemComment;
+//lineItemComment = substring(lineItemComment,-1);
+if(line._line_item_comment<>"")
+{
+teststring=line._line_item_comment;
+obj=json(teststring);
+child=jsonget(obj,"child");
+childObj=json(child);
+discPercentage = jsonget(childObj,"requestedDisc");
+supportPart = jsonget(childObj,"supportPartsPicklist");
+if(find(discPercentage,"%") > 1)
+{
+//count = 0;
+ discArray = split(discPercentage,"%");
+ print "discArray";
+ print discArray;
+ print "count";
+ print count;
+ arr = sizeofarray(discArray);
+ print line.coveredProduct_l;
+ if(supportPart <> "" and line._part_number == supportPart)
+  {
+  print line.coveredProduct_l;
+  print "Array";
+  print arr;
+   discPercentage = discArray[1];
+   print "discPercentage";
+   print discPercentage;
+   count = count + 1;
+  }
+  else
+  {
+  discPercentage = discArray[0];
+   count = 0;
+  }
+ 
+ 
+
+}
+ if(line.requestedDiscount_l == 0.0)
+ {
+ 
+ 
+  sb = sbappend(sb,line._document_number + "~requestedDiscount_l~" + discPercentage + "|");
+  print sb;
+ }
+}
+else 
+  {
+   count = 0;
+  }
+/*discountStartPosition = find(line._line_item_comment,"requestedDisc");
+if(discountStartPosition > 0)
+{
+discPercentage = substring(line._line_item_comment, discountStartPosition+len("requestedDisc")+3, find(line._line_item_comment,"\"}"));
+if(discPercentage <> "0.0")
+{
+//print discPercentage;
+sb = sbappend(sb,line._document_number + "~requestedDiscount_l~" + discPercentage + "|");
+}
+}*/
+//}
+sb = sbappend(sb,commerce.mergeStandaloneParts());
+return sbtostring(sb);

@@ -1,0 +1,15 @@
+/*********************************************************************
+24//08/2020 Kavita Lolla  VIPER-933   Line numbers are required for validations on line items.
+*********************************************************************/
+//Error message framing for Requested discount.
+returnmsg4=dict("dict<string>");
+PartError4=dict("string");
+sb4=stringbuilder();
+ sbappend(sb4, "Discount % on Line item(s) cannot be greater than 100%. Line # : ",substring(requestedDiscountErrorLines_t,0,-2));
+ error_Statement4=sbtostring(sb4);
+ put(PartError4, "message", error_Statement4);
+ put(PartError4, "location", "Top");
+ put(PartError4, "operator", "not =");
+ put(PartError4, "values", "");
+ put(returnmsg4, "requestedDiscountErrorLines_t", PartError4);
+return returnmsg4;

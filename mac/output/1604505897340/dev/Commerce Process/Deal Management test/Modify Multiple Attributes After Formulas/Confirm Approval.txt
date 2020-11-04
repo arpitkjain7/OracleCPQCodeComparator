@@ -1,0 +1,13 @@
+/************************************************************************************************************
+ Description: This library function is used to populate all the pricing related attributes of line items in a quote.
+ Return type: string
+ History:     Date          Author            Comment 
+        06/02/2019    Kavita Lolla              Initiate approvals for each line level approver
+      
+ ************************************************************************************************************/
+
+result = "";
+sb = stringbuilder();
+sbappend(sb, "1~approvalDate_t~" , _system_date , "|");
+result = sbtostring(sb);
+return result;

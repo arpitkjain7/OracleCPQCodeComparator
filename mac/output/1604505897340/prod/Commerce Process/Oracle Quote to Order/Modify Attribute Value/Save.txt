@@ -1,0 +1,133 @@
+/*****************************************************************
+Author - Shivendra Sharma
+Date - 19/08/2019
+JIRA - VIPER-64
+Summary - CFirst Quote Created from Opportunity should be marked as primary 
+*****************************************************************/
+
+result = primaryQuote_t;
+res = "";
+
+if(_system_current_step_var == "start_step" OR _system_current_step_var == "pending_process"){
+res = commerce.firstActiveQuote_t();
+ if(res == "true")
+ {
+    result = true;
+ }
+}
+
+return result;
+/********************************************************************
+Date          Developer            Ticket / Description
+20/11/2019    Kavita Lolla         CPQ:  Bilingual Quick Quote Templates for Brazil
+********************************************************************/
+languagesRecord=recordset();
+translationString="";
+lang = language_t+",Word";
+print lang;
+actualLanguage= language_t;
+
+              languagesRecord=bmql("select $lang FROM LanguageTranslations");
+            print languagesRecord;
+              for eachRecord in languagesRecord{      
+                                                  
+             translationString=translationString+"~"+get(eachRecord,"Word")+"=="+get(eachRecord,actualLanguage);
+              }
+              translationString=translationString+"~";
+             
+
+return translationString;
+/*
+Name:- Set SymantecTrialPOC
+Description:- To set Symentac Trial POC true when Deal Type is Trial POC
+Jira Id:- SYMINT-3131
+Author:- Arjun Singh
+Date:- 17-Jan-2020
+*/
+if(dealType_t=="trialPOC")
+{
+ return true;
+}
+else
+{
+ return false;
+}
+/*****************************************************************
+ Author - Kavita Lolla
+ Date - 23/03/2019
+ Defect id - BROCAD2-427
+ USer story summary - Empty opportunity details on reselect customer
+*****************************************************************/
+ret = "";
+if(copiedAndCustChanged_t <> "CustChanged")
+{
+ ret = copiedAndCustChanged_t;
+}
+else
+{
+ ret = "";
+}
+return ret;
+/************************************************************************************************
+Author - Kavita Lolla
+Date - 25/02/2019
+UID - 187
+USer story summary - Deal desk Approval Date will be updated whenever the deal desk status is changed.
+*************************************************************************************************/
+dealHistory = dealDeskHistory_t;
+if(dealDeskHistory_t <> dealDeskStatus_t){
+if(upper(dealDeskStatus_t) == "APPROVED" or upper(dealDeskStatus_t) == "SUBMITTED")
+{
+ return datetostr(getDate());
+}
+else
+{
+ return "";
+}
+}
+else
+{
+ return "";
+}
+/*********************************************************************
+Description: Update Sales Stage, Quote Expiration Date, Sales Org Details from BRCM Users, Primary quote and Payment Plan
+User Story #:
+History:     Date          Author              Comment 
+    10/11/2019    Satyabrata Acharya   VIPER-522 : Changes to default/set RTM for Commercial quotes as Tier 2
+**********************************************************************/
+
+route=routeToMarket_t;
+if(dealType_t=="bSN" or dealType_t=="bSNRenewal"){
+route="tier1";
+}
+//condition for sending route to market as Tier 2; Viper-522;VIPER-631
+if(core_t=="Commercial" AND routeToMarket_t ==""){
+route="tier2";
+}
+
+return route;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 04/03/2019
+User story summary - Change quote status to in progress 
+ if its draft on Save.
+*****************************************************************/
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect no - BROCAD2-584
+Defect summary - Status not changing to Approved when all approvals 
+  are achieved.
+*****************************************************************/
+result = status_t;
+if(status_t == "DRAFT")
+{
+ result =  "IN_PROGRESS";
+}
+else
+{
+ if(_system_current_step_var=="approved"){
+  result="APPROVED";
+ }
+}
+return result;

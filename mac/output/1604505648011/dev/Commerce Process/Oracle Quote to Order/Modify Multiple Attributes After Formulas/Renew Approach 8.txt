@@ -1,0 +1,25 @@
+/************************************************
+/Action Name:  Renew Approach 8
+/Description: this action is triggered implicitly by wrapper action which is responsible for renewal quote creation
+/Author: M Vamsi Krishna
+/Creation Date: 04-May-2020
+History:
+ Date          Author            Comment 
+ 04/05/2020    M Vamsi   VIPER-817- Create renewal automation process to generate renewal quotes
+*/
+
+Program_ID = "Renewal Program 8";
+Triggered_By = "Renewal Program";
+StartGrpID = 0;
+EndGrpID = 0;
+groupIDsResult = bmql("select START_GRP_ID,END_GRP_ID from Renewal_Batch_Detail where SNO = 8");
+
+for iDS in groupIDsResult
+{
+ StartGrpID  = atoi(get(iDS,"START_GRP_ID"));
+ EndGrpID  = atoi(get(iDS,"END_GRP_ID"));
+}
+// triggering UTIL library which is responsible for renewal quote creation
+result = util.newRenewalProgram(_system_user_bill_company, _system_supplier_company_name, StartGrpID, EndGrpID, Program_ID, Triggered_By);
+
+return "";

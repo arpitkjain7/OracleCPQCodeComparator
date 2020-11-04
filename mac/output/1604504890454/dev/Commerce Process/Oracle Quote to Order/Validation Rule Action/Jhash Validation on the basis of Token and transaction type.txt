@@ -1,0 +1,20 @@
+/********************************************************************
+Author : Satyabrata Acharya
+Changes done for VIPER-878
+Date: 21/07/2020  
+Change Description:- Jhash Validation
+*************************************************************************/
+returnmsg=dict("dict<string>");
+PartError=dict("string");
+sb=stringbuilder();
+
+sbappend(sb, "JHash is required for line(s): " , substring(jHASHRequired_t,0,-2));
+error_Statement=sbtostring(sb);
+put(PartError, "message", error_Statement);
+put(PartError, "location", "Top");
+put(PartError, "operator", "=");
+put(PartError, "values", "");
+put(returnmsg, "jHASH_t", PartError);
+
+
+return returnmsg;

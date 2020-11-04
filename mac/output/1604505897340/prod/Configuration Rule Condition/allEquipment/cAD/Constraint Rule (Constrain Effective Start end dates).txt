@@ -1,0 +1,18 @@
+/********************************************************************
+Function Name: Constrain Start End Dates
+Description: This Constraint rule checks that whether the effective start date and end date during product configuration are valid
+Date: May 12 2020
+User Story: Jira-803
+Author: Sindhura Chintakindi
+/********************************************************************/
+
+ret=false;
+
+if(datetostr(effectiveStartDate_guidedSelling, "yyyy-MM-dd HH:mm:ss") <> "" and datetostr(effectiveEndDate_guidedSelling, "yyyy-MM-dd HH:mm:ss") <> "")
+{
+ if(effectiveStartDate_guidedSelling > effectiveEndDate_guidedSelling)
+ {
+  ret=true;
+ } 
+}
+return ret;

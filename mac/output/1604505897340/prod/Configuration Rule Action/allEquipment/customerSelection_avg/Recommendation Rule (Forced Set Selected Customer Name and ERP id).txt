@@ -1,0 +1,60 @@
+/*****************************************************************
+Function Name : Forced Set Selected Customer Sales Area
+Name :Rohit Ranjan
+Description : This Rule to Force set Customer Sales Area
+*****************************************************************/ 
+result="";
+size=range(customersArrayControl_avg);
+for each in size{
+if(selectCustomer_t[each]==true){
+result=salesAreaArr_avg[each];
+}
+
+}
+
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Customer Parent Name
+Name :Rohit Ranjan
+Description : This Rule to Force set customer Parent  name
+*****************************************************************/ 
+result="";
+size=range(customersArrayControl_avg);
+for each in size{
+if(selectCustomer_t[each]==true){
+result=parentNameArr_avg[each];
+}
+
+}
+
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Customer Name and ERP id
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer id
+*****************************************************************/ 
+result="";
+size=range(customersArrayControl_avg);
+for each in size{
+if(selectCustomer_t[each]==true){
+result=customerNumberArr_avg[each];
+}
+
+}
+
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Customer Name and ERP id
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer name
+*****************************************************************/ 
+result="";
+size=range(customersArrayControl_avg);
+for each in size{
+if(selectCustomer_t[each]==true){
+result=customerNameArr_avg[each];
+}
+
+}
+
+return result;

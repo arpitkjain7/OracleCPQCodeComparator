@@ -1,0 +1,12 @@
+/********************************************************************
+Function Name: Apply Prior Price
+Description: To apply Prior Price for capacity transaction lines based on Contract/List unit Price
+Author: Keerthivasan A
+Date: 07/10/2019
+********************************************************************/
+
+
+result ="";
+sb=stringbuilder(result,commerce.applyPriorPrice_brcm());
+result=sbtostring(sb);
+return result;

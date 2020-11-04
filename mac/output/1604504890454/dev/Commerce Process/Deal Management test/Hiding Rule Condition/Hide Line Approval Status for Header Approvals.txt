@@ -1,0 +1,26 @@
+/************************************************************************************************
+Author - Kavita Lolla
+Date - 01/05/2019
+UID - BROCAD2-1713
+USer story summary - Hide Line status for header level approvals.
+*************************************************************************************************/
+flag = true;
+for status in approval_status_submit_t
+{
+ for approval in status
+ {
+  if(approval == "lineLevelApproval")
+  {
+   flag = false;
+   break;
+  }
+ }
+}
+if(flag)
+{
+ if(status_t <> "PENDING_APPROVER" and lineApprovalFlag_t)
+ {
+  flag = false;
+ }
+}
+return flag;

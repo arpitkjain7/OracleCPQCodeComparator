@@ -1,0 +1,21 @@
+/********************************************************************
+Validation Name: Adding this logic for having contract number validation for Hardware upgrade quote lines 
+Jira ID: SYMINT-4952
+Description: Adding this logic for having contract number validation for Hardware upgrade quote lines . 
+Author: Arjun Singh
+Date: 03-Mar-2020
+*************************/
+//Initialization
+returnmsg=dict("dict<string>");
+PartError=dict("string");
+//Setting the message that needs to be displayed
+sb=stringbuilder();
+sbappend(sb, "Prior Contract # and Prior Contract Line # are required for Upgrade,Renew,Capacity transactions. Please update the following quote lines:- " , hwValidation_contract_t);
+error_Statement=sbtostring(sb);
+//Displaying the error message
+put(PartError, "message", error_Statement);
+put(PartError, "location", "Top");
+put(PartError, "operator", " not =");
+put(PartError, "values", "");
+put(returnmsg, "hwValidation_contract_t", PartError);
+return returnmsg;

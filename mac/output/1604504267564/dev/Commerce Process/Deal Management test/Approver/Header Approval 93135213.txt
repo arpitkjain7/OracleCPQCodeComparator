@@ -1,0 +1,22 @@
+/******************************************************************************` 
+Author : M Vamsi Krishna
+User Story Summary : Dynamically assign approver
+Date : 11/15/2019
+******************************************************************************/
+ret = "";
+userID = "";
+sb = stringbuilder();
+
+approvers = split(approverLevel1_t,",");
+for str in approvers{
+if(NOT isnull(str) and str <> ""){
+sbappend(sb , "1~",str ,"~" , _system_company_name , "|");
+
+}
+}
+ret = sbtostring(sb);
+if(endswith(ret,"|")){
+ret = substring(ret,0,len(ret)-1);
+}
+
+return ret;

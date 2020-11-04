@@ -1,0 +1,49 @@
+/*****************************************************************
+ Author - Kavita Lolla
+ Date - 06/03/2019
+ UID - 79
+ USer story summary - Assign approver for Renewal Quotes
+*****************************************************************/
+transactionType=  "Renew";
+accountType = "";
+salesArea = quoteOwnerSubRegion_t;
+sb = stringbuilder();
+result="";
+if(core_t == "ZCA_CORE")
+{
+ accountType = "Core";
+}
+else
+{
+ accountType = "Non-Core";
+}
+rtm="";
+if(routeToMarket_t == "direct")
+{
+ rtm = "DIRECT";
+}
+else
+{
+ rtm = "INDIRECT";
+}
+deal = "";
+if(startswith(dealType_t,"cAD"))
+{
+ deal = "ENT";
+}
+else
+{
+ deal = "Other";
+}
+recordSet = bmql("select Level3_Approver_Role from BRCM_Approver_Roles where Route_To_Market = $rtm and Account_Type = $accountType and Deal_Type = $deal and Transaction_Type = $transactionType");
+levelRole3 = "";
+for record in recordSet{
+ levelRole3 = get(record,"Level3_Approver_Role");
+}
+resultSet = bmql("select User_Id from Approval_PF_Mapping where Assigned_Region = $salesArea and User_Role = $levelRole3");
+for record in resultSet{
+ sbappend(sb , "1~" , get(record,"User_Id") , "~" , _system_company_name  , "|");
+ 
+}
+result = sbtostring(sb);
+return substring(result,0,-1);

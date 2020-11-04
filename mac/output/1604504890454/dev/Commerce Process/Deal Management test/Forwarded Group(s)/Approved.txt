@@ -1,0 +1,71 @@
+/*****************************************************************
+Author - Shivendra Sharma
+Date - 01/02/2019
+USer story summary - Provide conditional access to Deal Desk Review Manager, Quote owner, Sales and Renewal user.
+// VIPER-453 - changes done by shruti on 24th sept 2019 for allowing only admin to view quotes created with deal type ENT SMB 
+// VIPER-513 - Changes done by Satya on 4th Oct 2019 for visibility restrictions on Commercial Renewals Quotes. 
+//Only commercial renewal should be hidden for sales users. Other quotes should be visible.
+*****************************************************************/ 
+
+result = "";
+usergroups=split(_system_user_groups,"+");
+print usergroups;
+print _system_user_groups;
+
+/*if (quoteOwner_t==_system_user_name)
+{
+  result =  result + _system_user_login + "~" + _system_company_name + "~Sales User|";
+}*/
+
+
+// VIPER-453 - changes done for allowing only admin to view quotes created with deal type ENT SMB
+if(core_t == "Commercial" and quoteType_t =="renewalQuote"){
+
+  result =  result + "businssAdminstrator"+ "~" + _system_company_name + "~Admin|";
+  result =  result + "technicalAdminstrator"+ "~" + _system_company_name + "~Admin|";
+  result =  result + "salesAdministrator"+ "~" + _system_company_name + "~Admin|";
+   
+}
+if(core_t == "Commercial" and quoteType_t <>"renewalQuote"){
+result =  result + "salesUser"+ "~" + _system_company_name + "~Sales User|";
+result =  result + "businssAdminstrator"+ "~" + _system_company_name + "~Admin|";
+  result =  result + "technicalAdminstrator"+ "~" + _system_company_name + "~Admin|";
+  result =  result + "salesAdministrator"+ "~" + _system_company_name + "~Admin|";
+}
+// end of code for VIPER-453
+
+//quoteRegion = quoteOwnerRegion_t;
+/*quoteSubRegion=quoteOwnerSubRegion_t;
+
+res = bmql("select Sales_Region_Queue, Sales_Area from BRCM_Sales_Region where Sales_Area = $quoteSubRegion");
+print res;
+regionQueue = "";
+region = "";
+
+for each in res
+{
+  regionQueue = get(each,"Sales_Region_Queue");
+  region = get(each, "Sales_Area");
+  print region;
+  print regionQueue;
+  result =  result + regionQueue + "~" + _system_company_name + "~Deal Desk Review Manager|";
+}*/
+
+// VIPER-453 - changes done for allowing only admin to view quotes created with deal type ENT SMB
+if(core_t <> "Commercial"){
+  //end of code for VIPER-453
+// VIPER-453 - changes done for allowing only admin to view quotes created with deal type ENT SMB
+
+result =  result + "businssAdminstrator"+ "~" + _system_company_name + "~Admin|";
+result =  result + "technicalAdminstrator"+ "~" + _system_company_name + "~Admin|";
+result =  result + "salesAdministrator"+ "~" + _system_company_name + "~Admin|";
+result =  result + "salesUser"+ "~" + _system_company_name + "~Sales User|";
+result =  result + "wWSalesOperations"+ "~" + _system_company_name + "~Sales User|";
+result =  result + "partnerUser" + "~" + _system_company_name + "~Partners|";
+}
+
+//end of code for VIPER-453
+
+//print result;
+
+return result;

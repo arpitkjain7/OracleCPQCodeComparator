@@ -1,0 +1,40 @@
+/************************************************
+Rule Name: Part Attribute Fetchhing
+Description: Fetch Part Attributes Ext from DB and storing in text area - Part Attributes Ext Fetched.
+Author: Shivendra
+Creation Date: 16-Jan-2020
+ */
+
+
+upgPart_idx = findinarray(selectUpgdSKUarr_avg,true);
+part_idx = findinarray(select_avg,true);
+part = PartNumber_avg[part_idx];
+upgPart = upgradeSKUarray_avg[upgPart_idx];
+res = recordset();
+
+//SYMINT-4173 - Fetch data based on upgrade parts in case of HW_upgrade confiurator for SED.
+if(selectUpgradeProduct_avg == true){
+res = bmql("select Environment_Allowed,Product_Type, Language_Required from BRCM_Part_Master where MPN = $upgPart");
+}
+else{
+res = bmql("select Environment_Allowed,Product_Type, Language_Required from BRCM_Part_Master where MPN = $part");
+}
+
+envString = "";
+prodType = "";
+langReq = "";
+partJson = json();
+for s in res
+{
+ envString = get(s,"Environment_Allowed");
+ prodType = get(s,"Product_Type");
+ langReq = get(s,"Language_Required");
+}
+/*finalStr = prodType;
+finalStr = finalStr + "-" + envString;*/
+jsonput(partJson,"Product Type",prodType);
+jsonput(partJson,"Environment Allowed",envString);
+jsonput(partJson,"Language Required",langReq);
+//return finalStr;
+finalStr = jsontostr(partJson);
+return finalStr;

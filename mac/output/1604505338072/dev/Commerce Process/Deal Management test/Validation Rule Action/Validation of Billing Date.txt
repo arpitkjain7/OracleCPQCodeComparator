@@ -1,0 +1,25 @@
+/********************************************************************
+Function Name: Validation of Billing Date
+Description:This rule validates if Billing Date is blank as per SYMINT-3776
+Author:   Keerthivasan
+History:     Date          Author                  Comment 
+    10-Jan-2020    Keerthivasan                       Initial Version
+********************************************************************/ 
+
+returnmsg=dict("dict<string>");
+PartError=dict("string");
+sb = stringbuilder();
+//assign Transaction Schedule ID. with blank Billing Date to the error substring
+if (errorLineBillingDate_t <> "")
+{
+ sbappend(sb,"The Billing Date must be entered on Schedule ID(s): " , substring(errorLineBillingDate_t,0,-2));
+}
+//Returning the error message by putting the value in dictionary
+
+error_Statement= sbtostring(sb);
+put(PartError, "message", error_Statement );
+put(PartError, "location", "Top");
+put(PartError, "operator", "=");
+put(PartError, "values", "");
+put(returnmsg, "billingDateValidation_t", PartError);
+return returnmsg;

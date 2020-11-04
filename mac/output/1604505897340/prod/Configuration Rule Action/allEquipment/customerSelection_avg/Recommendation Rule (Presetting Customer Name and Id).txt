@@ -1,0 +1,44 @@
+/*****************************************************************
+Function Name :Presetting values for End Customer Selection
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer ERP from OEC
+*****************************************************************/ 
+
+
+return customerNumber_avg;
+/*****************************************************************
+Function Name :Presetting values for End Customer Selection
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer name from OEC
+*****************************************************************/ 
+
+return customerName_avg;
+/*****************************************************************
+Function Name :Presetting values for End Customer Selection
+Name :Satyabrata Acharya
+Description : This function is used to fetch soldTocustomer name from commerce
+*****************************************************************/ 
+
+
+ret="";
+result = bmql("SELECT soldToCustomer_t from commerce.transaction");
+for each in result{
+ret = get(each,"soldToCustomer_t");
+}
+
+return ret;
+/*****************************************************************
+Function Name :Presetting values for End Customer Selection
+Name :Satyabrata Acharya
+Description : This function is used to fetch  ERP account number from Commerce
+*****************************************************************/ 
+
+ret="";
+result = bmql("SELECT eRPAccountNumberShipTo_t from commerce.transaction");
+for each in result{
+ret = get(each,"eRPAccountNumberShipTo_t");
+}
+
+
+
+return ret;

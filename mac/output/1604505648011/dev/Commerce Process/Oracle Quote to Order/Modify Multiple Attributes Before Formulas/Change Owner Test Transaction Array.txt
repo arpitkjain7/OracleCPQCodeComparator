@@ -1,0 +1,21 @@
+/*newOwner="";
+newOwnerEmail="";
+loop = range(arrayControlAttributeQuoteOwner_t); 
+ 
+  for line in loop
+  {
+   payment = json();
+   row = jsonarrayget(changeOwnerTransactionalArray_t, line, "json");
+   rowSelect = jsonget(row,"selectChangeOwner_t", "string","");
+   if(rowSelect =="true")
+   {
+   rowName = jsonget(row,"ownerName_t", "string","");
+   rowEmail = jsonget(row,"ownerEmail_t", "string","");
+   newOwner = rowName + "~" + rowEmail;
+   }
+  }
+ data = "<bm:newQuoteOwner_t>"+ newOwner +"</bm:newQuoteOwner_t>";*/
+ resultSave = commerce.changeQuoteOwnership_Array();
+ print resultSave;
+ 
+ return "";

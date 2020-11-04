@@ -1,0 +1,192 @@
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;
+/*****************************************************************
+Author - Kavita Lolla
+Date - 28/03/2019
+Defect No - BROCAD2-584
+Summary - Move to Approve step when all line approvals is achieved.
+*****************************************************************/
+flag = true;
+for line in transactionLine
+{
+ if(line.workflowStatus_l <> "approved")
+// if(line.approver_l <> "")
+ {
+  flag = false;
+ }
+}
+return flag;

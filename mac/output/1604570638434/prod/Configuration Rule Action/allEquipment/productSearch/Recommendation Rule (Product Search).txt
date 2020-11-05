@@ -1,0 +1,608 @@
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set srt weeks
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+row = json();
+sRTWeeks = string[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ sRTWeeks[count] = jsonget(row,"SRT Weeks", "string","");
+ count = count + 1; 
+
+}
+return sRTWeeks;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set product cpn
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+
+row = json();
+cPN = string[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ cPN[count] = jsonget(row,"CPN", "string","");
+ count = count + 1; 
+
+}
+return cPN;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to previous service required
+*****************************************************************/ 
+
+return serviceRequired_Search_avg;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set service required
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+row = json();
+serviceRequired = string[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ serviceRequired[count] = jsonget(row,"Service Required", "string","");
+ count = count + 1; 
+}
+return serviceRequired;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set product string
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+row = json();
+cOO = string[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ cOO[count] = jsonget(row,"COO", "string","");
+ count = count + 1; 
+}
+return cOO;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set srt quantity
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+row = json();
+sRTQty = integer[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ sRTQty[count] = atoi(jsonget(row,"SRT Qty", "string",""));
+ count = count + 1; 
+
+}
+return sRTQty;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set spi
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+row = json();
+sPI = string[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ sPI[count] = jsonget(row,"SPI", "string","");
+ count = count + 1; 
+}
+
+return sPI;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set previous product line
+*****************************************************************/ 
+
+return productLine_search_avg;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set product line
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+row = json();
+productLine = string[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ productLine[count] = jsonget(row,"Product Line", "string","");
+ count = count + 1; 
+}
+return productLine;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set previous business unit
+****************************************************************/ 
+
+return businessUnit_Search_avg;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set previous product name
+*****************************************************************/ 
+
+return productName_search_avg;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set total no of pages
+*****************************************************************/ 
+
+fields = dict("string");
+perc = "%";
+mPNSearch = perc + mPN_search_avg + perc;
+productNameSearch = perc + productName_search_avg + perc;
+businessUnitSearch = perc + businessUnit_Search_avg + perc;
+productLineSearch = perc + productLine_search_avg + perc;
+productFamilySearch = perc + productFamily_Search_avg + perc;
+productSubFamilySearch = perc + productSubFamily_Search_avg + perc;
+serviceRequiredSearch = perc + serviceRequired_Search_avg + perc;
+put(fields,"$mpn",mPNSearch);
+
+put(fields,"$productName",productNameSearch);
+
+put(fields,"$productLine",productLineSearch);
+put(fields,"$businessUnit",businessUnitSearch);
+put(fields,"$productFamily",productFamilySearch);
+put(fields,"$productSubFamily",productSubFamilySearch);
+put(fields,"$serviceRequired",serviceRequiredSearch);
+where = "";
+conjunction = "";
+
+if(len(mPN_search_avg) <> 0){
+ where = where + "BRCM_Part_Master.MPN LIKE $mpn";
+ conjunction = " AND ";
+}
+
+if(len(productName_search_avg) <> 0){
+ 
+ where = where + conjunction + "BRCM_Part_Master.Product_Name LIKE $productName";
+ conjunction = " AND ";
+}
+
+
+if(len(businessUnit_Search_avg) <> 0){
+ where = where + conjunction + "BRCM_Part_Master.Business_Div LIKE $businessUnit";
+ conjunction = " AND ";
+}
+if(len(productLine_search_avg) <> 0){
+ where = where + conjunction + "BRCM_Part_Master.PRODUCT_LINE LIKE $productLine";
+}
+
+if(len(productSubFamily_Search_avg) <> 0){
+ where = where + conjunction + "BRCM_Part_Master_Ext.Sub_Family LIKE $productSubFamily";
+ conjunction = " AND ";
+}
+
+if(len(productFamily_Search_avg) <> 0){
+ where = where + conjunction + "BRCM_Part_Master.PRODUCT_FAMILY LIKE $productFamily";
+ conjunction = " AND ";
+}
+
+if(len(serviceRequired_Search_avg) <> 0){
+ where = where + conjunction + "BRCM_Part_Master.Service_Required LIKE $serviceRequired";
+ conjunction = " AND ";
+}
+
+count = 1;
+
+lang = dict("string");
+
+res = bmql("select BRCM_MPN_CPN_Map.CPN,BRCM_Part_Master_Ext.Sub_Family,BRCM_Part_Master.MPN,BRCM_Part_Master.Product_Name, BRCM_Part_Master.Business_Div,BRCM_Part_Master.PRODUCT_LINE,BRCM_Part_Master.PRODUCT_FAMILY,BRCM_Part_Master.Service_Required,BRCM_Part_Master.SPI,BRCM_Part_Master.SRT_QTY,BRCM_Part_Master.SRT_Weeks,BRCM_Part_Master.Country_of_Origin,BRCM_Part_Master.Cust_Order_Enbld from BRCM_Part_Master LEFT OUTER JOIN BRCM_Part_Master_Ext ON BRCM_Part_Master_Ext.MPN = BRCM_Part_Master.MPN LEFT OUTER JOIN BRCM_MPN_CPN_Map ON BRCM_MPN_CPN_Map.MPN = BRCM_Part_Master.MPN WHERE $where", lang, fields);
+
+
+mPN = "";
+productName = "";
+businessUnit = "";
+productLine = "";
+productFamily = "";
+cPN = "";
+basePrice = "";
+subFamily = "";
+sPI = "";
+sRTWeeks = "";
+sRTQty = "";
+cOE = "";
+cOO = "";
+serviceRequired = "";
+previousMPN = "";
+array = json();
+result = jsonarray();
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in res{
+ count = count + 1;
+ 
+}
+
+totalPages = (count/20) + 1;
+return totalPages;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set product string
+*****************************************************************/ 
+
+fields = dict("string");
+perc = "%";
+mPNSearch = perc + mPN_search_avg + perc;
+productNameSearch = perc + productName_search_avg + perc;
+businessUnitSearch = perc + businessUnit_Search_avg + perc;
+productLineSearch = perc + productLine_search_avg + perc;
+productFamilySearch = perc + productFamily_Search_avg + perc;
+productSubFamilySearch = perc + productSubFamily_Search_avg + perc;
+serviceRequiredSearch = perc + serviceRequired_Search_avg + perc;
+put(fields,"$mpn",mPNSearch);
+
+put(fields,"$productName",productNameSearch);
+
+put(fields,"$productLine",productLineSearch);
+put(fields,"$businessUnit",businessUnitSearch);
+put(fields,"$productFamily",productFamilySearch);
+put(fields,"$productSubFamily",productSubFamilySearch);
+put(fields,"$serviceRequired",serviceRequiredSearch);
+where = "";
+conjunction = "";
+
+if(len(mPN_search_avg) <> 0){
+ where = where + "BRCM_Part_Master.MPN LIKE $mpn";
+ conjunction = " AND ";
+}
+
+if(len(productName_search_avg) <> 0){
+ 
+ where = where + conjunction + "BRCM_Part_Master.Product_Name LIKE $productName";
+ conjunction = " AND ";
+}
+
+
+if(len(businessUnit_Search_avg) <> 0){
+ where = where + conjunction + "BRCM_Part_Master.Business_Div LIKE $businessUnit";
+ conjunction = " AND ";
+}
+if(len(productLine_search_avg) <> 0){
+ where = where + conjunction + "BRCM_Part_Master.PRODUCT_LINE LIKE $productLine";
+}
+
+if(len(productSubFamily_Search_avg) <> 0){
+ where = where + conjunction + "BRCM_Part_Master_Ext.Sub_Family LIKE $productSubFamily";
+ conjunction = " AND ";
+}
+
+if(len(productFamily_Search_avg) <> 0){
+ where = where + conjunction + "BRCM_Part_Master.PRODUCT_FAMILY LIKE $productFamily";
+ conjunction = " AND ";
+}
+
+if(len(serviceRequired_Search_avg) <> 0){
+ where = where + conjunction + "BRCM_Part_Master.Service_Required LIKE $serviceRequired";
+ conjunction = " AND ";
+}
+
+count = 1;
+
+
+lang = dict("string");
+
+res = bmql("select BRCM_MPN_CPN_Map.CPN,BRCM_Part_Master_Ext.Sub_Family,BRCM_Part_Master.MPN,BRCM_Part_Master.Product_Name, BRCM_Part_Master.Business_Div,BRCM_Part_Master.PRODUCT_LINE,BRCM_Part_Master.PRODUCT_FAMILY,BRCM_Part_Master.Service_Required,BRCM_Part_Master.SPI,BRCM_Part_Master.SRT_QTY,BRCM_Part_Master.SRT_Weeks,BRCM_Part_Master.Country_of_Origin,BRCM_Part_Master.Cust_Order_Enbld from BRCM_Part_Master LEFT OUTER JOIN BRCM_Part_Master_Ext ON BRCM_Part_Master_Ext.MPN = BRCM_Part_Master.MPN LEFT OUTER JOIN BRCM_MPN_CPN_Map ON BRCM_MPN_CPN_Map.MPN = BRCM_Part_Master.MPN WHERE $where", lang, fields);
+
+
+mPN = "";
+productName = "";
+businessUnit = "";
+productLine = "";
+productFamily = "";
+cPN = "";
+basePrice = "";
+subFamily = "";
+sPI = "";
+sRTWeeks = "";
+sRTQty = "";
+cOE = "";
+cOO = "";
+serviceRequired = "";
+previousMPN = "";
+array = json();
+result = jsonarray();
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 19;
+
+for line in res{
+ if((count >= startPageNumber) and (count <= lastPageNumber)){
+  mPN = get(line,"MPN");
+  productName = get(line,"Product_Name");
+  businessUnit = get(line,"Business_Div");
+  productLine = get(line,"PRODUCT_LINE");
+  productFamily = get(line,"PRODUCT_FAMILY");
+  cPN = get(line,"CPN");
+  
+  sPI = get(line,"SPI");
+  sRTWeeks = get(line,"SRT_Weeks");
+  sRTQty = get(line,"SRT_QTY");
+  cOE = get(line,"Cust_Order_Enbld");
+  cOO = get(line,"Country_of_Origin");
+  serviceRequired = get(line,"Service_Required");
+  jsonput(array,"MPN", mPN);
+  jsonput(array,"Product Name", productName);
+  jsonput(array,"Business Unit", businessUnit);
+  jsonput(array,"Product Line", productLine);
+  jsonput(array,"Product Family", productFamily);
+  jsonput(array,"CPN", cPN);
+  
+  jsonput(array,"SPI", sPI);
+  jsonput(array,"SRT Weeks", sRTWeeks);
+  jsonput(array,"SRT Qty", sRTQty);
+  jsonput(array,"COE", cOE);
+  jsonput(array,"COO", cOO);
+  jsonput(array,"Service Required", serviceRequired);
+  jsonarrayappend(result, array);
+ 
+ }
+ count = count + 1;
+ 
+}
+
+return jsonarraytostr(result);
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set product name
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+
+row = json();
+productName = string[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ productName[count] = jsonget(row,"Product Name", "string","");
+ count = count + 1;
+  
+
+}
+
+
+return productName;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set product MPN
+*****************************************************************/ 
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+
+row = json();
+mPN = string[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ mPN[count] = jsonget(row,"MPN", "string","");
+ count = count + 1; 
+
+}
+return mPN;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set previous product sub family
+*****************************************************************/ 
+
+return productSubFamily_Search_avg;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set previous product family
+*****************************************************************/ 
+
+return productFamily_Search_avg;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set product 
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+row = json();
+cOE = string[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ cOE[count] = jsonget(row,"COE", "string","");
+ count = count + 1; 
+
+}
+return cOE;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set product family
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+row = json();
+productFamily = string[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ productFamily[count] = jsonget(row,"Product Family", "string","");
+ count = count + 1; 
+
+}
+return productFamily;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set previous MPN
+*****************************************************************/ 
+
+return mPN_search_avg;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set Business unit
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+sizeOfArr = jsonarraysize(array);
+noOfTimes = range(integer(sizeOfArr/5000) + 1);
+index = range(5000);
+if(sizeOfArr < 5000){
+ index = range(sizeOfArr);
+}
+row = json();
+businessUnit = string[];
+count = 0;
+startPageNumber = (pageNumber_avg*20) - 19;
+lastPageNumber = startPageNumber + 20;
+
+for line in index{
+ 
+ row = jsonarrayget(array, line, "json");
+ businessUnit[count] = jsonget(row,"Business Unit", "string","");
+ count = count + 1; 
+
+}
+
+return businessUnit;
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set product array control
+*****************************************************************/ 
+
+array = jsonarray(productString_avg);
+count = jsonarraysize(array);
+return count;

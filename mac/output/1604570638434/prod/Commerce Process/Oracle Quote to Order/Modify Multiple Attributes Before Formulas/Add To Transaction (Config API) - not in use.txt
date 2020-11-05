@@ -1,0 +1,24 @@
+/***********************************************************
+Function Name : Add To Transaction (Config API) - not in use
+Name : Nandhini Vurimella
+Description : To add to transaction.
+**********************************************************/
+result = "";
+res = commerce.importPartsTest();
+if(res == "ERROR"){
+text = "There are some data issues in the uploaded CSV. Kindly check the values in the CSV";
+
+
+data = "<bm:errorShowingAttribute>"+text+"</bm:errorShowingAttribute>";
+
+res = commerce.cleanSave(data);
+}
+else{
+text = "";
+
+data = "<bm:errorShowingAttribute>"+text+"</bm:errorShowingAttribute>";
+
+res = commerce.cleanSave(data);
+}
+
+return result;

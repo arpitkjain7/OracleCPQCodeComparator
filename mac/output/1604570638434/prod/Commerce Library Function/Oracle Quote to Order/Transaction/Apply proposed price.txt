@@ -1,0 +1,99 @@
+/*********************************************************************
+Function Name: Apply proposed price
+Description: This library function is used to cascade proposed price in the quote header to line items in a quote.
+Author: Acharya Kumar Satyabrata
+Date: 28th jan 2019
+
+
+05/05/2020 Adithya  //VIPER-768 The header proposed price is allocated based on line item Ext. Proposed Net Unit
+*********************************************************************/
+
+result = "";
+dlim="~";
+dend="|";
+
+if(avoidPricingCalculations_t == false){
+
+Totalprice=0.0;
+nondiscountableprice=0.0;
+NewrequestedDiscountpercent=0.0;
+lineproportion=0.0;
+NewLinePrice=0.0;
+total = 0;
+precision = 0;
+res = bmql("SELECT Precision from Func_Curr_Prec_Map WHERE Functional_Currency=$_system_current_document_currency_pref");
+
+for line in res{
+ precision=atoi(get(line,"Precision"));
+ 
+}
+
+for line in transactionLine{
+requestedDisc = string(line.requestedDiscount_l);
+
+if(line._model_name == "" AND line._part_number<>"Cust" and line.dropProduct_l<>true and line.extProposedNetPriceRequested_l <> 0){
+
+
+if(line.isDiscountable_l == "None" and line.requestedDiscount_l == 0.0){
+ result= result + line._document_number + dlim + "proposedNetUnitPriceRequested_l" + dlim + String(line.extContractListPrice_l) + dend;
+}
+else{
+if(totalExtListPrice_t<>0){
+lineproportion=line.unroundedExtListPrice_l/totalExtListPrice_t;
+}
+/*
+if(line.extContractListPrice_l<>0 and totalExtListPrice_t<>0){
+NewrequestedDiscountpercent=round((1-(headerLevelProposedPrice_t/totalExtListPrice_t))*100,12);
+}
+
+NewLinePrice=round(line.unroundedExtListPrice_l-((line.unroundedExtListPrice_l*NewrequestedDiscountpercent)/100),precision);
+*/
+
+//VIPER-768 The header proposed price is allocated based on line item Ext. Proposed Net Unit
+if(line.extContractListPrice_l<>0 and totalExtListPrice_t<>0){
+NewrequestedDiscountpercent=round((1-((headerLevelProposedPrice_t*line.extProposedNetPriceRequested_l)/(totalProposedNetPriceLC_t*line.unroundedExtListPrice_l)))*100,12);
+}
+
+NewLinePrice=round(line.unroundedExtListPrice_l-((line.unroundedExtListPrice_l*NewrequestedDiscountpercent)/100),precision);
+
+
+total = total + NewLinePrice;
+
+result= result + line._document_number + dlim + "proposedNetUnitPriceRequested_l" + dlim + String(NewLinePrice/line._price_quantity) + dend;
+result= result + line._document_number + dlim + "proposedNetPriceRequestedHidden_ct" + dlim + string(NewLinePrice/line._price_quantity) + dend;
+result= result + line._document_number + dlim + "requestedDiscount_l" + dlim + String(NewrequestedDiscountpercent) + dend;
+result = result + line._document_number + dlim + "customDiscountValue_l" + dlim + string(NewrequestedDiscountpercent) + dend;
+result= result + line._document_number + dlim + "extProposedNetPriceRequested_l" + dlim + String(NewLinePrice) + dend;
+result= result + line._document_number + dlim + "applyProposedPriceFlag_l" + dlim + "true" + dend;
+}
+
+}
+}
+
+difference = headerLevelProposedPrice_t - total;
+print difference;
+
+for line in transactionLine{
+ if(line._model_name == "" AND line._part_number<>"Cust" and line.dropProduct_l<>true and line.extProposedNetPriceRequested_l <> 0){
+  if(totalExtListPrice_t<>0){
+   lineproportion=line.extProposedNetPriceRequested_l/totalProposedNetPriceLC_t;
+  }
+  
+  NewLinePrice=round(lineproportion*(headerLevelProposedPrice_t),precision);
+  if(line.extContractListPrice_l<>0 and line.unroundedExtListPrice_l <> 0){
+   
+   NewrequestedDiscountpercent=(line.unroundedExtListPrice_l-(NewLinePrice + difference))*100/line.unroundedExtListPrice_l;
+  }
+  
+  result= result + line._document_number + dlim + "proposedNetUnitPriceRequested_l" + dlim + String((NewLinePrice + difference)/line._price_quantity) + dend;
+  result= result + line._document_number + dlim + "proposedNetPriceRequestedHidden_ct" + dlim + string((NewLinePrice + difference)/line._price_quantity) + dend;
+  result= result + line._document_number + dlim + "requestedDiscount_l" + dlim + String(NewrequestedDiscountpercent) + dend;
+  result = result + line._document_number + dlim + "customDiscountValue_l" + dlim + string(NewrequestedDiscountpercent) + dend;
+  result= result + line._document_number + dlim + "extProposedNetPriceRequested_l" + dlim + String((NewLinePrice + difference)) + dend;
+
+  break;
+  
+ }
+}
+}
+return result;

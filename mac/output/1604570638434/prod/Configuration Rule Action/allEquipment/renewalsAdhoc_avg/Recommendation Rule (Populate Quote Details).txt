@@ -1,0 +1,12 @@
+Quoteno = string[];
+size = 0;
+quotelistArray = split(renewalQuoteList,"~");
+//if(find(renewalQuoteList,"QuoteOptyCreated") > 0 OR find(renewalQuoteList,"QuoteCreated") > 0){
+Quoteno[0] = quotelistArray[0];
+return Quoteno;
+//}
+/*size = sizeofarray(quotelistArray);
+for each in quotelistArray{
+print each;
+}
+return Quoteno;*/

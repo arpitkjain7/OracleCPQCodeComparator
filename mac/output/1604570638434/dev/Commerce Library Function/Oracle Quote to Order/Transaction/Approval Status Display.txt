@@ -1,0 +1,12 @@
+/****************************************************************************** 
+Author : Kavita Lolla
+Date : 12/02/2019
+UID - 217
+USer story summary - Display Approval status and populate line approval status true if all lines are not auto-approved.
+******************************************************************************/
+result = "";
+flag = false;
+for line in transactionLine {
+ result = result + line._document_number + "~lineApprovalStatus_l~" + upper(line.workflowStatus_l) + "|";
+}
+return result ;

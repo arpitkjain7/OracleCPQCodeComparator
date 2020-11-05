@@ -1,0 +1,23 @@
+/***********************************************************
+Function Name :Select Quotes To be Merged
+Name : Nandhini Vurimella
+Description : For Quotes  to be Merged
+**********************************************************/
+result ="";
+quoteJsonObj = json(quotationList_t);
+ quoteArray = jsonkeys(quoteJsonObj);
+ index = range(selectedQuotesArrayController_t);
+ 
+ jsonArrayObj = jsonarray();
+ 
+ for each in index{
+  if(quoteArray[each] <> transactionID_t){
+   jsonObj = json();
+   selectedJson = jsonarrayget(selectedQuotes_array_t, each, "json");
+   jsonput(jsonObj, "selectQuotes_t", jsonget(selectedJson, "selectQuotes_t"));
+   jsonput(jsonObj, "quotes_t", quoteArray[each]);
+   jsonarrayappend(jsonArrayObj, jsonObj);
+  }
+ }
+ result = result + "1~selectedQuotes_array_t~" + jsonarraytostr(jsonArrayObj);
+ return result;

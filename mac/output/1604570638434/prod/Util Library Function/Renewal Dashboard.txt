@@ -1,0 +1,227 @@
+/************************************************
+/Rule Name: Renewal Dashboard
+/Description: This Util Library will update the Dashboard Table with the total line count, lines processed and number of opportunities created
+/Author: Satyabrata Acharya
+/Creation Date: 4-May-2020
+*/
+//Variable Creation
+batchNumber=Batch_Number;
+renewaljob=Job;
+status=Job_Status;
+totalLineCount=0;
+opptyCreated=0;
+linesProcessed=0;
+quoteCreated=0;
+i=0;
+j=0;
+lang = dict("string");
+fields = dict("string");
+sb=stringbuilder();
+groupStringBulder = stringbuilder();
+jsonObj= json();
+jsonObj1=json();
+recordUpdateString="";
+usernameFlagUpdate = "";
+passwordFlagUpdate = "";
+fileLocationFlagUpdate = "";
+soapendpointFlagUpdate = "";
+
+//Query to fetch status of all running renewal batches for the given batch number
+
+resultset=bmql("SELECT Batch_Number, Status, Program_ID FROM Renewal_Batch_Detail WHERE Batch_Number = $Batch_Number");
+
+for result in resultset
+{
+if(get(result,"Status")<>"Sync in Progress")
+{
+i=i+1;
+}
+if(get(result,"Status")<>"Completed")
+{
+j=j+1;
+}
+}
+
+//if all the batches are completed then take the count of total lines to be processed, Total Lines processed and total Opportunity Created. Also update the Status to Completed and the end date
+if(status=="Sync in Progress")
+{
+if(i==0)
+{
+totalLinesSet=bmql("SELECT BATCH_NUMBER, QUOTE_NUMBER, OPPORTUNITY_ID,TRANSACTION_ID FROM RENEWAL_ASSETS WHERE BATCH_NUMBER = $Batch_Number");
+
+For lines in totalLinesSet
+{
+//totalLineCount=totalLineCount+1;
+if(find(get(lines,"TRANSACTION_ID"), "COMMERCE-ERR")==-1)
+{
+if(get(lines,"TRANSACTION_ID")<>"")
+{
+linesProcessed=linesProcessed+1;
+}
+}
+if (get(lines,"OPPORTUNITY_ID")<>"0")
+{
+if(get(lines,"OPPORTUNITY_ID")<>"" AND get(lines,"QUOTE_NUMBER")<>"")
+{
+ 
+ jsonput(jsonObj,"Opportunity Id",get(lines,"OPPORTUNITY_ID"));
+ detailsString = jsontostr(jsonObj);
+ stringGroup = sbtostring(groupStringBulder);
+ 
+ if(find(stringGroup,detailsString) < 0)
+{
+opptyCreated=opptyCreated+1;
+groupStringBulder = sbappend(groupStringBulder,detailsString);
+}
+
+}
+}
+
+if(find(get(lines,"TRANSACTION_ID"), "COMMERCE-ERR")==-1)
+{
+ if(isnull(get(lines,"TRANSACTION_ID")) ==false AND get(lines,"TRANSACTION_ID")<>"")
+{
+ jsonput(jsonObj1,"Quote Number",get(lines,"QUOTE_NUMBER"));
+ detailsString = jsontostr(jsonObj1);
+ stringGroup = sbtostring(groupStringBulder);
+ if(find(stringGroup,detailsString) < 0)
+{
+quoteCreated=quoteCreated+1;
+groupStringBulder = sbappend(groupStringBulder,detailsString);
+}
+}
+}
+}
+currdate=getdate();
+
+ 
+ 
+sb=stringbuilder("Lines_to_Process =  ", string(totalLineCount), ",Status =  '" , status  , "',Lines_Processed =  " , string(linesProcessed) , ",Opportunity_Created =  " , string(opptyCreated), ",Quote_Created = ", string(quoteCreated));
+
+   recordUpdateString = "";
+   
+   recordUpdateString = recordUpdateString +"<bm:Status>"+status+"</bm:Status>";
+   recordUpdateString = recordUpdateString +"<bm:Lines_Processed>"+string(linesProcessed)+"</bm:Lines_Processed>";
+   recordUpdateString = recordUpdateString +"<bm:Quote_Created>"+string(quoteCreated)+"</bm:Quote_Created>";
+   recordUpdateString = recordUpdateString +"<bm:Opportunity_Created>"+string(opptyCreated)+"</bm:Opportunity_Created>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Number>"+batchNumber+"</bm:Batch_Number>";
+   
+
+
+
+
+}
+else{
+totalLinesSet=bmql("SELECT BATCH_NUMBER, QUOTE_NUMBER, OPPORTUNITY_ID, TRANSACTION_ID FROM RENEWAL_ASSETS WHERE BATCH_NUMBER = $Batch_Number");
+
+For lines in totalLinesSet
+{
+//totalLineCount=totalLineCount+1;
+if(isnull(get(lines,"QUOTE_NUMBER")) == false AND get(lines,"QUOTE_NUMBER")<>"")
+{
+linesProcessed=linesProcessed+1;
+}
+if (get(lines,"OPPORTUNITY_ID")<>"0")
+{
+if(get(lines,"OPPORTUNITY_ID")<>"" AND get(lines,"QUOTE_NUMBER")<>"")
+{
+ 
+ jsonput(jsonObj,"Opportunity Id",get(lines,"OPPORTUNITY_ID"));
+ detailsString = jsontostr(jsonObj);
+ stringGroup = sbtostring(groupStringBulder);
+ 
+ if(find(stringGroup,detailsString) < 0)
+{
+opptyCreated=opptyCreated+1;
+groupStringBulder = sbappend(groupStringBulder,detailsString);
+}
+
+}
+}
+/*
+if(isnull(get(lines,"QUOTE_NUMBER")) == false AND get(lines,"QUOTE_NUMBER")<>"")
+{
+ jsonput(jsonObj,"Quote Number",get(lines,"QUOTE_NUMBER"));
+ detailsString = jsontostr(jsonObj);
+ stringGroup = sbtostring(groupStringBulder);
+ if(find(stringGroup,detailsString) < 0)
+{
+quoteCreated=quoteCreated+1;
+groupStringBulder = sbappend(groupStringBulder,detailsString);
+}
+}*/
+
+if(find(get(lines,"TRANSACTION_ID"), "COMMERCE-ERR")==-1)
+{
+ if(get(lines,"TRANSACTION_ID")<>"")
+{
+ jsonput(jsonObj1,"Quote Number",get(lines,"QUOTE_NUMBER"));
+ detailsString = jsontostr(jsonObj1);
+ stringGroup = sbtostring(groupStringBulder);
+ if(find(stringGroup,detailsString) < 0)
+{
+quoteCreated=quoteCreated+1;
+groupStringBulder = sbappend(groupStringBulder,detailsString);
+}
+}
+}
+
+}
+
+currdate=getdate();
+
+sb=stringbuilder("Lines_to_Process =  ", string(totalLineCount), ",Status =  " , "'In Progress'", ",Lines_Processed =  " , string(linesProcessed) , ",Opportunity_Created =  " , string(opptyCreated), ",Quote_Created = ", string(quoteCreated));
+   recordUpdateString = "";
+   
+   recordUpdateString = recordUpdateString +"<bm:Status>"+"In Progress"+"</bm:Status>";
+   recordUpdateString = recordUpdateString +"<bm:Lines_Processed>"+string(linesProcessed)+"</bm:Lines_Processed>";
+   recordUpdateString = recordUpdateString +"<bm:Quote_Created>"+string(quoteCreated)+"</bm:Quote_Created>";
+   recordUpdateString = recordUpdateString +"<bm:Opportunity_Created>"+string(opptyCreated)+"</bm:Opportunity_Created>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Number>"+batchNumber+"</bm:Batch_Number>";
+   
+}
+
+}
+else{
+ currdate=getdate();
+if(status=="Completed"){
+if(j==0){
+sb=stringbuilder("End_Date = ", "'", datetostr(currdate), "'", ",Status =  '" , status, "'" );
+   recordUpdateString = "";
+   
+   recordUpdateString = recordUpdateString +"<bm:End_Date>"+datetostr(currdate)+"</bm:End_Date>";
+   recordUpdateString = recordUpdateString +"<bm:Status>"+status+"</bm:Status>";
+   recordUpdateString = recordUpdateString +"<bm:Batch_Number>"+batchNumber+"</bm:Batch_Number>";
+}   
+} 
+}
+
+
+ renewalDashboardUpdatePayload = dict("string");
+ renewalDashboardUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_DASHBOARD_UPDATE'");
+   for each in renewalDashboardUpdate
+   {
+    usernameFlagUpdate = get(each,"Username");
+    passwordFlagUpdate = get(each,"Password");
+    fileLocationFlagUpdate = get(each,"File_Location");
+    soapendpointFlagUpdate = get(each,"SoapEndpoint");
+   }
+   put(renewalDashboardUpdatePayload,"Username", usernameFlagUpdate);
+   put(renewalDashboardUpdatePayload,"Password", passwordFlagUpdate);
+   currentsystemDate = datetostr(getdate());
+   
+   put(renewalDashboardUpdatePayload,"forloop", recordUpdateString);
+   
+   defaultErrorMessage="";
+   quoteRequestRenewalDashboardUpdate=applytemplate(fileLocationFlagUpdate,renewalDashboardUpdatePayload,defaultErrorMessage);
+   quoteRequestRenewalDashboardUpdate = replace(quoteRequestRenewalDashboardUpdate,"&lt;","<");
+   quoteRequestRenewalDashboardUpdate= replace(quoteRequestRenewalDashboardUpdate,"&gt;",">");
+   quoteRequestRenewalDashboardUpdate = replace(quoteRequestRenewalDashboardUpdate,"&quot;","\"");
+   headersDict = dict("string"); 
+   response="";
+   //print quoteRequestRenewalDashboardUpdate ; 
+   //Trigger the web service to update RENEWAL_DASHBOARD table
+   response = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalDashboardUpdate, "",headersDict,true);
+   
+
+return "";

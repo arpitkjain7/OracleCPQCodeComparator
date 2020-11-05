@@ -1,0 +1,41 @@
+//FunctionName: adf_EncodeURIComponent
+//  input: parameter(string)
+//  output: encoded-parameter(string)
+//Description: 
+//    This utility function is to encode the url parameter value based on the http url standard.
+//
+str =parameter;
+str=replace(str, "%", "%25");
+str=replace(str, "!", "%21");
+str=replace(str, "#", "%23");
+str=replace(str,"$", "%24");
+str=replace(str, "&", "%26");
+str=replace(str, "'", "%27");
+str=replace(str, "(", "%28");
+str=replace(str, ")", "%29");
+str=replace(str, "*", "%2A");
+str=replace(str, "+", "%2B");
+str=replace(str, ",", "%2C");
+str=replace(str, "/", "%2F");
+str=replace(str, ":", "%3A");
+str=replace(str, ";", "%3B");
+str=replace(str, "=", "%3D");
+str=replace(str, "?", "%3F");
+str=replace(str, "@", "%40");
+str=replace(str, "[", "%5B");
+str=replace(str, "]", "%5D");
+str=replace(str, " ", "%20");
+str=replace(str, "\"", "%22");
+str=replace(str, "-", "%2D");
+str=replace(str, ".", "%2E");
+str=replace(str, "<", "%3C");
+str=replace(str, ">", "%3E");
+str=replace(str, "\\", "%5C");
+str=replace(str, "^", "%5E");
+str=replace(str, "_", "%5F");
+str=replace(str, "`", "%60");
+str=replace(str, "{", "%7B");
+str=replace(str, "|", "%7C");
+str=replace(str, "}", "%7D");
+str=replace(str, "~", "%7E");
+return str;

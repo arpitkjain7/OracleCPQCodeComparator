@@ -1,0 +1,16 @@
+/********************************************************************
+Function Name : WorkFlow Status Authorisation
+Name : Nandhini Vurimella
+Description : For WorkFlow Status
+********************************************************************/
+
+//Line approver status should be hidden in case logged in user is not the assigned line approver   
+ 
+if(status_t == "PENDING_APPROVER" and find(approver_l,_system_user_login) > -1)
+{
+ return false;
+}
+else
+{
+ return true;
+}

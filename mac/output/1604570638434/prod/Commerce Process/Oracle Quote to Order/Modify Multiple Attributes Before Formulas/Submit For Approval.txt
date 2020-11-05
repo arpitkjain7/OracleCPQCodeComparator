@@ -1,0 +1,52 @@
+/********************************************************************
+Description: submit the quote for approval process
+Author: Raghavendra Kumar Kamparth
+Date: 12-Feb-2019
+********************************************************************/
+/********************************************************************
+Description: BROCAD2-5478 - Line item status "Approved" in batch table while quote is 
+ in "Pending Approval" status for renewal quotes (Regression defect).
+Author: Kavita Lolla
+Date: 09-07-2019
+********************************************************************
+Description: VIPER-737 - Quote Approval/Reject Email
+Date - 14/05/2020
+Summary - Changed the final approval/rejection template. The new attribute for quote creator email will be populated here if not populated before.
+*******************************************************************/
+/********************************************************************
+Description: VIPER-906 - Update End customersite auto pop-up logic.
+Author: Kavita Lolla
+Date: 08-07-2020
+********************************************************************/
+retString = "";
+subresult="";
+errorString = "Discount value on Quote Header is set to 100.";
+dlim="~";
+dend="|";
+sb = stringbuilder();
+creatorNm = createdBy_t;
+creator = "";
+if(discount_t == 100.00){
+ sbappend(sb,_transaction_document_number , dlim , "lineItemsWarning_t" , dlim , errorString , dend);
+}
+sbappend(sb,commerce.setExpirationDateOnQuoteHeader_brcm());
+//VIPER-906 - Begin - Added the condition - if ship to erp = end customer erp, then only end customer site id = ship to site id.
+if(endCustomerSiteNumber_t=="" AND shipToPartyID_t==customerERPId_t)
+//VIPER-906 - End
+{
+
+sbappend(sb,_transaction_document_number , dlim , "endCustomerSiteNumber_t" , dlim , shipToSiteNumber_t , dend, "1",dlim,"_customer_t_address",dlim,_transaction_shipTo_t_address,dend,"1",dlim,"_customer_t_address_2",dlim,_transaction_shipTo_t_address_2,dend,"1",dlim,"_customer_t_city",dlim,_transaction_shipTo_t_city,dend,"1",dlim,"endCustomerState_t",dlim,_transaction_shipTo_t_state,dend,"1",dlim,"endCustomerCountry_t",dlim,shipToCountry_t,dend,"1",dlim, "_customer_t_zip",dlim,_transaction_shipTo_t_zip,dend);
+}
+//VIPER-737 - Populating quotecreator email.
+if(quoteCreatorEmail_t == "")
+{
+ res = bmql("select EMailID from BRCM_Users where Users = $creatorNm");
+ for each in res
+ {
+  creator = get(each,"EMailID");
+ }
+ sbappend(sb,"1~quoteCreatorEmail_t~",creator,"|","1~fillerForTemplate_t~/|");
+}
+//VIPER-737 - End
+result = sbtostring(sb);
+return result ;

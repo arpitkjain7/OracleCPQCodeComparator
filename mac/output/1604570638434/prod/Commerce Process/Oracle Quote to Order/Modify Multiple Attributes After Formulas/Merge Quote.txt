@@ -1,0 +1,66 @@
+/************************************************
+Rule Name: Merge Quote
+Description: This action implicitly call Merge Quote Library function 
+that adds standalone line items from child to parent quote
+Author: M Vamsi Krishna
+Creation Date: 22-FEB-2019
+14/07/2020 M Vamsi  VIPER-716 - Merge Quote - Update Line Discounts from Merged quotes to Parent quote for Configured lines
+*************************************************/
+ sb = stringbuilder();
+ jsonObj = json();
+ obj=json();
+ count = 0;
+ discPercentage = "0.0";
+ 
+ //Viper - 716 - Begin - fetching and upadting requested disount value for individual lines
+ for line in transactionLine
+{
+if(line._line_item_comment<>"" and line._part_number <> "Cust")
+{
+
+teststring=line._line_item_comment;
+obj=json(teststring);
+child=jsonget(obj,"child");
+if(find(child,"requestedDisc") >0)
+{
+
+childObj=json(child);
+discPercentage = jsonget(childObj,"requestedDisc");
+supportPart = jsonget(childObj,"supportPartsPicklist");
+if(find(discPercentage,"%") > 0)
+{
+//count = 0;
+ discArray = split(discPercentage,"%");
+ 
+ arr = sizeofarray(discArray);
+ 
+ if(supportPart <> "" and line._part_number == supportPart)
+  {
+  
+   discPercentage = discArray[1];
+   
+   count = count + 1;
+  }
+  else
+  {
+  discPercentage = discArray[0];
+   count = 0;
+  }
+ 
+ 
+
+}
+ if(line.requestedDiscount_l == 0.0)
+ {
+ 
+ 
+  sb = sbappend(sb,line._document_number + "~requestedDiscount_l~" + discPercentage + "|");
+  
+ }
+}
+}
+}
+//VIPER - 716 - End
+
+sb = sbappend(sb,commerce.mergeStandaloneParts());
+return sbtostring(sb);

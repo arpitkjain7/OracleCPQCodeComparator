@@ -1,0 +1,15 @@
+/*
+Name:- Set SymantecTrialPOC
+Description:- To set Symentac Trial POC true when Deal Type is Trial POC
+Jira Id:- SYMINT-3131
+Author:- Arjun Singh
+Date:- 17-Jan-2020
+*/
+if(dealType_t=="trialPOC")
+{
+ return true;
+}
+else
+{
+ return false;
+}

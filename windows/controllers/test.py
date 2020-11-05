@@ -3,4 +3,4 @@ import time
 import os
 from extract_scripts import CompareWrapper
 
-CompareWrapper(source_env="dev", target_env="qa")
+CompareWrapper(source_env="dev", target_env="prod")

@@ -1,0 +1,48 @@
+/************************************************************************************************************************
+Library Name:- Update Transaction for Commerce
+Author:- Arjun Singh
+Created on:- 18-Mar-2019
+Jira ID:- SYMINT-6850
+Description:-  Run a Job for fixing the access for Commercial Sales user role to get access to old Commercial renewal quotes
+************************************************************************************************************************/
+
+Url="";
+
+Credentials="";
+//fetch integration credentials
+Results=bmql("select Username,Password,SoapEndpoint from INT_SYSTEM_DETAILS where System='Create_Renewal_Trans_REST'");
+ 
+for res2 in Results
+ {
+  Credentials_sb=stringbuilder();
+  Credentials_sb = sbappend(Credentials_sb, get(res2,"Username"), ":", get(res2,"Password"));
+  Credentials=sbtostring(Credentials_sb);
+  Url=get(res2,"SoapEndpoint");
+ 
+ }
+
+http_Method="POST";
+ 
+//Rest API Header details
+headersDict = dict("string"); 
+
+put(headersDict,"Content-Type","application/json");
+
+encodecredential=encodebase64(Credentials);
+authstring="Basic " + encodecredential;
+ 
+
+put(headersDict,"Authorization",authstring);
+response=Dict("string");
+
+Resultset=bmql("Select TransactionId from UpdateStatus");
+for each in Resultset
+ {
+  transId=get(each,"TransactionId");
+  OPENURL_sb = stringbuilder();
+  OPENURL_sb = sbappend(OPENURL_sb, Url, "/", transId,"/actions/transition_Action");
+  OPENURL=sbtostring(OPENURL_sb);
+  response1 = urldata(OPENURL,http_Method,headersDict,"",1000);
+ 
+ }
+return"";

@@ -1,0 +1,254 @@
+/********************************************************************
+Function Name: Set Expiration Date On Quote Header
+Description: This library function is used to update the Quote Expiration Date on Quote header on click of submit for approval. 
+Also populates effective and expiration dates on line items if the  dates are null
+Author: Raghavendra Kumar Kamparth
+Date: 22-March-2019
+/********************************************************************
+Author : Shivendra Sharma
+Changes done to implement max(Line Exp Date, Sysdate+90) logic for Quote Expiration Date.
+Date: 23-May-2019
+
+********************************************************************/
+/********************************************************************
+Author : Raghavendra Kumar Kamparth
+Changes done to close defect BROCAD2-4103 
+Date: 21-June-2019
+Defect Description: line status, line expiration date was not getting populated on line items and data for attributes in batch tables was getting 
+set to null
+********************************************************************/
+/********************************************************************
+Author : Kavita Lolla
+Changes done to close defect BROCAD2-5427
+Date: 04-July-2019
+Defect Description: Discrepancy with Quote status in Header and Line level for quotes with status “Pending Approval”
+********************************************************************
+Author : Kavita Lolla
+Changes done to close defect BROCAD2-5478
+Date: 12-July-2019
+Defect Description: inconsistency in Quote line status between CPQ and Batch table for renewal quotes.
+********************************************************************
+Author : Arjun Singh
+Changes done for VIPER-163
+Date: 16-Aug-2019
+Requirement:- To change the expiration from SysDate+90 to SysDate+60
+Change Description:- Removed the variable "sysdatePlusNinety" and added the variable sysdatePlusSixty. This changes will modify the existing functionality of having expiration as 90 days after System Date to 60 Days after System Date. 
+**************************************************************************
+Author : Keerthivasan
+Changes done for BROCAD2-4444
+Date: 19-Aug-2019
+Requirement:- To include the ARR % Calculation in before Formulas so that Renewal Approval flag will set
+Change Description:- Included the ARR% calculation in Change Expiration Date on Quote Header before formulas library function so that Renewal Approval flag will set.
+**************************************************************************
+
+Author : Arjun
+Changes done for VIPER-163
+Date: 26-Aug-2019
+Requirement:- To change the calculation of expiration date logic.    
+Change Description:- The logic of calculation of expiration date is changed from CurrentDate+60 to EffectiveStartDate+60 
+**************************************************************************
+Author : Kavita Lolla
+Changes done for VIPER-415
+Date: 11-Sep-2019  
+Change Description:- Route Renewal Approval based on Account type classification.
+**************************************************************************/ 
+
+result="";
+dlim="~";
+dend="|";
+dateFormat = "yyyy-MM-dd HH:mm:ss";
+todaysdate = getdate();
+numberOfDaysToMinus = 25000;
+// Initialization of variables for ARR% Calculation
+aRRPercent =0.0;
+newAnnualRenewalRenew =0.0;
+newAnnualRenewalNew =0.0;
+newAnnualRenewalCapacity =0.0;
+expiringAnnualRenewalRenew =0.0;
+expiringAnnualRenewalNew =0.0;
+expiringAnnualRenewalCapacity =0.0;
+sumForNewAnnualRenewal=0.0;
+// End of Initialization of variables for ARR% Calculation
+//BROCAD2-5278-BEGIN
+renewalFlag = false;
+//BROCAD2-5278-END
+
+//Initializing Counter for number of line items
+numberOfLineItems = 0.0;
+/****Change begin****Shivendra****/
+
+max_lineExpirationDateObject = minusdays(todaysdate,numberOfDaysToMinus);
+approvedStatusString = "APPROVED";
+pendingApprovalString = "PENDING_APPROVER";
+sb = stringbuilder();
+lineDateArray = date[];
+quoteType = quoteType_t;
+
+// Start of change for Viper-163 by Arjun on 16-Aug-2019
+//Removed the variable "sysdatePlusNinety" and added the variable sysdatePlusSixty. This changes will modify the existing functionality of having expiration as 90 days after System Date to 60 Days after System Date. 
+
+//Start of change for VIPER-163 by Arjun on 28-Aug-2019. The logic of calculation of expiration date is changed from CurrentDate+60 to EffectiveStartDate+60 
+
+effectiveStartDate=strtojavadate(quoteEffectiveDate_t, dateformat);
+
+effectivedatePlusSixty = adddays(effectiveStartDate,60);
+
+expirationDate1 = datetostr(effectivedatePlusSixty,dateformat);
+expirationDate = strtojavadate(expirationDate1, dateformat);
+ExpirationdateOnLines = adddays(effectiveStartDate,60);
+
+// End of change for Viper-163 on 16-Aug-2019
+//End of change for VIPER-163 on 28-Aug-2019
+for line in transactionLine
+{
+ if(line._part_number <> "" and line._part_number <> "Cust")
+ { 
+  if(line.lineExpirationDate_l <> "")
+  {
+   append(lineDateArray, strtodate(line.lineExpirationDate_l,dateFormat));
+  }
+     
+ }
+//BROCAD2-5478
+// if(status_t <> "REJECTED" and quoteType_t == "renewalQuote")
+ if(quoteType_t == "renewalQuote")
+ {
+// approver = "";
+  workflow = "";
+  sbappend(sb,line._document_number , "~" , "lineApprovalStatus_l" , "~" , replace(upper(workflow),"_"," ") , "|",line._document_number , "~" , "workflowStatus_l" , "~" , workflow , "|");
+ 
+ }
+}
+
+if(NOT isempty(lineDateArray))
+{
+ max_lineExpirationDateObject = max(lineDateArray);
+}
+else
+{
+ sbappend(sb ,_transaction_document_number , dlim , "quoteExpirationDate_t" , dlim , datetostr(expirationDate,dateformat) , dend);
+ expirationDateOnLines = expirationDate;
+}
+
+ 
+quoteHeaderExpirationDate = expirationDate;
+if(comparedates(quoteHeaderExpirationDate,max_lineExpirationDateObject) == -1 and (status_t == approvedStatusString))
+{
+ sbappend(sb,_transaction_document_number, "~", "quoteExpirationDate_t", "~", datetostr(max_lineExpirationDateObject,dateformat), "|");
+ expirationDateOnLines = max_lineExpirationDateObject;
+}
+elif(quoteExpirationDate_t == "")
+{
+ sbappend(sb ,_transaction_document_number , dlim , "quoteExpirationDate_t" , dlim , datetostr(expirationDate,dateformat) , dend);
+} 
+
+if(status_t == approvedStatusString and approvalDate_t <> "")
+{
+ 
+ expirationDateObject = expirationDate;
+ if(comparedates(max_lineExpirationDateObject,expirationDateObject) == -1)
+ {
+  max_lineExpirationDateObject = expirationDateObject;
+ }
+ sbappend(sb,_transaction_document_number, "~", "quoteExpirationDate_t", "~", datetostr(max_lineExpirationDateObject,dateformat), "|");
+ expirationDateOnLines = max_lineExpirationDateObject;
+ 
+}
+
+/*******Change ends****Shivendra********/
+
+if(quoteExpirationDate_t <> "")
+{
+ expirationDateOnLines = strtodate(quoteExpirationDate_t,dateFormat);
+}
+lineExpirationDateString = datetostr(expirationDateOnLines,dateFormat);
+for line in transactionLine
+{
+ if(line._part_number <> "" and line._part_number <> "Cust")
+ {
+  if(line.effectiveStartDate_l == "")
+  {
+   sbappend(sb,line._document_number , dlim , "effectiveStartDate_l" , dlim , quoteEffectiveDate_t , dend);
+   sbappend(sb,line._document_number , dlim , "effectiveStartDateString_l" , dlim , quoteEffectiveDate_t , dend);
+
+  }
+  if(line.lineExpirationDate_l == "")
+  {
+   sbappend(sb ,line._document_number , dlim , "lineExpirationDate_l" , dlim ,lineExpirationDateString , dend);
+   sbappend(sb ,line._document_number , dlim , "lineExpirationDateString_l" , dlim ,lineExpirationDateString , dend);
+  }
+  
+  // Calculating the Number of Line items while looping
+  numberOfLineItems = numberOfLineItems + 1;
+  
+  // Calculation of ARR% in financial summary
+  if (quoteType_t =="renewalQuote" )  {
+           if( line.transactionTypeM_l== "Renew")
+        {
+             expiringAnnualRenewalRenew = expiringAnnualRenewalRenew + line.expiringAnnualRenewal_l;
+             newAnnualRenewalRenew = newAnnualRenewalRenew + line.newAnnualRenewalValue_l;
+              //BROCAD2-5278 - BEGIN
+              //If there is atleast one Renew line, Renewal Flag is set to true.
+             renewalFlag = true;
+             //BROCAD2-5278 - END
+           }
+           if( line.transactionTypeM_l== "New")
+     {
+             expiringAnnualRenewalNew = expiringAnnualRenewalNew + line.expiringAnnualRenewal_l;
+             newAnnualRenewalNew = newAnnualRenewalNew + line.newAnnualRenewalValue_l;
+           }
+           if( line.transactionTypeM_l== "Capacity")
+     {
+             expiringAnnualRenewalCapacity = expiringAnnualRenewalCapacity + line.expiringAnnualRenewal_l;
+             newAnnualRenewalCapacity = newAnnualRenewalCapacity + line.newAnnualRenewalValue_l;
+           }
+     }
+  // End of Calculation of ARR% in financial summary
+ }
+/* if(quoteType <> "contractQuote" AND status_t == "APPROVED")
+ {
+  sbappend(sb , line._document_number , dlim , "lineApprovalStatus_l" ,dlim , status_t , dend);
+ }*/
+}
+
+// Summation of New Annual Renewal and Expiring Annual Renewal
+sumForAnnualRenewal= (expiringAnnualRenewalRenew + expiringAnnualRenewalNew + expiringAnnualRenewalCapacity) ;
+sumForNewAnnualRenewal = (newAnnualRenewalCapacity + newAnnualRenewalNew + newAnnualRenewalRenew);
+// Calculation of ARR% based on New Annual Renewal and Expiring Annual Renewal
+if(sumForAnnualRenewal <> 0.0)
+{
+    aRRPercent = round((sumForNewAnnualRenewal / sumForAnnualRenewal)*100,2); 
+}
+//BROCAD2-5278-BEGIN
+//If quote with ARR% >= 99.7 having Renewal flag true, Renewal approval is not required.
+if(renewalFlag)
+{
+//VIPER-415 - Route Renewal Approval based on Account type classification.
+ if(core_t == "ZCA_CORE")
+ {
+ //Core - route for approval if below 110%
+  if(round(aRRPercent,2) >= 109.69)
+  {
+   renewalFlag = false;
+  }
+ }
+ else
+ {
+ //Non-Core - route for approval if below 99.7%
+  if(round(aRRPercent,2) >= 99.7)
+  {
+   renewalFlag = false;
+  }
+ }
+//VIPER-415 - END
+}
+//BROCAD2-5278-END
+//BROCAD2-5278 - BEGIN
+sbappend(sb , "1" , "~renewalApprovalFlag_t~" , string(renewalFlag) , "|");
+//BROCAD2-5278 - END
+//Setting of Value to Attribute
+//sbappend(sb , "1" , "~totalLineItems_t~" , string(numberOfLineItems) , "|");
+
+sbappend(sb,"1~aRR_t~" , string(aRRPercent) , "|");
+result = sbtostring(sb);
+return result;

@@ -1,0 +1,133 @@
+/*
+flag = false;
+
+url = "https://avagotechtest2.bigmachines.com/v2_0/receiver/commerce/oraclecpqo";
+
+returnString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\">";
+returnString = returnString +  "<soapenv:Header>";
+returnString = returnString + "<wsse:Security xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\" xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\">";
+returnString = returnString +"<wsse:UsernameToken wsu:Id=\"UsernameToken-2\">";
+returnString = returnString +"<wsse:Username>"+"Integration"+"</wsse:Username>";
+returnString = returnString +"<wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">"+"Glory@2019"+"</wsse:Password>";
+returnString = returnString +"</wsse:UsernameToken>";
+returnString = returnString +"</wsse:Security>";
+returnString = returnString +"</soapenv:Header>";
+returnString = returnString +"<soapenv:Body>";
+returnString = returnString +"<bm:createTransaction xmlns:bm=\"urn:soap.bigmachines.com\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">";
+returnString = returnString +"<bm:items>";
+returnString = returnString +"<bm:catalogItem>";
+returnString = returnString +"<bm:segment/>";
+returnString = returnString +"<bm:product_line/>";
+returnString = returnString +"<bm:model/>";
+returnString = returnString +"</bm:catalogItem>";
+
+for each in attributeArray
+{
+jsonObj = json(each);
+partNo = jsonget(jsonObj,"partNum");
+qty =jsonget(jsonObj,"qty");
+
+
+returnString = returnString +"<bm:partItem>";
+returnString = returnString +"<bm:part>"+partNo+"</bm:part>";
+returnString = returnString +"<bm:quantity>"+qty+"</bm:quantity>";
+returnString = returnString +"<bm:price_book_var_name>_default_price_book</bm:price_book_var_name>";
+returnString = returnString +"</bm:partItem>";
+}
+returnString = returnString +"</bm:items>";
+returnString = returnString +"<bm:transaction>";
+returnString = returnString +"<bm:process_var_name>oraclecpqo</bm:process_var_name>";
+returnString = returnString +"<bm:_bm_cm_new_transaction_currency/>";
+returnString = returnString +"<bm:return_specific_attributes>";
+returnString = returnString +"<bm:documents>";
+returnString = returnString +"<bm:document>";
+returnString = returnString +"<bm:var_name>transaction</bm:var_name>";
+returnString = returnString +"<bm:attributes>";
+returnString = returnString +"<bm:attribute>_document_number</bm:attribute>";
+returnString = returnString +"</bm:attributes>";
+returnString = returnString +"</bm:document>";
+returnString = returnString +"</bm:documents>";
+returnString = returnString +"</bm:return_specific_attributes>";
+returnString = returnString +"</bm:transaction>";
+returnString = returnString +"</bm:createTransaction>";
+returnString = returnString +"</soapenv:Body>";
+returnString = returnString +"</soapenv:Envelope>";
+
+finalString = urldatabypost(url, returnString, "Failed to Connect");
+
+if (finalString <> "Failed to Connect") 
+{
+  
+              finalString = finalString;
+              flag = true;
+}
+else
+{
+  
+              finalString = "";
+}
+
+return finalString ;
+*/
+
+/*
+
+flag = false;
+
+url = "https://avagotechtest2.bigmachines.com/v2_0/receiver/commerce/oraclecpqo";
+
+returnString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\">";
+returnString = returnString +  "<soapenv:Header>";
+returnString = returnString + "<wsse:Security xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\" xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\">";
+returnString = returnString +"<wsse:UsernameToken wsu:Id=\"UsernameToken-2\">";
+returnString = returnString +"<wsse:Username>"+"Integration"+"</wsse:Username>";
+returnString = returnString +"<wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">"+"Glory@2019"+"</wsse:Password>";
+returnString = returnString +"</wsse:UsernameToken>";
+returnString = returnString +"</wsse:Security>";
+returnString = returnString +"</soapenv:Header>";
+returnString = returnString +"<soapenv:Body>";
+returnString = returnString +"<bm:createTransaction xmlns:bm=\"urn:soap.bigmachines.com\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">";
+returnString = returnString +"<bm:items>";
+returnString = returnString +"<bm:catalogItem>";
+returnString = returnString +"<bm:segment/>";
+returnString = returnString +"<bm:product_line/>";
+returnString = returnString +"<bm:model/>";
+returnString = returnString +"</bm:catalogItem>";
+returnString = returnString +"<bm:partItem/>";
+returnString = returnString +"</bm:items>";
+returnString = returnString +"<bm:transaction>";
+returnString = returnString +"<bm:process_var_name>oraclecpqo</bm:process_var_name>";
+returnString = returnString +"<bm:_bm_cm_new_transaction_currency/>";
+returnString = returnString +"<bm:return_specific_attributes>";
+returnString = returnString +"<bm:documents>";
+returnString = returnString +"<bm:document>";
+returnString = returnString +"<bm:var_name>transaction</bm:var_name>";
+returnString = returnString +"<bm:attributes>";
+returnString = returnString +"<bm:attribute>_document_number</bm:attribute>";
+returnString = returnString +"</bm:attributes>";
+returnString = returnString +"</bm:document>";
+returnString = returnString +"</bm:documents>";
+returnString = returnString +"</bm:return_specific_attributes>";
+returnString = returnString +"</bm:transaction>";
+returnString = returnString +"</bm:createTransaction>";
+returnString = returnString +"</soapenv:Body>";
+returnString = returnString +"</soapenv:Envelope>";
+
+finalString = urldatabypost(url, returnString, "Failed to Connect");
+
+if (finalString <> "Failed to Connect") 
+{
+  
+              finalString = finalString;
+              flag = true;
+}
+else
+{
+  
+              finalString = "";
+}
+
+return finalString ;
+*/
+
+return "";

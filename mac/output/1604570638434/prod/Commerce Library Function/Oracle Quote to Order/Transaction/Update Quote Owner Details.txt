@@ -1,0 +1,39 @@
+/********************************************************************
+Function Name: Update Quote Owner Details
+Description: To update owner details based on search.
+Author: Satyabrata Acharya
+Date: 09-10-2020
+********************************************************************/
+result="";
+dlim="~";
+dend="|";
+dateFormat = "yyyy-MM-dd HH:mm:ss";
+OwnerDetails=jsonarray();
+Owner=changeOwner_t + "%";
+
+count =0;
+user="";
+email="";
+resultSet = bmql("select Users, SalesRegion, SalesArea, SalesOrg,EMailID from BRCM_Users");
+
+//WHERE Users LIKE $Owner
+
+for each in resultSet{
+if (startswith(UPPER(get(each,"Users")),UPPER(changeOwner_t))){
+ details = json(); 
+        user = get(each,"Users");
+ email = get(each,"EMailID");
+ jsonput(details ,"ownerName_t",user );
+ jsonput(details ,"ownerEmail_t",email );
+ jsonarrayappend(OwnerDetails, details); 
+ count=count+1; 
+}
+}
+
+//print OwnerDetails;
+result= result + "1" + dlim + "arrayControlAttributeQuoteOwner_t" + dlim + string(count) + dend; 
+result= result + "1" + dlim + "changeOwnerTransactionalArray_t" + dlim + jsonarraytostr(OwnerDetails) + dend; 
+
+
+
+return result;

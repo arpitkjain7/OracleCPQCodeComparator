@@ -1,0 +1,52 @@
+/*********************************************************************
+Function Name:Mass update contract date 
+Description:Action to mass update contract date in poroduc line
+Author: Ramesh Nellimarla
+User Story #:UID 56
+Date: 30th jan 2019
+******************************Change Log*****************************
+  Date          Author       Comment 
+30July2019   Shivendra   VIBER-219 -Code commented as  part of fix           
+*********************************************************************/
+
+
+
+result="";
+dlim="~";
+dend="|";
+//result = result + "1" + dlim + "selectedDate_t" + dlim + "" + dend;
+result = result + commerce.updateContractEndDate();
+
+/*
+dlim="~";
+dend="|";
+tempDate = " ";
+
+OptionSelected  = basisOfUpdation_t;
+contractNum = enterContractNumber_t;
+
+if (OptionSelected <> " ")
+{
+
+   if (OptionSelected == "calendarDate"){
+       tempDate = CalendarDate_t;
+       } else{
+       tempDate = selectedDate_t;
+        } 
+
+     for line in transactionLine
+      {      
+      if (line.selectLineItem_l== true ){  
+      
+         if (OptionSelected == "contractNumber") {
+            if (line.priorContract == contractNum ){
+              result = result + line._document_number + dlim + "contractEndDate_l" + dlim + tempDate + dend;
+             }
+             }else{
+               result = result + line._document_number + dlim + "contractEndDate_l" + dlim + tempDate + dend;
+            } 
+         }
+      }
+ }*/
+ 
+ return result;

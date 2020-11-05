@@ -1,0 +1,33 @@
+/********************************************************************
+Rule Name: Constraining Address Selection
+Description: This BML function is used to constraint user not to select multiple addresses of one address purpose type
+Author: Rohit Ranjan
+Date:   Created on 4th of july 2019 for Customer Search Enhancement having jira id:3273
+********************************************************************/
+
+Arrayrange=range(addressSearchArray_avg);  // finding range of address array
+endcustcounter=0;
+truecounter=0;
+SHIPTO=String[];
+BILLTO=String[];
+SELLTO=String[];
+if(endCustomerSelectFlag_avg==true)
+{
+For each in Arrayrange      //checking if multiple ship to sell to or bill to is selected
+ {
+   If(addressPurpose_avg[each]=="SHIP_TO" and addressselect_avg[each]==true){
+   endcustcounter=endcustcounter+1;
+   }
+   If(addressPurpose_avg[each]=="SOLD_TO" and addressselect_avg[each]==true){
+   endcustcounter=endcustcounter+1;
+  
+   }
+   If(addressPurpose_avg[each]=="BILL_TO" and addressselect_avg[each]==true){
+   endcustcounter=endcustcounter+1;
+  }
+ }
+     if(endcustcounter>1){
+     return true;
+   }
+}  
+return false;

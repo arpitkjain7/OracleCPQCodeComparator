@@ -1,0 +1,23 @@
+/************************************************************************************************************
+Description: Funcation to populate contract numbers html attibute.
+Return type: string
+History:     Date          Author             Comment 
+      01/02/2019    Ramesh Nellimarla      Modified the library as per best practices
+      05/14/2019    Mrinal Kumar           Removed print, removed commented code and added stringbuilder 
+
+**************************************************************************/
+
+
+returnString = "Please Save the Quote before you perform any other action.";
+result = "";
+sb1 = stringbuilder(result, "<script>");
+sb1 = stringbuilder(sbtostring(sb1),"$('#warningToSave_t-wrapper').css('display':'none');");
+sb1 = stringbuilder(sbtostring(sb1),"</script>");
+if(status_t == "DRAFT")
+{
+ sb1 = stringbuilder(sbtostring(sb1),"<h1 style=\"color:red;font-size:100%;\">");
+ sb2 = sbtostring(sb1) + returnString;
+ sb1 = stringbuilder(sb2, "</h1>");
+}
+result = sbtostring(sb1);
+return result;

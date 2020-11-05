@@ -1,0 +1,68 @@
+/*******************************************************************************************************************************
+Function Name : Auto Update Qty
+Author : Nandhini Vurimella.
+Description : Auto update Qty on Product lines to Minimum Qty if promotion is enabled and sku is eligible for Promotion discount
+// This util to Caluculate Promotion Discount if promotion is enabled and sku is eligible for Promotion discount.;
+// further the quantity on Product lines is Auto updated to Minimum Qty before calculating the discount if the ;
+// quantity enterd is less than Minmum Qty ;
+*******************************************************************************************************************************/
+result = "";
+dlim="~";
+dend="|";
+counter=1;
+sysDate = getdate();
+mpn = Dict("string");
+salesMin = Dict("string");
+qty = Dict("string");
+PartArray=String[];
+ary1 = string[];
+listPrc = 0.0;
+d = dict("string");
+promoType = Dict("string");
+      promo_enabled = "";
+   
+      resultSet = bmql("select MPN,Sales_Min1,Minimum_Qty,Promotion_Type,Start_Date,End_Date from BRCM_Promotion_Tb WHERE Promotion_Type='Single'");
+             
+             for each in resultSet{
+           startDate = strtojavadate(get(each,"Start_Date"),"dd/MM/yyyy");
+                  endDate   = strtojavadate(get(each,"End_Date"),"dd/MM/yyyy");
+                   
+                  if(comparedates(startDate,sysDate) ==-1 and comparedates(sysDate,endDate) ==-1){
+                  Key= "MPN" + String(counter);   
+                  put(mpn, Key, get(each,"MPN"));
+                  put(salesMin,Key, get(each,"Sales_Min1"));
+                  put(qty,Key, get(each,"Minimum_Qty"));
+                  put(promoType,Key, get(each,"Promotion_Type"));
+                  counter=counter+1;
+                  }
+             }
+
+            partNo= ""; 
+             for line in transactionLine{
+    
+  PartArray=Keys(mpn);
+             
+               if(line._model_name == ""){
+               partNumber = line._part_number;
+           resultSet1 = bmql("select MPN from BRCM_Part_Master_Ext where MPN = $partNumber and Promotion_Enabled='Y'");
+                 
+           for value in resultSet1{
+           partNo = get(value,"MPN");
+            for each in PartArray{
+            item=get(mpn,each);
+            if(item==partNo){
+            quantity=get(qty,each);
+             if (Line._price_quantity > atoi(quantity)){ quantity = string(Line._price_quantity);
+            }
+            salemin=get(salesMin,each);
+            result=result+line._document_number + dlim + "_price_quantity" + dlim + quantity + dend;
+            result=result+line._document_number + dlim + "promotionDisc_l" + dlim + salemin  + dend;
+            }
+            }
+     
+              } 
+              
+               }
+              
+             }
+ return result;

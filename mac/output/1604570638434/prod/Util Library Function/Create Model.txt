@@ -1,0 +1,125 @@
+/*
+retval1 = " " ;
+transid = TransactionID;
+//====================================================================
+//Process Model and product lines
+//====================================================================
+
+for each in modelArray
+{
+jsonObj1    = json(each);
+ModeldocNum = jsonget(jsonObj1,"documentNum");
+model       = jsonget(jsonObj1,"model");
+Product     = jsonget(jsonObj1,"productLine");
+segment     = jsonget(jsonObj1,"segment");
+ 
+ //if (ModeldocNum == "5"){
+       
+       
+       d= dict("string");    
+       //put(d,"sessionId",_system_user_session_id);
+       put(d,"sessionId",_user_session_id);
+       put(d,"Product_Family",segment);
+       put(d,"Product_Line",product);
+       put(d,"Model",model);
+       put(d,"bs_id",transid);
+       
+       trans       = ""; 
+       PCStr       = " ";
+       strPSAC     = 0 ;
+       strSAVG     = " ";
+       strPartNo   = " ";
+       strPartName = " ";
+       strQty      = " ";
+       
+       strLicencetype = " ";
+    
+   for each1 in partArray
+   {
+       Line          = json(each1);
+       PartdocNum    = jsonget(Line,"documentNum");
+       partNo        = jsonget(Line,"partNum");
+       partName      = jsonget(Line,"partName");
+       quantity      = jsonget(Line,"quantity");
+       licenceType   = jsonget(Line,"licenceType");
+       ParentDoc     = jsonget(Line,"parentDoc");
+       
+    if ((ParentDoc <> "") AND (ParentDoc == ModeldocNum))    
+     {
+       
+                     
+        strSAVG        = strSAVG        + "false"     + "$,$";
+        strPartNo      = strPartNo      + partNo      + "$,$";
+        strPartName    = strPartName    + partName    + "$,$";
+        strQty         = strQty         + quantity    + "$,$";
+        strLicencetype = strLicencetype + licenceType + "$,$";
+        
+                
+        //PCStr = PCStr+ string(strPSAC)+ ":{\"Sr_No\":" + string(strPSAC);
+        PCStr = PCStr + "\"" + string(strPSAC)+ "\"" + ":{\"Sr_No\":" + string(strPSAC);
+        PCStr = PCStr+",\"PartNumber\":\""+partNo;
+        PCStr = PCStr+"\",\"Quantity\":"+jsonget(Line,"quantity");
+        PCStr = PCStr+",\"child\":{\"transactionType\":\""+jsonget(Line,"transactionType");
+        PCStr = PCStr+"\",\"businessTransactionType\":\""+jsonget(Line,"businessTransactionType");
+        PCStr = PCStr+"\",\"specialMetric\":\""+jsonget(Line,"specialMetric");
+        PCStr = PCStr+"\",\"enterEnvironment\":\""+jsonget(Line,"enterEnvironment");
+        PCStr = PCStr+"\",\"selectLicenseType\":\""+jsonget(Line,"selectLicenseType");
+        PCStr = PCStr+"\",\"supportType\":\""+jsonget(Line,"supportType");
+        PCStr = PCStr+"\",\"supportPartsPicklist\":\""+jsonget(Line,"supportPartsPicklist");
+        PCStr = PCStr+"\",\"languageRequired\":\""+jsonget(Line,"languageRequired");
+        PCStr = PCStr+"\",\"startDate\":\""+jsonget(Line,"startDate");
+        PCStr = PCStr+"\",\"endDate\":\""+jsonget(Line,"endDate");
+        PCStr = PCStr+"\",\"standardQuantity\":\""+jsonget(Line,"standardQuantity");
+        PCStr = PCStr+"\",\"existingQuantity\":\""+jsonget(Line,"existingQuantity");
+        PCStr = PCStr+"\",\"licenseMetric\":\""+jsonget(Line,"licenseMetric");
+        PCStr = PCStr+"\",\"specialMetricLicense\":\""+jsonget(Line,"specialMetricLicense");
+        PCStr = PCStr+"\",\"UsageQuantity\":\""+jsonget(Line,"UsageQuantity");
+        PCStr = PCStr+"\",\"UsageExistingQuantity\":\""+jsonget(Line,"UsageExistingQuantity");
+        PCStr = PCStr+"\",\"ProductType\":\""+jsonget(Line,"ProductType");
+        PCStr = PCStr+"\"}}" + ",";
+        
+        strPSAC        = strPSAC + 1; 
+         
+     }
+   }
+    
+
+// Call config API Web service 
+       
+        strSAVG        = substring(strSAVG,1,(len(strSAVG)-3)) ;
+        strPartNo      = substring(strPartNo,1,(len(strPartNo)-3)) ;
+        strPartName    = substring(strPartName,1,(len(strPartName)-3)) ;
+        strQty         = substring(strQty,1,(len(strQty)-3)) ;
+        strLicencetype = substring(strLicencetype,1,(len(strLicencetype)-3)) ;
+        PCStr          = substring(PCStr,1,(len(PCStr)-1)); 
+        PCStr          = "{" + PCStr + "}";
+        
+        
+        
+        trans = trans + "<bm:attribute bm:_variableName=\"partSelectionArrayControl_avg\"><bm:value>" + string(strPSAC) + "</bm:value></bm:attribute>";
+ trans = trans + "<bm:attribute bm:_variableName=\"select_avg\"><bm:value>" + strSAVG + "</bm:value></bm:attribute>";
+ trans = trans + "<bm:attribute bm:_variableName=\"PartNumber_avg\"><bm:value>"+strPartNo+"</bm:value></bm:attribute>";     
+ trans = trans + "<bm:attribute bm:_variableName=\"selectProductByName_avg\"><bm:value>"+strPartName+"</bm:value></bm:attribute>";
+ trans = trans + "<bm:attribute bm:_variableName=\"quantity_avg\"><bm:value>"+ strQty +"</bm:value></bm:attribute>";
+ 
+ trans = trans + "<bm:attribute bm:_variableName=\"parentChildString_avg\"><bm:value>"; 
+ trans = trans + PCStr ;
+ trans = trans + "</bm:value></bm:attribute>"; 
+        
+        
+            
+        put(d,"forLoop",trans); 
+ retVal = applytemplate("$BASE_PATH$/Integration/getConfigAPI.xml",d,"Not_Found");
+        retVal = replace(retVal,"&lt;","<");
+ retVal = replace(retVal,"&gt;",">");
+ retVal = replace(retVal,"&quot;","\"");
+  
+        retVal1 = urldatabypost("https://avagotechtest2.bigmachines.com/v1_0/receiver",retVal,"ERROR");
+  // }
+ }
+//===================================
+//===================================
+return retval1;
+*/
+
+return "";

@@ -1,0 +1,13 @@
+/*****************************************************************
+ Author - Kavita Lolla
+ Date - 08/03/2019
+ USer story summary - Populate salesmin1
+*****************************************************************/
+part = _part_number;
+sm1 = 0.00000;
+res = bmql("select Sales_Min1 from BRCM_Part_Master_Prc where MPN = $part");
+for rec in res {
+ sm1 = atof(get(rec,"Sales_Min1"));
+ sm1 = (100 - sm1) * perUnitPerListPrice_l / 100;
+}
+return sm1;

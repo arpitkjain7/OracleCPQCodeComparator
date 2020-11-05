@@ -1,0 +1,13 @@
+/***********************************************************
+Function Name : Constraint Drop Reason on Drop Product Checked
+Name : Nandhini Vurimella
+Description :  Constraint rule on Drop Reason based on Drop Product
+**********************************************************/
+if(dropProduct_l== true)
+{
+ if(dropReason_l == "")
+ {
+  return true;
+ }
+}
+return false;

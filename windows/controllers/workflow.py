@@ -67,12 +67,23 @@ def CompareTxtFiles(
 ):
     diff_path = root_dir + "/Differences/"
     doc_count = 0
-    for target_file_name in master_target_files:
+    # print(f"master_source_files:{master_source_files}")
+    # print(f"master_target_files:{master_target_files}")
+    for target_file_name in master_target_files.keys():
         target_path = master_target_files.get(target_file_name)
         source_path = master_source_files.get(target_file_name)
+        if target_file_name in (
+            "Oracle Quote to Order_Modify Multiple Attributes Before Formulas_Save.txt",
+            "Oracle Quote to Order_Modify Multiple Attributes After Formulas_Save.txt",
+            "Deal Management test_Modify Multiple Attributes Before Formulas_Save.txt",
+            "Deal Management test_Modify Multiple Attributes After Formulas_Save.txt",
+        ):
+            print(f"target_path: {target_path}")
+            print(f"source_path: {source_path}")
         target_file_location = os.path.join(
             diff_path, os.path.splitext(target_file_name)[0] + ".html"
         )
+        # print(f"target_file_location: {target_file_location}")
         if os.path.exists(target_file_location):
             target_file_location = os.path.join(
                 diff_path,
@@ -130,8 +141,20 @@ def CompareFolders(source_path, target_path, source_env, target_env, root_dir):
                     txt_file_path = os.path.join(root, txt_file).replace(
                         os.path.sep, "/"
                     )
-                    txt_file_name = txt_file_path.split("/")[-1]
-                    master_source_files.update({txt_file_name: txt_file_path})
+                    # txt_file_name = txt_file_path.split("/")[-1]
+                    txt_file_name = os.path.split(txt_file_path)[-1]
+                    txt_file_parent = os.path.split(os.path.split(txt_file_path)[0])[-1]
+                    txt_file_grand_parent = os.path.split(
+                        os.path.split(os.path.split(txt_file_path)[0])[0]
+                    )[-1]
+                    file_name = (
+                        txt_file_grand_parent
+                        + "_"
+                        + txt_file_parent
+                        + "_"
+                        + txt_file_name
+                    )
+                    master_source_files.update({file_name: txt_file_path})
         else:
             for items in subdirs:
                 set_of_dir.append(items)
@@ -156,8 +179,23 @@ def CompareFolders(source_path, target_path, source_env, target_env, root_dir):
                         txt_file_path = os.path.join(root, txt_file).replace(
                             os.path.sep, "/"
                         )
-                        txt_file_name = txt_file_path.split("/")[-1]
-                        master_target_files.update({txt_file_name: txt_file_path})
+                        # txt_file_name = txt_file_path.split("/")[-1]
+                        txt_file_name = os.path.split(txt_file_path)[-1]
+                        txt_file_parent = os.path.split(
+                            os.path.split(txt_file_path)[0]
+                        )[-1]
+                        txt_file_grand_parent = os.path.split(
+                            os.path.split(os.path.split(txt_file_path)[0])[0]
+                        )[-1]
+                        file_name = (
+                            txt_file_grand_parent
+                            + "_"
+                            + txt_file_parent
+                            + "_"
+                            + txt_file_name
+                        )
+                        # master_source_files.update({file_name: txt_file_path})
+                        master_target_files.update({file_name: txt_file_path})
     CompareTxtFiles(
         master_source_files, master_target_files, source_env, target_env, root_dir
     )

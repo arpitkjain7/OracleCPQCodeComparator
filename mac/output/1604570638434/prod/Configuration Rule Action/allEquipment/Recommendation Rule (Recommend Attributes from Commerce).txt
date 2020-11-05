@@ -1,0 +1,200 @@
+/*
+This rule is used to set Bill Customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+ret = "";
+resultSet = bmql("SELECT dealType_t from commerce.transaction");
+for each in resultSet{
+ret = get(each,"dealType_t");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Shivendra on 17th Jan 2020
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT shipToPartyID_t from commerce.transaction");
+for each in resultSet{
+ret = get(each,"shipToPartyID_t");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Shivendra on 17th Jan 2020
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT shipToSiteNumber_t from commerce.transaction");
+for each in resultSet{
+ret = get(each,"shipToSiteNumber_t");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+
+
+ret = getDate();
+resultSet = bmql("SELECT quoteEffectiveDate_t from commerce.transaction");
+for each in resultSet{
+ret = getDate(each,"quoteEffectiveDate_t");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT quoteType_t from commerce.transaction");
+for each in resultSet{
+ret = get(each,"quoteType_t");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+
+
+ret = getDate();
+resultSet = bmql("SELECT contractStartDate_t from commerce.transaction");
+for each in resultSet{
+ret = getDate(each,"contractStartDate_t");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT endCustomerParentId_avg from commerce.transaction");
+for each in resultSet{
+ret = get(each,"endCustomerParentId_avg");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT endCustomerGrandParentId_avg from commerce.transaction");
+for each in resultSet{
+ret = get(each,"endCustomerGrandParentId_avg");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT billToGrandParentId_avg from commerce.transaction");
+for each in resultSet{
+ret = get(each,"billToGrandParentId_avg");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+
+
+ret = getDate();
+resultSet = bmql("SELECT contractEndDate_t from commerce.transaction");
+for each in resultSet{
+ret = getDate(each,"contractEndDate_t");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT _customer_id from commerce.transaction");
+for each in resultSet{
+ret = get(each,"_customer_id");
+}
+return ret;
+/*
+This rule is used to set Bill Customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+ret = "";
+resultSet = bmql("SELECT billToCustomerId_t from commerce.transaction");
+for each in resultSet{
+ret = get(each,"billToCustomerId_t");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT routeToMarket_t from commerce.transaction");
+for each in resultSet{
+ret = get(each,"routeToMarket_t");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT billToParentId_avg from commerce.transaction");
+for each in resultSet{
+ret = get(each,"billToParentId_avg");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Satyabrata on 10th Jan 2019
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT _customer_id from commerce.transaction");
+for each in resultSet{
+ret = get(each,"_customer_id");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Shivendra on 17th Jan 2020
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT endCustomerSiteNumber_t from commerce.transaction");
+for each in resultSet{
+ret = get(each,"endCustomerSiteNumber_t");
+}
+return ret;
+/*
+This rule is used to set customer id from commerce
+Created by Shivendra on 17th Jan 2020
+*/
+
+
+ret = "";
+resultSet = bmql("SELECT customerERPId_t from commerce.transaction");
+for each in resultSet{
+ret = get(each,"customerERPId_t");
+}
+return ret;

@@ -1,0 +1,53 @@
+/*********************************************************************
+              Function Name: Renewal Batch Update
+              Description: This function is Update Renewal batch Number After Job Execution Completed
+              Author: Ravi
+              User Story #:Renewal story
+              Date: 30th March 2019
+              ******************************Change Log*****************************
+           
+*********************************************************************/
+//================================================================================
+//Created by Ravi on March 30 2019 to Update Renewal batch Number After Job Execution Completed
+//=================================================================================
+usernameFlagUpdate = "";
+passwordFlagUpdate = "";
+fileLocationFlagUpdate = "";
+soapendpointFlagUpdate = "";
+usernameFlagDeploy = "";
+passwordFlagDeploy = "";
+fileLocationFlagDeploy = "";
+soapendpointFlagDeploy = "";
+renewalBatchDeletePayload = dict("string");
+
+currentsystemDate = datetostr(getdate());
+renewalBatchUpdatePayload = dict("string");
+// Fetching the SOAP End Point URL for invoking the service to update Renewal Batch Number
+renewalbatchUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'Renewal_BATCH_UPDATE'");
+
+for each in renewalbatchUpdate
+{
+usernameFlagUpdate = get(each,"Username");
+passwordFlagUpdate = get(each,"Password");
+fileLocationFlagUpdate = get(each,"File_Location");
+soapendpointFlagUpdate = get(each,"SoapEndpoint");
+}
+put(renewalBatchUpdatePayload,"USERNAME", usernameFlagUpdate);
+put(renewalBatchUpdatePayload,"PASSWORD", passwordFlagUpdate);
+put(renewalBatchUpdatePayload,"Batchnumber", Batch_Number);
+put(renewalBatchUpdatePayload,"starttime", Start_Time);
+put(renewalBatchUpdatePayload,"endtime", currentsystemDate);
+auth="Basic" + " " + passwordFlagUpdate;
+
+defaultErrorMessage="";
+quoteRequestRenewalJobUpdate=applytemplate(fileLocationFlagUpdate,renewalBatchUpdatePayload,defaultErrorMessage);
+
+headersDict = dict("string"); 
+put(headersDict,"Content-Type","text/xml;charset=UTF-8"); 
+put(headersDict,"Authorization",auth);
+response="";
+//service call to update batch number 
+response = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalJobUpdate, "error",headersDict);
+
+
+return response;

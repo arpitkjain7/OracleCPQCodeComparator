@@ -1,0 +1,267 @@
+//To Auto Generate opportunity when the Renewal quote is auto generated.
+//Changes done for sending Bill to Customer-- Arjun --02-Jul-2019
+//Changes done for null check for response of Bill TO Customer For BROCAD2-5264-- Arjun -- 03-Jul-2019
+
+
+Details=split(Type, "~");
+dealType=Details[0];
+CurrencyCode=Details[1];
+effDate=Details[2];
+Partner=Details[3];
+ownerId=Details[4];
+quoteName=Details[5];
+username1 = "";
+password1 = "";
+fileLocation = "";
+soapendpoint ="";
+ErpNum=split(ErpNumber, "~");
+EndCust=ErpNum[0];
+BillTo=ErpNum[1];
+result="";
+
+if(dealType=="cADStandard" or dealType=="cADEducation" or dealType=="cADProfessionalServices" or dealType=="cADRenewal")
+{
+ dealType="CA";
+}
+elif(dealType=="bSN" or dealType=="bSNRenewal")
+{
+ dealType="BSN";
+}
+elif(dealType=="classicBroadcomOnly")
+{
+ dealType="Broadcom";
+}
+else
+{
+ dealType="";
+}
+
+Credentials="";
+url="";
+
+//Rest API URL for creating a new opportunity
+if(ErpNumber<>"" and QuoteNum<>"" and dealType<>"")
+{
+ results=bmql("select Username,Password,SoapEndpoint from INT_SYSTEM_DETAILS where System='Create_Opportunity'");
+ for res in results
+ {
+ Credentials_sb=stringbuilder();
+ Credentials_sb = sbappend(Credentials_sb, get(res,"Username"), ":", get(res,"Password"));
+ Credentials=sbtostring(Credentials_sb);
+ url=get(res,"SoapEndpoint");
+ 
+ 
+ }
+ GETURL_sb=stringbuilder();
+ GETURL_sb=sbappend(GETURL_sb,url,"crmRestApi/resources/11.13.18.02/accounts?q=OrganizationDEO_BRCM_ERPAccount_c='",EndCust,"'");
+ GETURL=sbtostring(GETURL_sb);
+ 
+ url_CreateOpportunity_sb=stringbuilder();
+ url_CreateOpportunity_sb=sbappend(url_CreateOpportunity_sb,url,"crmRestApi/resources/11.13.17.11/opportunities");
+ url_CreateOpportunity=sbtostring(url_CreateOpportunity_sb);
+ 
+ 
+//Rest API http method
+ http_Method="POST";
+
+//Rest API Header details
+ headersDict = dict("string"); 
+
+ put(headersDict,"Content-Type","application/json");
+
+ encodecredential=encodebase64(Credentials);
+ authstring="Basic " + encodecredential;
+
+
+ put(headersDict,"Authorization",authstring);
+ response=Dict("string");
+ response1 =Dict("string");
+ response = urldata(GETURL,"GET",headersDict, "");
+ rescheck = 0;
+ if(EndCust<>BillTo AND BillTo<>""){
+ print "Before Replace";
+ print GETURL;
+ GETURL = replace(GETURL, EndCust, BillTo);
+ print "After Replace";
+ print GETURL;
+ response1 = urldata(GETURL,"GET",headersDict, "");
+ rescheck=1;
+ }
+ 
+ if(isnull(response)<>true)
+ {
+ str= get(response,"Message-Body");
+ if(trim(str) <> "" AND NOT isnull(str))
+ {
+ jsonObj1=json(str);
+ 
+ Party_ID_array=jsonpathgetmultiple(jsonObj1,"$..PartyId");
+ RenewalOwnerArray=jsonpathgetmultiple(jsonObj1,"$..OrganizationDEO_BRCM_RenewalOwnerId_c");
+ Payment_termarray=jsonpathgetmultiple(jsonObj1,"$..OrganizationDEO_BRCM_PaymentTerms_c");
+ classification_array=jsonpathgetmultiple(jsonObj1,"$..OrganizationDEO_BRCM_Classification_c");
+ 
+ parentId_array=jsonpathgetmultiple(jsonObj1,"$..ParentAccountPartyId"); //endCustomerParentId_avg
+ globalParentName_array=jsonpathgetmultiple(jsonObj1,"$..OrganizationDEO_BRCM_GlobalParentName_c"); //endCustomerGlobalParentName_t
+ globalParentId_array=jsonpathgetmultiple(jsonObj1,"$..OrganizationDEO_BRCM_GlobalParentId_c"); //endCustomerGrandParentId_avg
+ 
+ 
+ 
+ if(jsonarraysize(Party_ID_array)>0)
+ {
+ 
+  Party_ID=jsonarrayget(Party_ID_array,0);
+  Paymentterm=jsonarrayget(Payment_termarray,0);
+  classification=jsonarrayget(classification_array,0);
+  if(isnull(Paymentterm) or trim(Paymentterm) == "")
+  {
+  Paymentterm = "NET 30 DAYS";
+  }
+  
+  parentId=jsonarrayget(parentId_array,0);
+  globalParentName=jsonarrayget(globalParentName_array,0);
+  globalParentId=jsonarrayget(globalParentId_array,0);
+  RenewalOwnerID=jsonarrayget(RenewalOwnerArray,0);
+  
+  if(RenewalOwnerID == "" or isnull(RenewalOwnerID))
+  {
+  
+  resultIntegrationUser = bmql("select PartyResourceId from BRCM_Users where Users = 'Integration'");
+  for resultUser in resultIntegrationUser
+   {
+   
+    RenewalOwnerID = get(resultUser,"PartyResourceId");
+    
+   }
+  }
+  print "RenewalOwnerID" + RenewalOwnerID;
+ jsonBodyString="";
+//Rest API body details
+ id=QuoteNum;
+ jsonBodyString_sb=stringbuilder();
+ //SYMINT-3751 added OwnerResourcePartyId to the json body
+ //Added for CA renewal as OwnerId is not being passed.
+ if(RenewalOwnerID<>"" and not isnull(RenewalOwnerID))
+ {
+ jsonBodyString_sb=sbappend(jsonBodyString_sb,"{\"Name\":\"Opportunity for " , QuoteNum+" / "+quoteName ,"\",\"TargetPartyId\":\"" , Party_ID  ,"\",\"BRCM_OpportunityType_New_c\":\""+dealType+"\",\"CurrencyCode\":\""+CurrencyCode+"\",\"EffectiveDate\":\""+effDate+"\",\"OwnerResourcePartyId\":",RenewalOwnerID,"}"); 
+  }
+ else
+ {
+ jsonBodyString_sb=sbappend(jsonBodyString_sb,"{\"Name\":\"Opportunity for " ,  QuoteNum+" / "+quoteName,"\",\"TargetPartyId\":\"" , Party_ID  ,"\",\"BRCM_OpportunityType_New_c\":\""+dealType+"\",\"CurrencyCode\":\""+CurrencyCode+"\",\"EffectiveDate\":\""+effDate+"\"}");
+ }
+ 
+ jsonBodyString=sbtostring(jsonBodyString_sb);
+ 
+//Function to post Rest API
+ response_CreateOpportunity=Dict("string");
+ response_CreateOpportunity = urldata(url_CreateOpportunity,http_Method,headersDict,jsonBodyString);
+ print "Request ";
+ print jsonBodyString;
+ print "Response";
+ print response_CreateOpportunity;
+ jsonResponse=get(response_CreateOpportunity,"Message-Body");
+ 
+  
+  
+//Fetch required details opportunityID/opportunityNumber from response post creating opportunity
+  if(isnull(jsonResponse)<>true)
+  {
+  jsonObj = json(jsonResponse);
+  
+  opportunityID = jsonget(jsonObj,"OptyId");
+  opportunityNumber = jsonget(jsonObj,"OptyNumber");
+  
+  
+  //Fetching the partner details(PartyId)
+  getPartnerPayload = dict("string");
+  defaultErrorMessage="";
+  results=bmql("select Username,Password,SoapEndpoint,File_Location from INT_SYSTEM_DETAILS where System='Renewal_Get_PartnerID'");
+  for res in results
+  {
+   username1 = get(res,"Username");
+   password1 = get(res,"Password");
+   fileLocation = get(res,"File_Location");
+   soapendpoint = get(res, "SoapEndpoint");
+  }
+  userpasscode=username1+":"+password1;
+  //put(getPartnerPayload,"USERNAME", username1);
+  //put(getPartnerPayload,"PASSWORD", password1);
+  put(getPartnerPayload,"partner", Partner);
+  getPartnerPayloadrequest=applytemplate(fileLocation,getPartnerPayload,defaultErrorMessage);
+  getPartnerPayloadrequest = replace(getPartnerPayloadrequest,"&lt;","<");
+  getPartnerPayloadrequest= replace(getPartnerPayloadrequest,"&gt;",">");
+  //getPartnerPayloadrequest = replace(getPartnerPayloadrequest,"&quot;","\"");
+  //getPartnerPayloadrequest = replace(getPartnerPayloadrequest,"&","&amp;");
+  //getPartnerPayloadrequest = replace(getPartnerPayloadrequest,"&apos;","\'");
+  headersDictpartner = dict("string"); 
+  str1=encodebase64(userpasscode);
+  auth="Basic" + " " + str1;
+  put(headersDictpartner,"Content-Type","text/xml;charset=UTF-8"); 
+  put(headersDictpartner,"Authorization",auth);
+  partnerresponse="";
+  //Trigger the web service to get Partner ID
+  
+  partnerresponse = urldatabypost(soapendpoint,getPartnerPayloadrequest, "error",headersDictpartner);
+  /*partnerURL_sb=stringbuilder();
+  partnerURL_sb=sbappend(partnerURL_sb,url,"crmRestApi/resources/11.13.18.05/partners?q=OrganizationName='",Partner,"'");
+  partnerURL=sbtostring(partnerURL_sb);
+  partnerRes = urldata(partnerURL,"GET",headersDict, "");*/
+  if(find(partnerresponse,"<ns1:PartyId>") > 0)
+  {
+  partnerStartPosition = find(partnerresponse, "<ns1:PartyId>");
+  partnerEndPosition = find(partnerresponse, "</ns1:PartyId>");
+  partnerId = substring(partnerresponse, partnerStartPosition+len("<ns1:PartyId>"), partnerEndPosition);
+   
+   /*partnerStr = get(partnerRes,"Message-Body");
+   partnerJson = json(partnerStr);
+   partnerId_array = jsonpathgetmultiple(partnerJson,"$..PartyId");*/
+   if(len(partnerId)>0)
+   {
+   //partnerId=jsonarrayget(partnerId_array,0);
+    print partnerId;
+   partnerOpp_sb = stringbuilder();
+   partnerOpp_sb = sbappend(partnerOpp_sb,"{\"PartOrgPartyId\":",partnerId,",\"BRCRM_PARTNER_ROLE_V2_c\":\"Reseller\"}");
+   partnerOpp = sbtostring(partnerOpp_sb);
+   partnerUrl = url + "crmRestApi/resources/11.13.18.05/opportunities/"+opportunityNumber+"/child/RevenuePartnerPrimary"; 
+   partneradd = urldata(partnerUrl,"POST",headersDict,partnerOpp);
+   print get(partneradd,"Status-Code");
+   }
+  }
+  
+  //added Null Check
+  if(isnull(response1)<>true and rescheck==1)
+  {
+  str1= get(response1,"Message-Body");
+  if(Trim(str1) <> "" AND NOT isnull(str1))
+  {
+  jsonObj2=json(str1);
+  billto_Id_array=jsonpathgetmultiple(jsonObj2,"$..PartyId");
+  
+  if(jsonarraysize(billto_Id_array)>0)
+   {
+   billto_Id=jsonarrayget(billto_Id_array,0);
+   jsonBodyString_sb1=stringbuilder();
+   jsonBodyString_sb1=sbappend(jsonBodyString_sb1,"{\"BRCM_EndCustomerName_Id_c\":",billto_Id,"}");
+   response_Opportunity=Dict("string");
+   jsonBodyString1=sbtostring(jsonBodyString_sb1);
+   
+   urlsb=stringbuilder();
+   urlsb=sbappend(urlsb,url_CreateOpportunity,"/",opportunityNumber);
+   url_CreateOpportunity=sbtostring(urlsb);
+   response_Opportunity = urldata(url_CreateOpportunity,"PATCH",headersDict,jsonBodyString1);
+   }
+   }
+  }
+  
+  CurrencyCode=jsonget(jsonObj,"CurrencyCode");
+  
+  result_sb=stringbuilder();
+  result_sb=sbappend(result_sb, Party_ID,"~",opportunityID,"~",opportunityNumber,"~",CurrencyCode,"~",Paymentterm,"~",classification,"~",parentId,"~",globalParentName,"~",globalParentId,"~",RenewalOwnerID);
+  result=sbtostring(result_sb);
+    
+   }
+ }
+ }
+}
+
+}
+return result;

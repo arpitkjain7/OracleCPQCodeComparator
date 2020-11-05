@@ -1,0 +1,102 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+
+<head>
+    <meta http-equiv="Content-Type"
+          content="text/html; charset=utf-8" />
+    <title></title>
+    <style type="text/css">
+        table.diff {font-family:Courier; border:medium;}
+        .diff_header {background-color:#e0e0e0}
+        td.diff_header {text-align:right}
+        .diff_next {background-color:#c0c0c0}
+        .diff_add {background-color:#aaffaa}
+        .diff_chg {background-color:#ffff77}
+        .diff_sub {background-color:#ffaaaa}
+    </style>
+</head>
+
+<body>
+    
+    <table class="diff" id="difflib_chg_to257__top"
+           cellspacing="0" cellpadding="0" rules="groups" >
+        <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
+        <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
+        <thead><tr><th class="diff_next"><br /></th><th colspan="2" class="diff_header">dev</th><th class="diff_next"><br /></th><th colspan="2" class="diff_header">prod</th></tr></thead>
+        <tbody>
+            <tr><td class="diff_next" id="difflib_chg_to257__0"><a href="#difflib_chg_to257__top">t</a></td><td class="diff_header" id="from257_1">1</td><td nowrap="nowrap"><span class="diff_sub">/******************************************************************************`&nbsp;</span></td><td class="diff_next"><a href="#difflib_chg_to257__top">t</a></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_2">2</td><td nowrap="nowrap"><span class="diff_sub">Author&nbsp;:&nbsp;Kavita&nbsp;Lolla,&nbsp;Satyabrata&nbsp;Acharya</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_3">3</td><td nowrap="nowrap"><span class="diff_sub">User&nbsp;Story&nbsp;Summary&nbsp;:&nbsp;Webservice&nbsp;call&nbsp;to&nbsp;update&nbsp;the&nbsp;customer&nbsp;pricing&nbsp;for&nbsp;a&nbsp;part.</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_4">4</td><td nowrap="nowrap"><span class="diff_sub">Date&nbsp;:&nbsp;24/01/2019</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_5">5</td><td nowrap="nowrap"><span class="diff_sub">******************************************************************************/</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_6">6</td><td nowrap="nowrap"><span class="diff_sub">flag&nbsp;=false;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_7">7</td><td nowrap="nowrap"><span class="diff_sub">ValueString=Split(customerNo,"~");</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_8">8</td><td nowrap="nowrap"><span class="diff_sub">quoteRequest="";</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_9">9</td><td nowrap="nowrap"><span class="diff_sub">CustomerNum=ValueString[0];</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_10">10</td><td nowrap="nowrap"><span class="diff_sub">CPN=ValueString[1];</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_11">11</td><td nowrap="nowrap"><span class="diff_sub">CustomerName=ValueString[2];</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_12">12</td><td nowrap="nowrap"><span class="diff_sub">QuoteNum=ValueString[3];</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_13">13</td><td nowrap="nowrap"><span class="diff_sub">StartDate=ValueString[4];</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_14">14</td><td nowrap="nowrap"><span class="diff_sub">EndDate=ValueString[5];</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_15">15</td><td nowrap="nowrap"><span class="diff_sub">payload&nbsp;=&nbsp;dict("string");</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_16">16</td><td nowrap="nowrap"><span class="diff_sub">Price=String(itemPrice);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_17">17</td><td nowrap="nowrap"><span class="diff_sub">finalString="";</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_18">18</td><td nowrap="nowrap"><span class="diff_sub">location="";</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_19">19</td><td nowrap="nowrap"><span class="diff_sub">//retrieving&nbsp;username&nbsp;and&nbsp;password&nbsp;for&nbsp;web&nbsp;service&nbsp;authentication,&nbsp;file&nbsp;location&nbsp;and&nbsp;end&nbsp;point&nbsp;URL&nbsp;from&nbsp;data&nbsp;table&nbsp;for&nbsp;the&nbsp;corresponding&nbsp;function&nbsp;call</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_20">20</td><td nowrap="nowrap"><span class="diff_sub">recordset=bmql("SELECT&nbsp;Username,Password,File_Location,SoapEndpoint,SchemaLocation&nbsp;FROM&nbsp;INT_SYSTEM_DETAILS&nbsp;WHERE&nbsp;System='CUSTOMER_MODIFY'");</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_21">21</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_22">22</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"CustomerNum",&nbsp;CustomerNum);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_23">23</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"CustomerName",&nbsp;CustomerName);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_24">24</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"QuoteNum",&nbsp;QuoteNum);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_25">25</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"StartDate",&nbsp;StartDate);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_26">26</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"EndDate",&nbsp;EndDate);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_27">27</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"Price",&nbsp;Price);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_28">28</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"partNo",partNo);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_29">29</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"CPN",CPN);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_30">30</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"session_id",_user_session_id);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_31">31</td><td nowrap="nowrap"><span class="diff_sub">for&nbsp;record&nbsp;in&nbsp;recordset{</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_32">32</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"location",&nbsp;get(record,&nbsp;"SchemaLocation"));</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_33">33</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"USERNAME",&nbsp;get(record,&nbsp;"Username"));</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_34">34</td><td nowrap="nowrap"><span class="diff_sub">put(payload,"PASSWORD",&nbsp;get(record,&nbsp;"Password"));</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_35">35</td><td nowrap="nowrap"><span class="diff_sub">quoteRequest=applytemplate(get(record,"File_Location"),payload,"");</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_36">36</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_37">37</td><td nowrap="nowrap"><span class="diff_sub">//finalString&nbsp;=&nbsp;urldatabypost(get(record,"SoapEndpoint"),&nbsp;quoteRequest,&nbsp;"Failed&nbsp;to&nbsp;Connect");</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_38">38</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_39">39</td><td nowrap="nowrap"><span class="diff_sub">}</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_40">40</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_41">41</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_42">42</td><td nowrap="nowrap"><span class="diff_sub">if&nbsp;(finalString&nbsp;&lt;&gt;&nbsp;"Failed&nbsp;to&nbsp;Connect")&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_43">43</td><td nowrap="nowrap"><span class="diff_sub">{</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_44">44</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;finalString&nbsp;=&nbsp;finalString;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_45">45</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flag&nbsp;=&nbsp;true;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_46">46</td><td nowrap="nowrap"><span class="diff_sub">}</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_47">47</td><td nowrap="nowrap"><span class="diff_sub">else</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_48">48</td><td nowrap="nowrap"><span class="diff_sub">{</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_49">49</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;finalString&nbsp;=&nbsp;"";</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_50">50</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flag&nbsp;=&nbsp;false;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_51">51</td><td nowrap="nowrap"><span class="diff_sub">}</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_52">52</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from257_53">53</td><td nowrap="nowrap"><span class="diff_sub">return&nbsp;quoteRequest;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+        </tbody>
+    </table>
+    <table class="diff" summary="Legends">
+        <tr> <th colspan="2"> Legends </th> </tr>
+        <tr> <td> <table border="" summary="Colors">
+                      <tr><th> Colors </th> </tr>
+                      <tr><td class="diff_add">&nbsp;Added&nbsp;</td></tr>
+                      <tr><td class="diff_chg">Changed</td> </tr>
+                      <tr><td class="diff_sub">Deleted</td> </tr>
+                  </table></td>
+             <td> <table border="" summary="Links">
+                      <tr><th colspan="2"> Links </th> </tr>
+                      <tr><td>(f)irst change</td> </tr>
+                      <tr><td>(n)ext change</td> </tr>
+                      <tr><td>(t)op</td> </tr>
+                  </table></td> </tr>
+    </table>
+</body>
+
+</html>

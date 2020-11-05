@@ -1,0 +1,19 @@
+/*****************************************************************
+Function Name : Constrain Contract Selection
+Name :Ravi Kumar
+Description : This Rule returns boolean value when this constrain should fire
+*****************************************************************/ 
+arrayRange=range(renewalContractsArrayController_avg);
+count=0;
+for each in arrayRange{
+ if(selectPrimary_avg[each]==true){
+  count=count+1;
+ }
+}
+if(count>1)
+{
+return true;
+}
+else{
+return false;
+}

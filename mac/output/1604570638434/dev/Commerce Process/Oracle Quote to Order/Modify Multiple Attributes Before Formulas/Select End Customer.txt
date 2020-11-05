@@ -1,0 +1,13 @@
+/***********************************************************
+Function Name : Select End Customer
+Name : Nandhini Vurimella
+Description : To Select end customer
+**********************************************************/
+ret = "";
+/*if(copiedAndCustChanged_t == "Copied")
+{
+ ret = ret + "1~copiedAndCustChanged_t~CustChanged|";
+ 
+}*/
+ret = ret + "1~endCustomerSelectFlag_t~true";
+return ret;

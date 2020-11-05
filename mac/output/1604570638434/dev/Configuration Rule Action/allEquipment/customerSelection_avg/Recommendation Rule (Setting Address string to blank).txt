@@ -1,0 +1,7 @@
+/*****************************************************************
+Function Name :Setting Address string to blank
+Name :Satyabrata Acharya
+Description : This function set null value to address string
+*****************************************************************/ 
+
+return "";

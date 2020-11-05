@@ -1,0 +1,1732 @@
+/************************************************
+    /Rule Name: Renew Action QA
+    /Description: On click of this action all the entitlements that are expiring in 90 or 180 days(Defined in Renewals Before table) will be renewed
+    /Author: M Vamsi Krishna
+    /Creation Date: 21-Jan-2019
+    /Modified by Ravi 17-Feb-2019 Added addtional Attributes to populate in Renewal Quotes.
+    /Modified by Ravi 25-Jan-2019 Added Contract Line number new field to Asset and Entitilements 
+    /Data table to Populate Contract Line Number for CA Quotes.
+    /***********************************************/
+    
+    
+    res = "";
+    batchNumber = "";
+   
+    quoteEffectiveDate = datetostr(strtojavadate(_system_date,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+ currentsystemDate = datetostr(strtojavadate(_system_date,"MM/dd/yyyy"), "yyyy-MM-dd");
+ 
+    daysBeforeRenewal = "";
+    renewalResult = bmql("select Days_Before_Renewal from BRCM_Renewal_Before");
+    batchNumberResult = bmql("select Batch_Number from BRCM_Renewal_Batch");
+    for batch in batchNumberResult
+    {
+            batchNumber = get(batch,"Batch_Number");
+    }
+    for days in renewalResult
+    {
+            daysBeforeRenewal = get(days,"Days_Before_Renewal");
+    }
+    renewalDate = (datetostr(adddays(strtojavadate(_system_date,"MM/dd/yyyy HH:mm:ss"),atoi(daysBeforeRenewal)),"yyyy-MM-dd"));
+    
+ 
+ 
+    batchNumber = string(atoi(batchNumber)+1);
+    
+    array1 = string[];
+    jsonPartArray = string[];
+    transactionID="";
+    jsonGrp = json();
+    dataTableJsonArray = jsonarray();
+    transactionJasonArray = jsonarray();
+
+ 
+ caProductfamilysecurity = "%SECURITY%";
+ caProductfamilyautomic ="%AUTOMATION%";
+ customerNumber = "";
+shipCountry = "";
+operatingUnit = "";
+jsonRenewalArray = jsonarray();
+serialNumber = "";
+contractLineNumber = "";
+     contractNumber = "";
+     shipToCoutry = "";
+     instOwnerNum = "";
+     licenseeAccNumber = "";
+     source = "";
+     postcode = "";
+     unitPrice = "";
+     licenseType = "";
+     expAnnualRenewal = "";
+     licenseMetric = "";
+     contractEndDate = "";
+     envType = "";
+     specialMetricType = "";
+     metricQty = "";
+     instCity = "";
+     operatingSys = "";
+     instAddr1 = "";
+     instAddr2 = "";
+     instAddr3 = "";
+     instCountry = "";
+     instOwnName = "";
+     shipDate = "";
+     eosDate = "";
+     existingSupportType = "";
+     existingQuantity = "";
+     serviceItem = "";
+     entitlementStartDate = "";
+     entitlementExpDate = "";
+     coveredItem = "";
+     coveredProductFamily = "";
+     billToCustNum = "";
+     billToCustName = "";
+     soldToCustNum = "";
+     soldToCustName = "";
+     totQauntity = "";
+     autoRenewalFlag = "";
+     instanceIdentifier = "";
+     licenseeName = "";
+     linecurrency = "";
+     lineSiteNumber = "";
+     RenewalBatchStart = datetostr(getdate());
+                                                   
+  
+ bsnDistDict = dict("string");
+    
+    
+            resultsafterGrouping = bmql("select BRCM_Assets.INST_OWNER_CUST_NUM,BRCM_Assets.SHIP_TO_COUNTRY,BRCM_Assets.OPERATING_UNIT from BRCM_Entitlements INNER JOIN BRCM_Assets ON BRCM_Assets.SERIAL_NUMBER = BRCM_Entitlements.SERIAL_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Entitlements.CONTRACT_LINE_NUM and BRCM_Assets.CONTRACT_NUMBER = BRCM_Entitlements.CONTRACT_NUMBER where BRCM_Entitlements.QUOTE_NUMBER IS NULL and BRCM_Entitlements.ACTIVE_STATUS = 'Active' and BRCM_Entitlements.ENTITLEMENT_EXP_DATE <= $renewalDate and BRCM_Entitlements.ENTITLEMENT_EXP_DATE  >= $currentsystemDate and BRCM_Assets.SOURCE = 'BSN' and BRCM_Assets.TOT_QUANTITY > 0");
+            
+            
+            keyArray = string[];
+            for resultafterGrouping in resultsafterGrouping
+            {
+            jsonObj= json();
+                 customerNumber = get(resultafterGrouping,"INST_OWNER_CUST_NUM");
+                    shipCountry = get(resultafterGrouping,"SHIP_TO_COUNTRY");
+                    operatingUnit = get(resultafterGrouping,"OPERATING_UNIT");
+                    jsonput(jsonObj,"customerNumber",customerNumber);
+                    jsonput(jsonObj,"shipCountry",shipCountry);
+                    jsonput(jsonObj,"operatingUnit",operatingUnit);
+                    keyValue = jsontostr(jsonObj);
+                    if(findinarray(keyArray,keyValue) == -1 and sizeofarray(keyArray) < 5000)
+                    {
+                    append(keyArray,keyValue);
+                    }
+                    
+                    
+            }
+            bsnDistDictKeys = keys(bsnDistDict);
+            for key in keyArray
+            {
+            jsonObj = json(key);
+            customerNumber = jsonget(jsonObj,"customerNumber");
+            shipCountry = jsonget(jsonObj,"shipCountry");
+            operatingUnit = jsonget(jsonObj,"operatingUnit");
+          
+    if(len(trim(customerNumber)) > 0 and len(trim(shipCountry)) > 0 and len(trim(operatingUnit)) > 0){
+                    
+                    
+                                                    
+                                                    finalPartToadd = bmql("select BRCM_Assets_EXT.CONTRACT_END_DATE,BRCM_Part_Master.MPN,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Migration_Type, BRCM_Part_Master.Replacement_Product,BRCM_Part_Master.Replacement_Pdt_Val,BRCM_Part_Master.Qty_Ratio_Conversion, BRCM_Part_Master.Upgrade_Material,BRCM_Assets.INST_POSTAL_CODE,BRCM_Assets.UNIT_PRICE,BRCM_Assets.LICENSE_TYPE,BRCM_Assets.EXP_ANNUAL_RENEWAL,BRCM_Assets.LICENSE_METRIC,BRCM_Assets.ENV_TYPE,BRCM_Assets.SPECIAL_METRIC_TYPE,BRCM_Assets.METRIC_QUANTITY,BRCM_Assets.INST_CITY,BRCM_Assets_EXT.OPERATING_SYS,BRCM_Assets.INST_ADDR1,BRCM_Assets.INST_ADDR2,BRCM_Assets.INST_ADDR3,BRCM_Assets.INST_COUNTRY,BRCM_Assets.INST_OWNER_CUST_NUM,BRCM_Assets.INST_OWNER_NAME,BRCM_Assets.SHIP_DATE,BRCM_Assets.EOS_DATE,BRCM_Assets.EXISTING_SUPPORT_TYP,BRCM_Assets.EXISTING_QUANTITY,BRCM_Assets.SERVICE_ITEM,BRCM_Assets.SERIAL_NUMBER,BRCM_Assets.CONTRACT_NUMBER,BRCM_Entitlements.ENTITLEMENT_START_DT,BRCM_Entitlements.ENTITLEMENT_EXP_DATE,BRCM_Assets.COVERED_ITEM,BRCM_Assets.COVERED_ITEM_DESC,BRCM_Assets.COVERED_PRDCT_FAMILY,BRCM_Assets.BILL_TO_CUST_NAME,BRCM_Assets.BILL_TO_CUST_NUMBER,BRCM_Assets.SOLD_TO_CUST_NAME,BRCM_Assets.SOLD_TO_CUST_NUMBER,BRCM_Assets.TOT_QUANTITY,BRCM_Assets.INSTANCE_IDENTIFIER,BRCM_Assets.SHIP_TO_COUNTRY,BRCM_Assets.OPERATING_UNIT,BRCM_Assets_EXT.LINE_CURRENCY,BRCM_Assets_EXT.BILL_TO_CNTCT_EMAIL,BRCM_Assets.INST_OWN_SITE_NUM from BRCM_Entitlements INNER JOIN BRCM_Assets ON BRCM_Assets.SERIAL_NUMBER = BRCM_Entitlements.SERIAL_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Entitlements.CONTRACT_LINE_NUM and BRCM_Assets.CONTRACT_NUMBER = BRCM_Entitlements.CONTRACT_NUMBER INNER JOIN BRCM_Part_Master ON BRCM_Assets.SERVICE_ITEM = BRCM_Part_Master.MPN INNER JOIN BRCM_Assets_EXT ON BRCM_Assets.SERIAL_NUMBER = BRCM_Assets_EXT.SERIAL_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Assets_EXT.CONTRACT_LINE_NUM and BRCM_Assets.CONTRACT_NUMBER = BRCM_Assets_EXT.CONTRACT_NUMBER where INST_OWNER_CUST_NUM = $customerNumber and SHIP_TO_COUNTRY = $shipCountry and OPERATING_UNIT = $operatingUnit and BRCM_Entitlements.QUOTE_NUMBER IS NULL and BRCM_Entitlements.ACTIVE_STATUS = 'Active' and BRCM_Entitlements.ENTITLEMENT_EXP_DATE <= $renewalDate and BRCM_Entitlements.ENTITLEMENT_EXP_DATE  >= $currentsystemDate and BRCM_Assets.SOURCE = 'BSN' and BRCM_Assets.TOT_QUANTITY > 0 and BRCM_Assets_EXT.LINE_CURRENCY <> 'VES'");
+                                                    
+                                                    resultsetLength =0;
+                                                    
+                                                    AccumulatedQuantity = "0";
+                                                    previousPart = "";
+                                                    previoussNO = "";
+                                                    documentNumber = 1;
+                                                    
+                                                    for rt in finalPartToadd
+                                                    {
+    
+                                                            
+                                                            finalPart = get(rt,"SERVICE_ITEM");
+                                                            sNo = get(rt,"SERIAL_NUMBER");
+                                                            quantity = get(rt, "EXISTING_QUANTITY");
+                                                            unitprice = get(rt,"UNIT_PRICE");
+                                                            contractEndDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                            operatingsys = get(rt, "OPERATING_SYS");
+                                                            entitlementStartDate = get(rt,"ENTITLEMENT_START_DT");
+           if(entitlementStartDate <> "" and NOT isnull(entitlementStartDate))
+                                                            {
+                                                            entitlementStartDate = datetostr(strtojavadate(entitlementStartDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+           }
+                                                            entitlementexpDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    if(entitlementexpDate <> "" and NOT isnull(entitlementexpDate))
+                                                            {
+                                                            entitlementexpDate = datetostr(strtojavadate(entitlementexpDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+               expAnnualrenewal = get(rt,"EXP_ANNUAL_RENEWAL");
+                                                                    
+                                                            contractNumber=get(rt,"CONTRACT_NUMBER");
+                                                            mpn = get(rt,"MPN");
+                                                            productName = get(rt,"Product_Name");
+                                                            migrationType = get(rt,"Migration_Type");
+                                                            licenseType = get(rt,"LICENSE_TYPE");
+                                                            licenseMetric = get(rt,"LICENSE_METRIC");
+                                                            environmentCode = get(rt,"ENV_TYPE");
+                                                            specialMetricType = get(rt,"SPECIAL_METRIC_TYPE");
+                                                            metricQuantity=get(rt,"METRIC_QUANTITY");
+                                                            replacementProduct = get(rt,"Replacement_Product");
+                                                            replacementPdtVal = get(rt,"Replacement_Pdt_Val");
+                                                            qtyRatioConversion = get(rt,"Qty_Ratio_Conversion");
+                                                            upgradeMaterial = get(rt,"Upgrade_Material");
+                                                            coveredProduct = get(rt,"COVERED_ITEM");
+                                                            productFamily = get(rt,"COVERED_PRDCT_FAMILY");
+                                                            billCustName = get(rt,"BILL_TO_CUST_NAME");
+                                                            billCustNumber = get(rt,"BILL_TO_CUST_NUMBER");
+                                                            soldCustName = get(rt,"SOLD_TO_CUST_NAME");
+                                                            soldCustNumber = get(rt,"SOLD_TO_CUST_NUMBER");
+                                                            contractLineNumber = get(rt,"CONTRACT_LINE_NUM");
+                                                            contractheaderEndDate = get(rt,"CONTRACT_END_DATE");
+                                                            endOfSupportDate = get(rt,"EOS_DATE");
+           linecurrency = get(rt,"LINE_CURRENCY");
+               billtocontactemail = get(rt,"BILL_TO_CNTCT_EMAIL");
+                                                            if(endOfSupportDate <> "" and NOT isnull(endOfSupportDate))
+                                                            {
+                                                            endOfSupportDate = datetostr(strtojavadate(endOfSupportDate,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                            dateShipped = get(rt,"SHIP_DATE");
+                                                            if(dateShipped <> "" and NOT isnull(dateShipped))
+                                                            {
+                                                            dateShipped = datetostr(strtojavadate(dateShipped,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                            line1 = get(rt, "INST_ADDR1");
+                                                            line2 = get(rt, "INST_ADDR2");
+                                                            line3 = get(rt, "INST_ADDR3");
+                                                            fullAddress = line1 + ", "+line2 + ", "+line3;
+                                                            fullAddress = substring(fullAddress, 0, 254);
+                                                            installedAtCustomerNumber = get(rt,"INST_OWNER_CUST_NUM");
+                                                            siteId = get(rt,"INST_OWNER_NAME");
+                                                            siteIdCity = get(rt,"INST_CITY");
+                                                            siteIdZip = get(rt,"INST_POSTAL_CODE");
+                                                            siteIdCountry = get(rt,"INST_COUNTRY");
+                                                            existingSupportType = get(rt,"EXISTING_SUPPORT_TYP");
+                                                            instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                            existingQuantity = get(rt,"TOT_QUANTITY");
+                                                            shipToCoutry = get(rt,"SHIP_TO_COUNTRY");
+                                                            operatingUnit = get(rt,"OPERATING_UNIT");
+                                                            lineSiteNumber = get(rt,"INST_OWN_SITE_NUM");
+                                                            coveredItemDescription = get(rt, "COVERED_ITEM_DESC");
+                                                            
+                                                            
+                                                            jsonput(jsonGrp,"partNumber",contractNumber);
+                                                            jsonput(jsonGrp,"serialNumber",sNo);
+                                                            jsonput(jsonGrp,"instanceIdentifier",instanceIdentifier);
+                                                            jsonput(jsonGrp,"contractLineNumber",contractLineNumber);
+                                                            jsonarrayappend(dataTableJsonArray,jsonGrp);
+
+                                                            
+                                                            
+                                                            
+                                                                    documentNumber = documentNumber +1;
+                                                                    jsonObj = json();
+                 jsonput(jsonObj,"lineSiteNumber",lineSiteNumber);
+                 jsonput(jsonObj,"coveredItemDescription",coveredItemDescription);
+                 jsonput(jsonObj,"linecurrency",linecurrency);
+                 jsonput(jsonObj,"billtocontactemail",billtocontactemail);
+                                                                    jsonput(jsonObj,"quoteEffectiveDate",quoteEffectiveDate);
+                                                                    jsonput(jsonObj,"operatingsys",operatingsys);
+                                                                    jsonput(jsonObj,"partNumber",finalPart);
+                                                                    jsonput(jsonObj,"quantity",quantity);
+                                                                    jsonput(jsonObj,"ContractStartDate",contractEndDate);
+                                                                    jsonput(jsonObj,"entitlementStartDate",entitlementStartDate);
+                                                                    jsonput(jsonObj,"entitlementexpDate",entitlementexpDate);
+                                                                    jsonput(jsonObj,"_document_number",documentNumber);
+                                                                    jsonput(jsonObj,"contractNumber",contractNumber);
+                                                                    jsonput(jsonObj,"mpn",mpn);
+                                                                    jsonput(jsonObj,"productName",productName);
+                                                                    jsonput(jsonObj,"migrationType",migrationType);
+                                                                    
+                                                                    jsonput(jsonObj,"replacementProduct",replacementProduct);
+                                                                    jsonput(jsonObj,"replacementPdtVal",replacementPdtVal);
+                                                                    jsonput(jsonObj,"qtyRatioConversion",qtyRatioConversion);
+                                                                    jsonput(jsonObj,"coveredProduct",coveredProduct);
+                                                                    jsonput(jsonObj,"productFamily",productFamily);
+                                                                    jsonput(jsonObj,"upgradeMaterial",upgradeMaterial);
+                                                                    jsonput(jsonObj,"dealType","bSNRenewal");
+            
+                                                                    jsonput(jsonObj,"quoteOuteputType","bSNRenewal");
+                                                                    jsonput(jsonObj,"billCustName",billCustName);
+                                                                    jsonput(jsonObj,"billCustNumber",billCustNumber);
+                                                                    jsonput(jsonObj,"soldCustName",soldCustName);
+                                                                    jsonput(jsonObj,"soldCustNumber",soldCustNumber);
+                                                                    jsonput(jsonObj,"sNo",sNo);
+                                                                    jsonput(jsonObj,"fullAddress",fullAddress);
+                                                                    jsonput(jsonObj,"endOfSupportDate",endOfSupportDate);
+                                                                    jsonput(jsonObj,"dateShipped",dateShipped);
+                                                                    jsonput(jsonObj,"installedAtCustomerNumber",installedAtCustomerNumber);
+                                                                    jsonput(jsonObj,"siteId",siteId);
+                                                                    jsonput(jsonObj,"siteIdCity",siteIdCity);
+                                                                    jsonput(jsonObj,"siteIdZip",siteIdZip);
+                                                                    jsonput(jsonObj,"siteIdCountry",siteIdCountry);
+                                                                    jsonput(jsonObj,"existingSupportType",existingSupportType);
+                                                                    jsonput(jsonObj,"existingQuantity",existingQuantity);
+                                                                    jsonput(jsonObj,"contractLineNumber",contractLineNumber);
+                                                                    jsonput(jsonObj,"shipToCoutry",shipToCoutry);
+                                                                    jsonput(jsonObj,"operatingUnit",operatingUnit);
+            jsonput(jsonObj,"batchNumber",batchNumber);        jsonput(jsonObj,"contractheaderEndDate",contractheaderEndDate);
+                                                                    instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                                    if(licenseType == "P" or licenseType == "p")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Perpetual");
+                                                                    }
+                                                                    if(licenseType == "S" or licenseType == "s")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Subscription");
+                                                                    }
+                                                                    if(licenseType == "L" or licenseType == "l")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","UMF");
+                                                                    }
+                                                                    jsonput(jsonObj,"licenseMetric",licenseMetric);
+                                                                    if(environmentCode == "PD" or environmentCode == "pd")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production");
+                                                                    }
+                                                                    if(environmentCode == "NP" or environmentCode == "np")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production");
+                                                                    }
+                                                                    if(environmentCode == "DR" or environmentCode == "dr")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Disaster Recovery");
+                                                                    }
+                                                                    if(environmentCode == "PL" or environmentCode == "pl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production Limited Use");
+                                                                    }
+                                                                    if(environmentCode == "NL" or environmentCode == "nl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production Limited Use");
+                                                                    }
+                                                                    jsonput(jsonObj,"specialMetricType",specialMetricType);
+                                                                    jsonput(jsonObj,"metricQuantity",metricQuantity);
+         if(atoi(existingQuantity) <> 0 and expAnnualrenewal <> ""){
+         
+         previousprice = round(atof(expAnnualrenewal)/atoi(existingQuantity),4);
+         jsonput(jsonObj,"previousprice",previousprice);
+         
+         expAnnualrenewal = formatascurrency(atof(expAnnualrenewal), linecurrency);
+         
+                                                                    jsonput(jsonObj,"expAnnualrenewal",expAnnualrenewal);
+         }else{jsonput(jsonObj,"previousprice",0.0);
+         jsonput(jsonObj,"expAnnualrenewal",formatascurrency(0.0, linecurrency));}     
+                                                                    
+                                                                    jsonput(jsonObj,"gbuDriverValue","BSN Renewal Quote ");
+                                                                    jsonarrayappend(transactionJasonArray,jsonObj);
+                                                                    
+                                                                    
+                                                    }
+    
+                                                                    
+    
+                                                    createQuote = util.createNewQuote(_transaction_customer_t_company_name, _system_supplier_company_name, dataTableJsonArray, transactionJasonArray);
+                                                    
+                                                    dataTableJsonArray = jsonarray();
+              transactionJasonArray = jsonarray();
+              }
+                                            }
+    
+                                    
+                            
+    
+    
+    
+    
+    
+
+            resultsAfterGrouping = bmql("select BRCM_Assets.LICENSEE_ACNT_NUM,BRCM_Assets.SHIP_TO_COUNTRY,BRCM_Assets.OPERATING_UNIT,BRCM_Entitlements.ENTITLEMENT_EXP_DATE,BRCM_Assets.COVERED_PRDCT_FAMILY,BRCM_Assets.AUTO_RENEWAL_FLAG from BRCM_Assets INNER JOIN BRCM_Entitlements ON BRCM_Assets.SERIAL_NUMBER = BRCM_Entitlements.SERIAL_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Entitlements.CONTRACT_LINE_NUM and BRCM_Assets.CONTRACT_NUMBER = BRCM_Entitlements.CONTRACT_NUMBER where BRCM_Entitlements.QUOTE_NUMBER IS NULL and BRCM_Entitlements.ACTIVE_STATUS = 'Active' and BRCM_Entitlements.ENTITLEMENT_EXP_DATE <= $renewalDate and BRCM_Entitlements.ENTITLEMENT_EXP_DATE  >= $currentsystemDate and BRCM_Assets.SOURCE = 'CA' and BRCM_Assets.TOT_QUANTITY > 0");
+            
+          
+            cAAutoRenewalKeyString = string[];
+            cARenewalKeyString = string[];
+            for resultAfterGrouping in resultsAfterGrouping
+            {
+          jsonObj= json();
+                    licenseeAccNumber = get(resultAfterGrouping,"LICENSEE_ACNT_NUM");
+                    shipCountry = get(resultAfterGrouping,"SHIP_TO_COUNTRY");
+      operatingUnit = get(resultAfterGrouping,"OPERATING_UNIT");
+      entilementExpDt = get(resultAfterGrouping,"ENTITLEMENT_EXP_DATE");
+      
+      autoRenewalFlag = get(resultAfterGrouping,"AUTO_RENEWAL_FLAG");
+      
+      jsonput(jsonObj,"licenseeAccNumber",licenseeAccNumber);
+      jsonput(jsonObj,"shipCountry",shipCountry);
+      jsonput(jsonObj,"operatingUnit",operatingUnit);
+      jsonput(jsonObj,"entilementExpDt",entilementExpDt);
+     
+      
+      if(autoRenewalFlag == "Yes")
+      {
+
+      
+      
+      detailsString = jsontostr(jsonObj);
+       if(findinarray(cAAutoRenewalKeyString,detailsString) == -1 and sizeofarray(cAAutoRenewalKeyString) < 5000)
+       {
+       append(cAAutoRenewalKeyString,detailsString);
+       }
+      }
+      else
+      {
+       detailsString = jsontostr(jsonObj);
+       if(findinarray(cARenewalKeyString,detailsString) == -1 and sizeofarray(cARenewalKeyString) < 5000)
+       {
+       append(cARenewalKeyString,detailsString);
+      
+       }
+      }
+      
+      
+             }     
+                        if(isnull(cARenewalKeyString))
+       {
+               print "NO CAPARTS TO RENEW";
+       }
+       else
+       {
+                                            
+                                            for cArenewalKey in cARenewalKeyString
+                                            {
+                                            jsonObj = json(cArenewalKey);
+                                            licenseeAccNumber = jsonget(jsonObj,"licenseeAccNumber");
+                       shipCountry = jsonget(jsonObj,"shipCountry");
+         operatingUnit = jsonget(jsonObj,"operatingUnit");
+         entilementExpDt = jsonget(jsonObj,"entilementExpDt");
+         gbuDriverValue = jsonget(jsonObj,"gbuDriverValue");
+         
+                                            if(len(trim(licenseeAccNumber)) > 0 and len(trim(shipCountry)) > 0 and len(trim(operatingUnit)) > 0 and len(trim(entilementExpDt)) > 0){           
+                                                
+                                                
+      
+    
+                                                          
+                                                            
+                                                            finalPartToadd = bmql("select BRCM_Part_Master.MPN,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Migration_Type, BRCM_Part_Master.Replacement_Product,BRCM_Part_Master.Replacement_Pdt_Val,BRCM_Part_Master.Qty_Ratio_Conversion, BRCM_Part_Master.Upgrade_Material,BRCM_Assets_EXT.CONTRACT_END_DATE,BRCM_Assets.LICENSE_TYPE,BRCM_Assets_EXT.LICENSEE_NAME,BRCM_Assets.EXP_ANNUAL_RENEWAL,BRCM_Assets.LICENSE_METRIC,BRCM_Assets.CONTRACT_LINE_NUM,BRCM_Assets.ENV_TYPE,BRCM_Assets.SPECIAL_METRIC_TYPE,BRCM_Assets.METRIC_QUANTITY,BRCM_Assets.EXISTING_QUANTITY,BRCM_Assets_EXT.OPERATING_SYS,BRCM_Assets.SERVICE_ITEM,BRCM_Assets.SERIAL_NUMBER,BRCM_Assets.UNIT_PRICE,BRCM_Entitlements.ENTITLEMENT_START_DT,BRCM_Entitlements.ENTITLEMENT_EXP_DATE,BRCM_Assets.CONTRACT_NUMBER,BRCM_Assets.COVERED_ITEM,BRCM_Assets.COVERED_PRDCT_FAMILY,BRCM_Assets.COVERED_ITEM_DESC,BRCM_Assets.LICENSEE_ACNT_NUM,BRCM_Assets.BILL_TO_CUST_NAME,BRCM_Assets.BILL_TO_CUST_NUMBER,BRCM_Assets.SOLD_TO_CUST_NAME,BRCM_Assets.SOLD_TO_CUST_NUMBER,BRCM_Assets.INST_POSTAL_CODE,BRCM_Assets.INST_CITY,BRCM_Assets.INST_ADDR1,BRCM_Assets.INST_ADDR2,BRCM_Assets.INST_ADDR3,BRCM_Assets.INST_COUNTRY,BRCM_Assets.INST_OWNER_CUST_NUM,BRCM_Assets.INST_OWNER_NAME,BRCM_Assets.SHIP_DATE,BRCM_Assets.EOS_DATE,BRCM_Assets.EXISTING_SUPPORT_TYP,BRCM_Assets.TOT_QUANTITY,BRCM_Assets_EXT.LINE_CURRENCY,BRCM_Assets_EXT.BILL_TO_CNTCT_EMAIL,BRCM_Entitlements.INSTANCE_IDENTIFIER,BRCM_Assets.SHIP_TO_COUNTRY,BRCM_Assets.OPERATING_UNIT,BRCM_Assets.INST_OWN_SITE_NUM from BRCM_Assets INNER JOIN BRCM_Entitlements ON BRCM_Assets.SERIAL_NUMBER = BRCM_Entitlements.SERIAL_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Entitlements.CONTRACT_LINE_NUM and BRCM_Assets.CONTRACT_NUMBER = BRCM_Entitlements.CONTRACT_NUMBER INNER JOIN BRCM_Part_Master on  BRCM_Assets.SERVICE_ITEM = BRCM_Part_Master.MPN INNER JOIN BRCM_Assets_EXT ON BRCM_Assets.CONTRACT_NUMBER = BRCM_Assets_EXT.CONTRACT_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Assets_EXT.CONTRACT_LINE_NUM and BRCM_Assets.SERIAL_NUMBER = BRCM_Assets_EXT.SERIAL_NUMBER where BRCM_Assets.LICENSEE_ACNT_NUM = $licenseeAccNumber and BRCM_Assets.OPERATING_UNIT = $operatingUnit and BRCM_Entitlements.ENTITLEMENT_EXP_DATE = $entilementExpDt and BRCM_Assets.SHIP_TO_COUNTRY = $shipCountry and BRCM_Assets.COVERED_PRDCT_FAMILY LIKE $caProductfamilysecurity and BRCM_Entitlements.QUOTE_NUMBER IS NULL and BRCM_Entitlements.ACTIVE_STATUS = 'Active' and BRCM_Entitlements.ENTITLEMENT_EXP_DATE <= $renewalDate and BRCM_Entitlements.ENTITLEMENT_EXP_DATE  >= $currentsystemDate and BRCM_Assets.SOURCE = 'CA' and BRCM_Assets.TOT_QUANTITY > 0 and ((BRCM_Assets.LICENSE_TYPE IS NULL or BRCM_Assets.LICENSE_TYPE = 'S') or  ((BRCM_Assets.LICENSE_TYPE = 'P' or BRCM_Assets.LICENSE_TYPE = 'L') and BRCM_Assets.SERVICE_ITEM like 'SUPPORT-%' )) and BRCM_Assets_EXT.LINE_CURRENCY <> 'VES'");
+               
+                                                            
+                                                            documentNumber = 1;
+                                                            
+                                                            for rt in finalPartToadd
+                                                            {
+                                                                   
+    
+                                                                    
+                                                                    finalPart = get(rt,"SERVICE_ITEM");
+            licenseAccountNo = get(rt,"LICENSEE_ACNT_NUM");
+                                                                    sNo = get(rt,"SERIAL_NUMBER");
+            expAnnualrenewal = get(rt,"EXP_ANNUAL_RENEWAL");
+                                                                    unitprice = get(rt,"UNIT_PRICE");
+                                                                    quantity = get(rt, "EXISTING_QUANTITY");
+                                                                    operatingsys = get(rt, "OPERATING_SYS");
+                                                                    contractEndDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    entitlementStartDate = get(rt,"ENTITLEMENT_START_DT");
+                                                                    if(entitlementStartDate <> "" and NOT isnull(entitlementStartDate))
+                                                            {
+                                                            entitlementStartDate = datetostr(strtojavadate(entitlementStartDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    
+                                                                    entitlementexpDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    if(entitlementexpDate <> "" and NOT isnull(entitlementexpDate))
+                                                            {
+                                                            entitlementexpDate = datetostr(strtojavadate(entitlementexpDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    
+                                                                    contractNumber=get(rt,"CONTRACT_NUMBER");
+                                                                    mpn = get(rt,"MPN");
+                                                                    productName = get(rt,"Product_Name");
+                                                                    migrationType = get(rt,"Migration_Type");
+                                                                    
+                                                                    replacementProduct = get(rt,"Replacement_Product");
+                                                                    replacementPdtVal = get(rt,"Replacement_Pdt_Val");
+                                                                    qtyRatioConversion = get(rt,"Qty_Ratio_Conversion");
+                                                                    upgradeMaterial = get(rt,"Upgrade_Material");
+                                                                    coveredProduct = get(rt,"COVERED_ITEM");
+                                                                    productFamily = get(rt,"COVERED_PRDCT_FAMILY");
+                                                                    billCustName = get(rt,"BILL_TO_CUST_NAME");
+                                                                    billCustNumber = get(rt,"BILL_TO_CUST_NUMBER");
+                                                                    soldCustName = get(rt,"SOLD_TO_CUST_NAME");
+                                                                    soldCustNumber = get(rt,"SOLD_TO_CUST_NUMBER");
+                                                                    licenseType = get(rt,"LICENSE_TYPE");
+                                                                    licenseMetric = get(rt,"LICENSE_METRIC");
+                                                                    environmentCode = get(rt,"ENV_TYPE");
+                                                                    specialMetricType = get(rt,"SPECIAL_METRIC_TYPE");
+                                                                    metricQuantity=get(rt,"METRIC_QUANTITY");
+            linecurrency = get(rt,"LINE_CURRENCY");
+                 billtocontactemail = get(rt,"BILL_TO_CNTCT_EMAIL");
+         contractheaderEndDate = get(rt,"CONTRACT_END_DATE");
+                                                            endOfSupportDate = get(rt,"EOS_DATE");
+                                                            dateShipped = get(rt,"SHIP_DATE");
+                                                            if(endOfSupportDate <> "" and NOT isnull(endOfSupportDate))
+                                                            {
+                                                            endOfSupportDate = datetostr(strtojavadate(endOfSupportDate,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                            if(dateShipped <> "" and NOT isnull(dateShipped))
+                                                            {
+                                                            dateShipped = datetostr(strtojavadate(dateShipped,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                            line1 = get(rt, "INST_ADDR1");
+                                                            line2 = get(rt, "INST_ADDR2");
+                                                            line3 = get(rt, "INST_ADDR3");
+                                                            fullAddress = line1 + ", "+line2 + ", "+line3;
+                                                            fullAddress = substring(fullAddress, 0, 254);
+                                                            installedAtCustomerNumber = get(rt,"INST_OWNER_CUST_NUM");
+                                                            siteId = get(rt,"INST_OWNER_NAME");
+                                                            siteIdCity = get(rt,"INST_CITY");
+                                                            siteIdZip = get(rt,"INST_POSTAL_CODE");
+                                                            siteIdCountry = get(rt,"INST_COUNTRY");
+                                                            existingSupportType = "";
+                                                            if(finalPart == "SUPPORT-P")
+                                                            {
+                                                             existingSupportType = "PS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-S")
+                                                            {
+                                                             existingSupportType = "SS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-E")
+                                                            {
+                                                             existingSupportType = "ES";
+                                                            }
+                                                            
+                                                            instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                            existingQuantity = get(rt,"TOT_QUANTITY");
+                                                            contractLineNumber = get(rt,"CONTRACT_LINE_NUM");
+                                                            shipToCoutry = get(rt,"SHIP_TO_COUNTRY");
+           operatingUnit = get(rt,"OPERATING_UNIT");
+           licenseeName = get(rt,"LICENSEE_NAME");
+                 lineSiteNumber = get(rt,"INST_OWN_SITE_NUM");
+                 coveredItemDescription = get(rt, "COVERED_ITEM_DESC");
+                                                                    jsonput(jsonGrp,"partNumber",contractNumber);
+                                                                    jsonput(jsonGrp,"serialNumber",sNo);
+                                                                    jsonput(jsonGrp,"instanceIdentifier",instanceIdentifier);
+                                                                    jsonput(jsonGrp,"contractLineNumber",contractLineNumber);
+                                                                    jsonarrayappend(dataTableJsonArray,jsonGrp);
+                                                                    
+                                                                            documentNumber = documentNumber +1;
+                                                                    jsonObj = json();
+                 jsonput(jsonObj,"lineSiteNumber",lineSiteNumber);
+                 jsonput(jsonObj,"coveredItemDescription",coveredItemDescription);
+                 jsonput(jsonObj,"linecurrency",linecurrency);
+                 jsonput(jsonObj,"billtocontactemail",billtocontactemail);
+                                                                    jsonput(jsonObj,"quoteEffectiveDate",quoteEffectiveDate);
+                                                                    jsonput(jsonObj,"operatingsys",operatingsys);
+                                                                    jsonput(jsonObj,"partNumber",finalPart);
+                                                                    jsonput(jsonObj,"quantity",quantity);
+                                                                    jsonput(jsonObj,"ContractStartDate",contractEndDate);
+                                                                    jsonput(jsonObj,"entitlementStartDate",entitlementStartDate);
+                                                                    jsonput(jsonObj,"entitlementexpDate",entitlementexpDate);
+                                                                    jsonput(jsonObj,"_document_number",documentNumber);
+                                                                    jsonput(jsonObj,"contractNumber",contractNumber);
+                                                                    jsonput(jsonObj,"mpn",mpn);
+                                                                    jsonput(jsonObj,"productName",productName);
+                                                                    jsonput(jsonObj,"migrationType",migrationType);
+                                                                    
+                                                                    jsonput(jsonObj,"replacementProduct",replacementProduct);
+                                                                    jsonput(jsonObj,"replacementPdtVal",replacementPdtVal);
+                                                                    jsonput(jsonObj,"qtyRatioConversion",qtyRatioConversion);
+                                                                    jsonput(jsonObj,"coveredProduct",coveredProduct);
+                                                                    jsonput(jsonObj,"productFamily",productFamily);
+                                                                    jsonput(jsonObj,"upgradeMaterial",upgradeMaterial);
+                                                                    jsonput(jsonObj,"dealType","cADRenewal");
+         
+         jsonput(jsonObj,"licenseAccountNo",licenseAccountNo);
+                                                                    jsonput(jsonObj,"quoteOuteputType","cADRenewal");
+                                                                    jsonput(jsonObj,"billCustName",billCustName);
+                                                                    jsonput(jsonObj,"billCustNumber",billCustNumber);
+                                                                    jsonput(jsonObj,"soldCustName",soldCustName);
+                                                                    jsonput(jsonObj,"soldCustNumber",soldCustNumber);
+                                                                    jsonput(jsonObj,"sNo",sNo);
+                                                                    jsonput(jsonObj,"fullAddress",fullAddress);
+                                                                    jsonput(jsonObj,"endOfSupportDate",endOfSupportDate);
+                                                                    jsonput(jsonObj,"dateShipped",dateShipped);
+                                                                    jsonput(jsonObj,"installedAtCustomerNumber",installedAtCustomerNumber);
+                                                                    jsonput(jsonObj,"siteId",siteId);
+                                                                    jsonput(jsonObj,"siteIdCity",siteIdCity);
+                                                                    jsonput(jsonObj,"siteIdZip",siteIdZip);
+                                                                    jsonput(jsonObj,"siteIdCountry",siteIdCountry);
+                                                                    jsonput(jsonObj,"existingSupportType",existingSupportType);
+                                                                    jsonput(jsonObj,"existingQuantity",existingQuantity);
+                                                                    jsonput(jsonObj,"contractLineNumber",contractLineNumber);
+            jsonput(jsonObj,"contractheaderEndDate",contractheaderEndDate);
+            jsonput(jsonObj,"shipToCoutry",shipToCoutry);
+            jsonput(jsonObj,"operatingUnit",operatingUnit);
+            jsonput(jsonObj,"licenseeName",licenseeName);
+            jsonput(jsonObj,"batchNumber",batchNumber);
+                                                                    instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                                    
+                                                                    if(licenseType == "P" or licenseType == "p")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Perpetual");
+                                                                    }
+                                                                    if(licenseType == "S" or licenseType == "s")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Subscription");
+                                                                    }
+                                                                    if(licenseType == "L" or licenseType == "l")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","UMF");
+                                                                    }
+                                                                    jsonput(jsonObj,"licenseMetric",licenseMetric);
+                                                                    if(environmentCode == "PD" or environmentCode == "pd")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production");
+                                                                    }
+                                                                    if(environmentCode == "NP" or environmentCode == "np")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production");
+                                                                    }
+                                                                    if(environmentCode == "DR" or environmentCode == "dr")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Disaster Recovery");
+                                                                    }
+                                                                    if(environmentCode == "PL" or environmentCode == "pl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production Limited Use");
+                                                                    }
+                                                                    if(environmentCode == "NL" or environmentCode == "nl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production Limited Use");
+                                                                    }
+                                                                    jsonput(jsonObj,"specialMetricType",specialMetricType);
+                                                                    jsonput(jsonObj,"metricQuantity",metricQuantity);
+                                                                    if(atoi(existingQuantity) <> 0 and expAnnualrenewal <> ""){
+         
+         previousprice = round(atof(expAnnualrenewal)/atoi(existingQuantity),4);
+         jsonput(jsonObj,"previousprice",previousprice);
+         expAnnualrenewal = formatascurrency(atof(expAnnualrenewal), linecurrency);
+                                                                    jsonput(jsonObj,"expAnnualrenewal",expAnnualrenewal);
+         }else{jsonput(jsonObj,"previousprice",0.0);
+         jsonput(jsonObj,"expAnnualrenewal",formatascurrency(0.0, linecurrency));}        
+                                                                    
+                                                                    gbuDriverValue_1 = ":" + gbuDriverValue + ":";
+                                                                    jsonput(jsonObj,"CA " + "gbuDriverValue",gbuDriverValue_1);
+                                                                    jsonarrayappend(transactionJasonArray,jsonObj);
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                            
+                                                            }
+                                                            if(jsonarraysize(transactionJasonArray) > 0 )
+                                                            {
+                                                                  createQuote = util.createNewQuote(_transaction_customer_t_company_name, _system_supplier_company_name, dataTableJsonArray, transactionJasonArray);
+                                                    
+                                                           dataTableJsonArray = jsonarray();
+             transactionJasonArray = jsonarray();
+             jsonRenewalJobDetails = json();
+             jsonput(jsonRenewalJobDetails,"RenewalJobDetails",createQuote);
+             
+                                                            
+                                                            }
+                                                    
+                                                    
+    
+                                                            
+                                                            finalPartToadd = bmql("select BRCM_Part_Master.MPN,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Migration_Type, BRCM_Part_Master.Replacement_Product,BRCM_Part_Master.Replacement_Pdt_Val,BRCM_Part_Master.Qty_Ratio_Conversion, BRCM_Part_Master.Upgrade_Material,BRCM_Assets_EXT.CONTRACT_END_DATE,BRCM_Assets.LICENSE_TYPE,BRCM_Assets_EXT.LICENSEE_NAME,BRCM_Assets.EXP_ANNUAL_RENEWAL,BRCM_Assets.LICENSE_METRIC,BRCM_Assets.CONTRACT_LINE_NUM,BRCM_Assets.ENV_TYPE,BRCM_Assets.SPECIAL_METRIC_TYPE,BRCM_Assets.METRIC_QUANTITY,BRCM_Assets.EXISTING_QUANTITY,BRCM_Assets_EXT.OPERATING_SYS,BRCM_Assets.SERVICE_ITEM,BRCM_Assets.SERIAL_NUMBER,BRCM_Assets.UNIT_PRICE,BRCM_Entitlements.ENTITLEMENT_START_DT,BRCM_Entitlements.ENTITLEMENT_EXP_DATE,BRCM_Assets.CONTRACT_NUMBER,BRCM_Assets.COVERED_ITEM,BRCM_Assets.COVERED_PRDCT_FAMILY,BRCM_Assets.COVERED_ITEM_DESC,BRCM_Assets.LICENSEE_ACNT_NUM,BRCM_Assets.BILL_TO_CUST_NAME,BRCM_Assets.BILL_TO_CUST_NUMBER,BRCM_Assets.SOLD_TO_CUST_NAME,BRCM_Assets.SOLD_TO_CUST_NUMBER,BRCM_Assets.INST_POSTAL_CODE,BRCM_Assets.INST_CITY,BRCM_Assets.INST_ADDR1,BRCM_Assets.INST_ADDR2,BRCM_Assets.INST_ADDR3,BRCM_Assets.INST_COUNTRY,BRCM_Assets.INST_OWNER_CUST_NUM,BRCM_Assets.INST_OWNER_NAME,BRCM_Assets.SHIP_DATE,BRCM_Assets.EOS_DATE,BRCM_Assets.EXISTING_SUPPORT_TYP,BRCM_Assets.TOT_QUANTITY,BRCM_Entitlements.INSTANCE_IDENTIFIER,BRCM_Assets.SHIP_TO_COUNTRY,BRCM_Assets.OPERATING_UNIT,BRCM_Assets_EXT.LINE_CURRENCY,BRCM_Assets_EXT.BILL_TO_CNTCT_EMAIL,BRCM_Assets.INST_OWN_SITE_NUM from BRCM_Assets INNER JOIN BRCM_Entitlements ON BRCM_Assets.SERIAL_NUMBER = BRCM_Entitlements.SERIAL_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Entitlements.CONTRACT_LINE_NUM and BRCM_Assets.CONTRACT_NUMBER = BRCM_Entitlements.CONTRACT_NUMBER INNER JOIN BRCM_Part_Master on  BRCM_Assets.SERVICE_ITEM = BRCM_Part_Master.MPN INNER JOIN BRCM_Assets_EXT ON BRCM_Assets.CONTRACT_NUMBER = BRCM_Assets_EXT.CONTRACT_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Assets_EXT.CONTRACT_LINE_NUM and BRCM_Assets.SERIAL_NUMBER = BRCM_Assets_EXT.SERIAL_NUMBER where BRCM_Assets.LICENSEE_ACNT_NUM = $licenseeAccNumber and BRCM_Assets.OPERATING_UNIT = $operatingUnit and BRCM_Entitlements.ENTITLEMENT_EXP_DATE = $entilementExpDt and BRCM_Assets.SHIP_TO_COUNTRY = $shipCountry and BRCM_Assets.COVERED_PRDCT_FAMILY LIKE $caProductfamilyautomic and BRCM_Entitlements.QUOTE_NUMBER IS NULL and BRCM_Entitlements.ACTIVE_STATUS = 'Active' and BRCM_Entitlements.ENTITLEMENT_EXP_DATE <= $renewalDate and BRCM_Entitlements.ENTITLEMENT_EXP_DATE  >= $currentsystemDate and BRCM_Assets.SOURCE = 'CA' and BRCM_Assets.TOT_QUANTITY > 0 and ((BRCM_Assets.LICENSE_TYPE IS NULL or BRCM_Assets.LICENSE_TYPE = 'S') or  ((BRCM_Assets.LICENSE_TYPE = 'P' or BRCM_Assets.LICENSE_TYPE = 'L') and BRCM_Assets.SERVICE_ITEM like 'SUPPORT-%' )) and BRCM_Assets_EXT.LINE_CURRENCY <> 'VES'");
+                                                            
+                                                            documentNumber = 1;
+                                                            
+                                                            for rt in finalPartToadd
+                                                            {
+                                                                   
+                                                                    finalPart = get(rt,"SERVICE_ITEM");
+                                                                    sNo = get(rt,"SERIAL_NUMBER");
+            expAnnualrenewal = get(rt,"EXP_ANNUAL_RENEWAL");
+            licenseAccountNo = get(rt,"LICENSEE_ACNT_NUM");
+                                                                    quantity = get(rt, "EXISTING_QUANTITY");
+                                                                    unitprice = get(rt,"UNIT_PRICE");
+                                                                    contractEndDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    operatingsys = get(rt, "OPERATING_SYS");
+                                                                    entitlementStartDate = get(rt,"ENTITLEMENT_START_DT");
+                                                                    if(entitlementStartDate <> "" and NOT isnull(entitlementStartDate))
+                                                            {
+                                                            entitlementStartDate = datetostr(strtojavadate(entitlementStartDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    
+                                                                    entitlementexpDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    if(entitlementexpDate <> "" and NOT isnull(entitlementexpDate))
+                                                            {
+                                                            entitlementexpDate = datetostr(strtojavadate(entitlementexpDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    contractNumber=get(rt,"CONTRACT_NUMBER");
+                                                                    mpn = get(rt,"MPN");
+                                                                    productName = get(rt,"Product_Name");
+                                                                    migrationType = get(rt,"Migration_Type");
+                                                                    
+                                                                    replacementProduct = get(rt,"Replacement_Product");
+                                                                    replacementPdtVal = get(rt,"Replacement_Pdt_Val");
+                                                                    qtyRatioConversion = get(rt,"Qty_Ratio_Conversion");
+                                                                    upgradeMaterial = get(rt,"Upgrade_Material");
+                                                                    coveredProduct = get(rt,"COVERED_ITEM");
+                                                                    productFamily = get(rt,"COVERED_PRDCT_FAMILY");
+                                                                    billCustName = get(rt,"BILL_TO_CUST_NAME");
+                                                                    billCustNumber = get(rt,"BILL_TO_CUST_NUMBER");
+                                                                    soldCustName = get(rt,"SOLD_TO_CUST_NAME");
+                                                                    soldCustNumber = get(rt,"SOLD_TO_CUST_NUMBER");
+                                                                    licenseType = get(rt,"LICENSE_TYPE");
+                                                                    licenseMetric = get(rt,"LICENSE_METRIC");
+                                                                    environmentCode = get(rt,"ENV_TYPE");
+                                                                    specialMetricType = get(rt,"SPECIAL_METRIC_TYPE");
+                                                                    metricQuantity=get(rt,"METRIC_QUANTITY");
+                                                                    endOfSupportDate = get(rt,"EOS_DATE");
+                                                                    shipToCoutry = get(rt,"SHIP_TO_COUNTRY");
+                 linecurrency = get(rt,"LINE_CURRENCY");
+                 billtocontactemail = get(rt,"BILL_TO_CNTCT_EMAIL");
+            operatingUnit = get(rt,"OPERATING_UNIT");
+                                                                    dateShipped = get(rt,"SHIP_DATE");
+                                                                    licenseeName = get(rt,"LICENSEE_NAME");
+                 contractheaderEndDate = get(rt,"CONTRACT_END_DATE");
+                                                                    if(endOfSupportDate <> "" and NOT isnull(endOfSupportDate))
+                                                            {
+                                                            endOfSupportDate = datetostr(strtojavadate(endOfSupportDate,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    if(dateShipped <> "" and NOT isnull(dateShipped))
+                                                            {
+                                                            dateShipped = datetostr(strtojavadate(dateShipped,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    line1 = get(rt, "INST_ADDR1");
+                                                                    line2 = get(rt, "INST_ADDR2");
+                                                                    line3 = get(rt, "INST_ADDR3");
+                                                                    fullAddress = line1 + ", "+line2 + ", "+line3;
+                                                                    fullAddress = substring(fullAddress, 0, 254);
+                                                                    installedAtCustomerNumber = get(rt,"INST_OWNER_CUST_NUM");
+                                                                    siteId = get(rt,"INST_OWNER_NAME");
+                                                                    siteIdCity = get(rt,"INST_CITY");
+                                                                    siteIdZip = get(rt,"INST_POSTAL_CODE");
+                                                                    siteIdCountry = get(rt,"INST_COUNTRY");
+                                                                    existingSupportType = "";
+                                                            if(finalPart == "SUPPORT-P")
+                                                            {
+                                                             existingSupportType = "PS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-S")
+                                                            {
+                                                             existingSupportType = "SS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-E")
+                                                            {
+                                                             existingSupportType = "ES";
+                                                            }
+                                                                    instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                                    existingQuantity = get(rt,"TOT_QUANTITY");
+                                                                    contractLineNumber = get(rt,"CONTRACT_LINE_NUM");
+                                                                   lineSiteNumber = get(rt,"INST_OWN_SITE_NUM");
+                   coveredItemDescription = get(rt, "COVERED_ITEM_DESC");
+                                                                    jsonput(jsonGrp,"partNumber",contractNumber);
+                                                                    jsonput(jsonGrp,"serialNumber",sNo);
+                                                                    jsonput(jsonGrp,"instanceIdentifier",instanceIdentifier);
+                                                                    jsonput(jsonGrp,"contractLineNumber",contractLineNumber);
+                                                                    jsonarrayappend(dataTableJsonArray,jsonGrp);
+                                                                    
+                                                                            documentNumber = documentNumber +1;
+                                                                    jsonObj = json();
+                 jsonput(jsonObj,"lineSiteNumber",lineSiteNumber);
+                 jsonput(jsonObj,"coveredItemDescription",coveredItemDescription);
+                 jsonput(jsonObj,"linecurrency",linecurrency);
+                 jsonput(jsonObj,"billtocontactemail",billtocontactemail);
+                                                                    jsonput(jsonObj,"quoteEffectiveDate",quoteEffectiveDate);
+                                                                    jsonput(jsonObj,"operatingsys",operatingsys);
+                                                                    jsonput(jsonObj,"partNumber",finalPart);
+                                                                    jsonput(jsonObj,"quantity",quantity);
+                                                                    jsonput(jsonObj,"ContractStartDate",contractEndDate);
+                                                                    jsonput(jsonObj,"entitlementStartDate",entitlementStartDate);
+                                                                    jsonput(jsonObj,"entitlementexpDate",entitlementexpDate);
+                                                                    jsonput(jsonObj,"_document_number",documentNumber);
+                                                                    jsonput(jsonObj,"contractNumber",contractNumber);
+                                                                    jsonput(jsonObj,"mpn",mpn);
+                                                                    jsonput(jsonObj,"productName",productName);
+                                                                    jsonput(jsonObj,"migrationType",migrationType);
+                                                                
+                                                                    jsonput(jsonObj,"replacementProduct",replacementProduct);
+                                                                    jsonput(jsonObj,"replacementPdtVal",replacementPdtVal);
+                                                                    jsonput(jsonObj,"qtyRatioConversion",qtyRatioConversion);
+                                                                    jsonput(jsonObj,"coveredProduct",coveredProduct);
+                                                                    jsonput(jsonObj,"productFamily",productFamily);
+                                                                    jsonput(jsonObj,"upgradeMaterial",upgradeMaterial);
+                                                                    jsonput(jsonObj,"dealType","cADRenewal");
+           
+            jsonput(jsonObj,"licenseAccountNo",licenseAccountNo);
+                                                                    jsonput(jsonObj,"quoteOuteputType","cADRenewal");
+                                                                    jsonput(jsonObj,"billCustName",billCustName);
+                                                                    jsonput(jsonObj,"billCustNumber",billCustNumber);
+                                                                    jsonput(jsonObj,"soldCustName",soldCustName);
+                                                                    jsonput(jsonObj,"soldCustNumber",soldCustNumber);
+                                                                    jsonput(jsonObj,"sNo",sNo);
+                                                                    jsonput(jsonObj,"fullAddress",fullAddress);
+                                                                    jsonput(jsonObj,"endOfSupportDate",endOfSupportDate);
+                                                                    jsonput(jsonObj,"dateShipped",dateShipped);
+                                                                    jsonput(jsonObj,"installedAtCustomerNumber",installedAtCustomerNumber);
+                                                                    jsonput(jsonObj,"siteId",siteId);
+                                                                    jsonput(jsonObj,"siteIdCity",siteIdCity);
+                                                                    jsonput(jsonObj,"siteIdZip",siteIdZip);
+                                                                    jsonput(jsonObj,"siteIdCountry",siteIdCountry);
+                                                                    jsonput(jsonObj,"existingSupportType",existingSupportType);
+                                                                    jsonput(jsonObj,"existingQuantity",existingQuantity);
+            jsonput(jsonObj,"contractheaderEndDate",contractheaderEndDate);
+            jsonput(jsonObj,"shipToCoutry",shipToCoutry);
+            jsonput(jsonObj,"operatingUnit",operatingUnit);
+            jsonput(jsonObj,"licenseeName",licenseeName);
+                                                                    instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                                    jsonput(jsonObj,"batchNumber",batchNumber);
+         if(atoi(existingQuantity) <> 0 and expAnnualrenewal <> ""){
+         
+         previousprice = round(atof(expAnnualrenewal)/atoi(existingQuantity),4);
+         jsonput(jsonObj,"previousprice",previousprice);
+         expAnnualrenewal = formatascurrency(atof(expAnnualrenewal), linecurrency);
+                                                                    jsonput(jsonObj,"expAnnualrenewal",expAnnualrenewal);
+         }else{jsonput(jsonObj,"previousprice",0.0);
+         jsonput(jsonObj,"expAnnualrenewal",formatascurrency(0.0, linecurrency));}        
+                                                                    
+                                                                    gbuDriverValue_1 = ":" + gbuDriverValue + ":";
+                                                                    jsonput(jsonObj,"gbuDriverValue",gbuDriverValue_1);
+                                                                    jsonput(jsonObj,"contractLineNumber",contractLineNumber);
+                                                                    if(licenseType == "P" or licenseType == "p")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Perpetual");
+                                                                    }
+                                                                    if(licenseType == "S" or licenseType == "s")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Subscription");
+                                                                    }
+                                                                    if(licenseType == "L" or licenseType == "l")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","UMF");
+                                                                    }
+                                                                    jsonput(jsonObj,"licenseMetric",licenseMetric);
+                                                                    if(environmentCode == "PD" or environmentCode == "pd")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production");
+                                                                    }
+                                                                    if(environmentCode == "NP" or environmentCode == "np")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production");
+                                                                    }
+                                                                    if(environmentCode == "DR" or environmentCode == "dr")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Disaster Recovery");
+                                                                    }
+                                                                    if(environmentCode == "PL" or environmentCode == "pl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production Limited Use");
+                                                                    }
+                                                                    if(environmentCode == "NL" or environmentCode == "nl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production Limited Use");
+                                                                    }
+                                                                    jsonput(jsonObj,"specialMetricType",specialMetricType);
+                                                                    jsonput(jsonObj,"metricQuantity",metricQuantity);
+                                                                    jsonarrayappend(transactionJasonArray,jsonObj);
+                                                                    
+                                                            }
+                                                            if(jsonarraysize(transactionJasonArray) > 0 )
+                                                            {
+                                                                  createQuote = util.createNewQuote(_transaction_customer_t_company_name, _system_supplier_company_name, dataTableJsonArray, transactionJasonArray);
+                                                    
+                                                           dataTableJsonArray = jsonarray();
+             transactionJasonArray = jsonarray();
+             jsonRenewalJobDetails = json();
+             jsonput(jsonRenewalJobDetails,"RenewalJobDetails",createQuote);
+             
+                                                            
+                                                            }
+                                                    
+    
+                                                            
+                                                            finalPartToadd = bmql("select BRCM_Part_Master.MPN,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Migration_Type, BRCM_Part_Master.Replacement_Product,BRCM_Part_Master.Replacement_Pdt_Val,BRCM_Part_Master.Qty_Ratio_Conversion, BRCM_Part_Master.Upgrade_Material,BRCM_Assets_EXT.CONTRACT_END_DATE,BRCM_Assets_EXT.LICENSEE_NAME,BRCM_Assets.LICENSE_TYPE,BRCM_Assets.EXP_ANNUAL_RENEWAL,BRCM_Assets.LICENSE_METRIC,BRCM_Assets.CONTRACT_LINE_NUM,BRCM_Assets.ENV_TYPE,BRCM_Assets.SPECIAL_METRIC_TYPE,BRCM_Assets.METRIC_QUANTITY,BRCM_Assets.EXISTING_QUANTITY,BRCM_Assets_EXT.OPERATING_SYS,BRCM_Assets.SERVICE_ITEM,BRCM_Assets.SERIAL_NUMBER,BRCM_Assets.UNIT_PRICE,BRCM_Entitlements.ENTITLEMENT_START_DT,BRCM_Entitlements.ENTITLEMENT_EXP_DATE,BRCM_Assets.CONTRACT_NUMBER,BRCM_Assets.COVERED_ITEM,BRCM_Assets.COVERED_PRDCT_FAMILY,BRCM_Assets.COVERED_ITEM_DESC,BRCM_Assets.LICENSEE_ACNT_NUM,BRCM_Assets.BILL_TO_CUST_NAME,BRCM_Assets.BILL_TO_CUST_NUMBER,BRCM_Assets.SOLD_TO_CUST_NAME,BRCM_Assets.SOLD_TO_CUST_NUMBER,BRCM_Assets.INST_POSTAL_CODE,BRCM_Assets.INST_CITY,BRCM_Assets.INST_ADDR1,BRCM_Assets.INST_ADDR2,BRCM_Assets.INST_ADDR3,BRCM_Assets.INST_COUNTRY,BRCM_Assets.INST_OWNER_CUST_NUM,BRCM_Assets.INST_OWNER_NAME,BRCM_Assets.SHIP_DATE,BRCM_Assets.EOS_DATE,BRCM_Assets.EXISTING_SUPPORT_TYP,BRCM_Assets.TOT_QUANTITY,BRCM_Entitlements.INSTANCE_IDENTIFIER,BRCM_Assets.SHIP_TO_COUNTRY,BRCM_Assets.OPERATING_UNIT,BRCM_Assets_EXT.LINE_CURRENCY,BRCM_Assets_EXT.BILL_TO_CNTCT_EMAIL,BRCM_Assets.INST_OWN_SITE_NUM from BRCM_Assets INNER JOIN BRCM_Entitlements ON BRCM_Assets.SERIAL_NUMBER = BRCM_Entitlements.SERIAL_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Entitlements.CONTRACT_LINE_NUM and BRCM_Assets.CONTRACT_NUMBER = BRCM_Entitlements.CONTRACT_NUMBER INNER JOIN BRCM_Part_Master on  BRCM_Assets.SERVICE_ITEM = BRCM_Part_Master.MPN INNER JOIN BRCM_Assets_EXT ON BRCM_Assets.CONTRACT_NUMBER = BRCM_Assets_EXT.CONTRACT_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Assets_EXT.CONTRACT_LINE_NUM and BRCM_Assets.SERIAL_NUMBER = BRCM_Assets_EXT.SERIAL_NUMBER where BRCM_Assets.LICENSEE_ACNT_NUM = $licenseeAccNumber and BRCM_Assets.OPERATING_UNIT = $operatingUnit and BRCM_Entitlements.ENTITLEMENT_EXP_DATE = $entilementExpDt and BRCM_Assets.SHIP_TO_COUNTRY = $shipCountry and (BRCM_Assets.COVERED_PRDCT_FAMILY NOT LIKE $caProductfamilysecurity and BRCM_Assets.COVERED_PRDCT_FAMILY NOT LIKE $caProductfamilyautomic OR BRCM_Assets.COVERED_PRDCT_FAMILY IS NULL) and BRCM_Entitlements.QUOTE_NUMBER IS NULL and BRCM_Entitlements.ACTIVE_STATUS = 'Active' and BRCM_Entitlements.ENTITLEMENT_EXP_DATE <= $renewalDate and BRCM_Entitlements.ENTITLEMENT_EXP_DATE  >= $currentsystemDate and BRCM_Assets.SOURCE = 'CA' and BRCM_Assets.TOT_QUANTITY > 0 and ((BRCM_Assets.LICENSE_TYPE IS NULL or BRCM_Assets.LICENSE_TYPE = 'S') or  ((BRCM_Assets.LICENSE_TYPE = 'P' or BRCM_Assets.LICENSE_TYPE = 'L') and BRCM_Assets.SERVICE_ITEM like 'SUPPORT-%' )) and BRCM_Assets_EXT.LINE_CURRENCY <> 'VES'");
+                                                           
+                                                            documentNumber = 1;
+                                                        
+                                                         
+                                                            for rt in finalPartToadd
+                                                            {
+                                                                    
+                                                                    finalPart = get(rt,"SERVICE_ITEM");
+                                                                    sNo = get(rt,"SERIAL_NUMBER");
+         licenseAccountNo = get(rt,"LICENSEE_ACNT_NUM");
+         expAnnualrenewal = get(rt,"EXP_ANNUAL_RENEWAL");
+                                                                    unitprice = get(rt,"UNIT_PRICE");
+                                                                    quantity = get(rt, "EXISTING_QUANTITY");
+                                                                    contractEndDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    operatingsys = get(rt, "OPERATING_SYS");
+                                                                    entitlementStartDate = get(rt,"ENTITLEMENT_START_DT");
+                                                                    if(entitlementStartDate <> "" and NOT isnull(entitlementStartDate))
+                                                            {
+                                                            entitlementStartDate = datetostr(strtojavadate(entitlementStartDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    
+                                                                    entitlementexpDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    if(entitlementexpDate <> "" and NOT isnull(entitlementexpDate))
+                                                            {
+                                                            entitlementexpDate = datetostr(strtojavadate(entitlementexpDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    contractNumber=get(rt,"CONTRACT_NUMBER");
+                                                                    mpn = get(rt,"MPN");
+                                                                    productName = get(rt,"Product_Name");
+                                                                    migrationType = get(rt,"Migration_Type");
+                                                                  
+                                                                    replacementProduct = get(rt,"Replacement_Product");
+                                                                    replacementPdtVal = get(rt,"Replacement_Pdt_Val");
+                                                                    qtyRatioConversion = get(rt,"Qty_Ratio_Conversion");
+                                                                    upgradeMaterial = get(rt,"Upgrade_Material");
+                                                                    coveredProduct = get(rt,"COVERED_ITEM");
+                                                                    productFamily = get(rt,"COVERED_PRDCT_FAMILY");
+                                                                    billCustName = get(rt,"BILL_TO_CUST_NAME");
+                                                                    billCustNumber = get(rt,"BILL_TO_CUST_NUMBER");
+                                                                    soldCustName = get(rt,"SOLD_TO_CUST_NAME");
+                                                                    soldCustNumber = get(rt,"SOLD_TO_CUST_NUMBER");
+                                                                    licenseType = get(rt,"LICENSE_TYPE");
+                                                                    licenseMetric = get(rt,"LICENSE_METRIC");
+                                                                    environmentCode = get(rt,"ENV_TYPE");
+                                                                    specialMetricType = get(rt,"SPECIAL_METRIC_TYPE");
+                                                                    metricQuantity=get(rt,"METRIC_QUANTITY");
+                                                                    endOfSupportDate = get(rt,"EOS_DATE");
+                                                                    dateShipped = get(rt,"SHIP_DATE");
+                                                                    contractLineNumber = get(rt,"CONTRACT_LINE_NUM");
+                 linecurrency = get(rt,"LINE_CURRENCY");
+                 billtocontactemail = get(rt,"BILL_TO_CNTCT_EMAIL");
+            contractheaderEndDate = get(rt,"CONTRACT_END_DATE");
+            shipToCoutry = get(rt,"SHIP_TO_COUNTRY");
+            operatingUnit = get(rt,"OPERATING_UNIT");
+            licenseeName = get(rt,"LICENSEE_NAME");
+                                                                    if(endOfSupportDate <> "" and NOT isnull(endOfSupportDate))
+                                                            {
+                                                            endOfSupportDate = datetostr(strtojavadate(endOfSupportDate,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    if(dateShipped <> "" and NOT isnull(dateShipped))
+                                                            {
+                                                            dateShipped = datetostr(strtojavadate(dateShipped,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    line1 = get(rt, "INST_ADDR1");
+                                                                    line2 = get(rt, "INST_ADDR2");
+                                                                    line3 = get(rt, "INST_ADDR3");
+                                                                    fullAddress = line1 + ", "+line2 + ", "+line3;
+                                                                    fullAddress = substring(fullAddress, 0, 254);
+                                                                    installedAtCustomerNumber = get(rt,"INST_OWNER_CUST_NUM");
+                                                                    siteId = get(rt,"INST_OWNER_NAME");
+                                                                    siteIdCity = get(rt,"INST_CITY");
+                                                                    siteIdZip = get(rt,"INST_POSTAL_CODE");
+                                                                    siteIdCountry = get(rt,"INST_COUNTRY");
+                                                                    existingSupportType = "";
+                                                            if(finalPart == "SUPPORT-P")
+                                                            {
+                                                             existingSupportType = "PS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-S")
+                                                            {
+                                                             existingSupportType = "SS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-E")
+                                                            {
+                                                             existingSupportType = "ES";
+                                                            }
+                                                                    instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                                    existingQuantity = get(rt,"TOT_QUANTITY");
+                                                                   lineSiteNumber = get(rt,"INST_OWN_SITE_NUM");
+                   coveredItemDescription = get(rt, "COVERED_ITEM_DESC");
+                                                                    jsonput(jsonGrp,"partNumber",contractNumber);
+                                                                    
+                                                                    jsonput(jsonGrp,"serialNumber",sNo);
+                                                                    jsonput(jsonGrp,"instanceIdentifier",instanceIdentifier);
+                                                                    jsonput(jsonGrp,"contractLineNumber",contractLineNumber);
+                                                                    jsonarrayappend(dataTableJsonArray,jsonGrp);
+                                                                    
+                                                                            documentNumber = documentNumber +1;
+                                                                    jsonObj = json();
+                 jsonput(jsonObj,"lineSiteNumber",lineSiteNumber);
+                 jsonput(jsonObj,"coveredItemDescription",coveredItemDescription);
+                 jsonput(jsonObj,"linecurrency",linecurrency);
+                 jsonput(jsonObj,"billtocontactemail",billtocontactemail);
+                                                                    jsonput(jsonObj,"quoteEffectiveDate",quoteEffectiveDate);
+                                                                    jsonput(jsonObj,"operatingsys",operatingsys);
+                                                                    jsonput(jsonObj,"partNumber",finalPart);
+                                                                    jsonput(jsonObj,"quantity",quantity);
+                                                                    jsonput(jsonObj,"ContractStartDate",contractEndDate);
+                                                                    jsonput(jsonObj,"entitlementStartDate",entitlementStartDate);
+                                                                    jsonput(jsonObj,"entitlementexpDate",entitlementexpDate);
+                                                                    jsonput(jsonObj,"_document_number",documentNumber);
+                                                                    jsonput(jsonObj,"contractNumber",contractNumber);
+                                                                    jsonput(jsonObj,"mpn",mpn);
+                                                                    jsonput(jsonObj,"productName",productName);
+                                                                    jsonput(jsonObj,"migrationType",migrationType);
+                                                                    
+                                                                    jsonput(jsonObj,"replacementProduct",replacementProduct);
+                                                                    jsonput(jsonObj,"replacementPdtVal",replacementPdtVal);
+                                                                    jsonput(jsonObj,"qtyRatioConversion",qtyRatioConversion);
+                                                                    jsonput(jsonObj,"coveredProduct",coveredProduct);
+                                                                    jsonput(jsonObj,"productFamily",productFamily);
+                                                                    jsonput(jsonObj,"upgradeMaterial",upgradeMaterial);
+                                                                    jsonput(jsonObj,"dealType","cADRenewal");
+           
+            jsonput(jsonObj,"licenseAccountNo",licenseAccountNo);
+                                                                    jsonput(jsonObj,"quoteOuteputType","cADRenewal");
+                                                                    jsonput(jsonObj,"billCustName",billCustName);
+                                                                    jsonput(jsonObj,"billCustNumber",billCustNumber);
+                                                                    jsonput(jsonObj,"soldCustName",soldCustName);
+                                                                    jsonput(jsonObj,"soldCustNumber",soldCustNumber);
+                                                                    jsonput(jsonObj,"sNo",sNo);
+                                                                    jsonput(jsonObj,"fullAddress",fullAddress);
+                                                                    jsonput(jsonObj,"endOfSupportDate",endOfSupportDate);
+                                                                    jsonput(jsonObj,"dateShipped",dateShipped);
+                                                                    jsonput(jsonObj,"installedAtCustomerNumber",installedAtCustomerNumber);
+                                                                    jsonput(jsonObj,"siteId",siteId);
+                                                                    jsonput(jsonObj,"siteIdCity",siteIdCity);
+                                                                    jsonput(jsonObj,"siteIdZip",siteIdZip);
+                                                                    jsonput(jsonObj,"siteIdCountry",siteIdCountry);
+                                                                    jsonput(jsonObj,"existingSupportType",existingSupportType);
+                                                                    jsonput(jsonObj,"existingQuantity",existingQuantity);
+                                                                    jsonput(jsonObj,"shipToCoutry",shipToCoutry);
+            jsonput(jsonObj,"operatingUnit",operatingUnit);
+            jsonput(jsonObj,"licenseeName",licenseeName);
+                                                                    jsonput(jsonObj,"batchNumber",batchNumber);
+        jsonput(jsonObj,"contractheaderEndDate",contractheaderEndDate);
+                                                                    instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                                    if(atoi(existingQuantity) <> 0 and expAnnualrenewal <> ""){
+         
+         previousprice = round(atof(expAnnualrenewal)/atoi(existingQuantity),4);
+         jsonput(jsonObj,"previousprice",previousprice);
+         
+         expAnnualrenewal = formatascurrency(atof(expAnnualrenewal), linecurrency);
+         
+                                                                    jsonput(jsonObj,"expAnnualrenewal",expAnnualrenewal);
+         }else{jsonput(jsonObj,"previousprice",0.0);
+         jsonput(jsonObj,"expAnnualrenewal",formatascurrency(0.0, linecurrency));}  
+                                                                    
+                                                                    
+                                                                    jsonput(jsonObj,"gbuDriverValue",":");
+                                                                    jsonput(jsonObj,"contractLineNumber",contractLineNumber);
+                                                                    if(licenseType == "P" or licenseType == "p")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Perpetual");
+                                                                    }
+                                                                    if(licenseType == "S" or licenseType == "s")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Subscription");
+                                                                    }
+                                                                    if(licenseType == "L" or licenseType == "l")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","UMF");
+                                                                    }
+                                                                    jsonput(jsonObj,"licenseMetric",licenseMetric);
+                                                                    if(environmentCode == "PD" or environmentCode == "pd")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production");
+                                                                    }
+                                                                    if(environmentCode == "NP" or environmentCode == "np")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production");
+                                                                    }
+                                                                    if(environmentCode == "DR" or environmentCode == "dr")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Disaster Recovery");
+                                                                    }
+                                                                    if(environmentCode == "PL" or environmentCode == "pl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production Limited Use");
+                                                                    }
+                                                                    if(environmentCode == "NL" or environmentCode == "nl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production Limited Use");
+                                                                    }
+                                                                    jsonput(jsonObj,"specialMetricType",specialMetricType);
+                                                                    jsonput(jsonObj,"metricQuantity",metricQuantity);
+                                                                    jsonarrayappend(transactionJasonArray,jsonObj);
+                                                                    
+                                                            }
+                                                   // }
+    
+                 if(jsonarraysize(transactionJasonArray) > 0 )
+                                                            {
+                                                                  createQuote = util.createNewQuote(_transaction_customer_t_company_name, _system_supplier_company_name, dataTableJsonArray, transactionJasonArray);
+                                                    
+                                                           dataTableJsonArray = jsonarray();
+             transactionJasonArray = jsonarray();
+             jsonRenewalJobDetails = json();
+             jsonput(jsonRenewalJobDetails,"RenewalJobDetails",createQuote);
+             
+                                                            
+                                                            }
+    
+         }
+                                            
+    
+                                    }
+    }
+    
+    
+    if(isnull(cAAutoRenewalKeyString))
+    {
+            print "NO CAPARTS TO RENEW";
+    }
+    else
+    {
+             for cAAutorenewalKey in cAAutoRenewalKeyString
+                                            {
+                                            jsonObj = json(cAAutorenewalKey);
+                                            licenseeAccNumber = jsonget(jsonObj,"licenseeAccNumber");
+                       shipCountry = jsonget(jsonObj,"shipCountry");
+         operatingUnit = jsonget(jsonObj,"operatingUnit");
+         entilementExpDt = jsonget(jsonObj,"entilementExpDt");
+         gbuDriverValue = jsonget(jsonObj,"gbuDriverValue");
+         
+                                   if(len(trim(licenseeAccNumber)) > 0 and len(trim(shipCountry)) > 0 and len(trim(operatingUnit)) > 0 and len(trim(entilementExpDt)) > 0){   
+                                                
+                                                
+      
+    
+                                                           
+                                                            
+                                                            finalPartToadd = bmql("select BRCM_Part_Master.MPN,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Migration_Type, BRCM_Part_Master.Replacement_Product,BRCM_Part_Master.Replacement_Pdt_Val,BRCM_Part_Master.Qty_Ratio_Conversion, BRCM_Part_Master.Upgrade_Material,BRCM_Assets_EXT.CONTRACT_END_DATE,BRCM_Assets.LICENSE_TYPE,BRCM_Assets_EXT.LICENSEE_NAME,BRCM_Assets.EXP_ANNUAL_RENEWAL,BRCM_Assets.LICENSE_METRIC,BRCM_Assets.CONTRACT_LINE_NUM,BRCM_Assets.ENV_TYPE,BRCM_Assets.SPECIAL_METRIC_TYPE,BRCM_Assets.METRIC_QUANTITY,BRCM_Assets.EXISTING_QUANTITY,BRCM_Assets_EXT.OPERATING_SYS,BRCM_Assets.SERVICE_ITEM,BRCM_Assets.SERIAL_NUMBER,BRCM_Assets.UNIT_PRICE,BRCM_Entitlements.ENTITLEMENT_START_DT,BRCM_Entitlements.ENTITLEMENT_EXP_DATE,BRCM_Assets.CONTRACT_NUMBER,BRCM_Assets.COVERED_ITEM,BRCM_Assets.COVERED_PRDCT_FAMILY,BRCM_Assets.COVERED_ITEM_DESC,BRCM_Assets.LICENSEE_ACNT_NUM,BRCM_Assets.BILL_TO_CUST_NAME,BRCM_Assets.BILL_TO_CUST_NUMBER,BRCM_Assets.SOLD_TO_CUST_NAME,BRCM_Assets.SOLD_TO_CUST_NUMBER,BRCM_Assets.INST_POSTAL_CODE,BRCM_Assets.INST_CITY,BRCM_Assets.INST_ADDR1,BRCM_Assets.INST_ADDR2,BRCM_Assets.INST_ADDR3,BRCM_Assets.INST_COUNTRY,BRCM_Assets.INST_OWNER_CUST_NUM,BRCM_Assets.INST_OWNER_NAME,BRCM_Assets.SHIP_DATE,BRCM_Assets.EOS_DATE,BRCM_Assets.EXISTING_SUPPORT_TYP,BRCM_Assets.TOT_QUANTITY,BRCM_Entitlements.INSTANCE_IDENTIFIER,BRCM_Assets.SHIP_TO_COUNTRY,BRCM_Assets.OPERATING_UNIT,BRCM_Assets_EXT.LINE_CURRENCY,BRCM_Assets_EXT.BILL_TO_CNTCT_EMAIL,BRCM_Assets.INST_OWN_SITE_NUM from BRCM_Assets INNER JOIN BRCM_Entitlements ON BRCM_Assets.SERIAL_NUMBER = BRCM_Entitlements.SERIAL_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Entitlements.CONTRACT_LINE_NUM and BRCM_Assets.CONTRACT_NUMBER = BRCM_Entitlements.CONTRACT_NUMBER INNER JOIN BRCM_Part_Master on  BRCM_Assets.SERVICE_ITEM = BRCM_Part_Master.MPN INNER JOIN BRCM_Assets_EXT ON BRCM_Assets.CONTRACT_NUMBER = BRCM_Assets_EXT.CONTRACT_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Assets_EXT.CONTRACT_LINE_NUM and BRCM_Assets.SERIAL_NUMBER = BRCM_Assets_EXT.SERIAL_NUMBER where BRCM_Assets.LICENSEE_ACNT_NUM = $licenseeAccNumber and BRCM_Assets.OPERATING_UNIT = $operatingUnit and BRCM_Entitlements.ENTITLEMENT_EXP_DATE = $entilementExpDt and BRCM_Assets.SHIP_TO_COUNTRY = $shipCountry and BRCM_Assets.COVERED_PRDCT_FAMILY LIKE $caProductfamilysecurity and BRCM_Entitlements.QUOTE_NUMBER IS NULL and BRCM_Entitlements.ACTIVE_STATUS = 'Active' and BRCM_Entitlements.ENTITLEMENT_EXP_DATE <= $renewalDate and BRCM_Entitlements.ENTITLEMENT_EXP_DATE  >= $currentsystemDate and BRCM_Assets.SOURCE = 'CA' and BRCM_Assets.TOT_QUANTITY > 0 and ((BRCM_Assets.LICENSE_TYPE IS NULL or BRCM_Assets.LICENSE_TYPE = 'S') or  ((BRCM_Assets.LICENSE_TYPE = 'P' or BRCM_Assets.LICENSE_TYPE = 'L') and BRCM_Assets.SERVICE_ITEM like 'SUPPORT-%' )) and BRCM_Assets_EXT.LINE_CURRENCY <> 'VES'");
+    
+                                                            
+                                                            documentNumber = 1;
+                                                            
+                                                            for rt in finalPartToadd
+                                                            {
+                                                                    
+    
+                                                                 
+                                                                    finalPart = get(rt,"SERVICE_ITEM");
+            licenseAccountNo = get(rt,"LICENSEE_ACNT_NUM");
+                                                                    sNo = get(rt,"SERIAL_NUMBER");
+            expAnnualrenewal = get(rt,"EXP_ANNUAL_RENEWAL");
+                                                                    unitprice = get(rt,"UNIT_PRICE");
+                                                                    quantity = get(rt, "EXISTING_QUANTITY");
+                                                                    operatingsys = get(rt, "OPERATING_SYS");
+                                                                    contractEndDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    entitlementStartDate = get(rt,"ENTITLEMENT_START_DT");
+                                                                    if(entitlementStartDate <> "" and NOT isnull(entitlementStartDate))
+                                                            {
+                                                            entitlementStartDate = datetostr(strtojavadate(entitlementStartDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    
+                                                                    entitlementexpDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    if(entitlementexpDate <> "" and NOT isnull(entitlementexpDate))
+                                                            {
+                                                            entitlementexpDate = datetostr(strtojavadate(entitlementexpDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    contractNumber=get(rt,"CONTRACT_NUMBER");
+                                                                    mpn = get(rt,"MPN");
+                                                                    productName = get(rt,"Product_Name");
+                                                                    migrationType = get(rt,"Migration_Type");
+                                                                  
+                                                                    replacementProduct = get(rt,"Replacement_Product");
+                                                                    replacementPdtVal = get(rt,"Replacement_Pdt_Val");
+                                                                    qtyRatioConversion = get(rt,"Qty_Ratio_Conversion");
+                                                                    upgradeMaterial = get(rt,"Upgrade_Material");
+                                                                    coveredProduct = get(rt,"COVERED_ITEM");
+                                                                    productFamily = get(rt,"COVERED_PRDCT_FAMILY");
+                                                                    billCustName = get(rt,"BILL_TO_CUST_NAME");
+                                                                    billCustNumber = get(rt,"BILL_TO_CUST_NUMBER");
+                                                                    soldCustName = get(rt,"SOLD_TO_CUST_NAME");
+                                                                    soldCustNumber = get(rt,"SOLD_TO_CUST_NUMBER");
+                                                                    licenseType = get(rt,"LICENSE_TYPE");
+                                                                    licenseMetric = get(rt,"LICENSE_METRIC");
+                                                                    environmentCode = get(rt,"ENV_TYPE");
+                                                                    specialMetricType = get(rt,"SPECIAL_METRIC_TYPE");
+                                                                    metricQuantity=get(rt,"METRIC_QUANTITY");
+                 linecurrency = get(rt,"LINE_CURRENCY");
+                 billtocontactemail = get(rt,"BILL_TO_CNTCT_EMAIL");
+         contractheaderEndDate = get(rt,"CONTRACT_END_DATE");
+                                                            endOfSupportDate = get(rt,"EOS_DATE");
+                                                            dateShipped = get(rt,"SHIP_DATE");
+                                                            if(endOfSupportDate <> "" and NOT isnull(endOfSupportDate))
+                                                            {
+                                                            endOfSupportDate = datetostr(strtojavadate(endOfSupportDate,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                            if(dateShipped <> "" and NOT isnull(dateShipped))
+                                                            {
+                                                            dateShipped = datetostr(strtojavadate(dateShipped,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                            line1 = get(rt, "INST_ADDR1");
+                                                            line2 = get(rt, "INST_ADDR2");
+                                                            line3 = get(rt, "INST_ADDR3");
+                                                            fullAddress = line1 + ", "+line2 + ", "+line3;
+                                                            fullAddress = substring(fullAddress, 0, 254);
+                                                            installedAtCustomerNumber = get(rt,"INST_OWNER_CUST_NUM");
+                                                            siteId = get(rt,"INST_OWNER_NAME");
+                                                            siteIdCity = get(rt,"INST_CITY");
+                                                            siteIdZip = get(rt,"INST_POSTAL_CODE");
+                                                            siteIdCountry = get(rt,"INST_COUNTRY");
+                                                            existingSupportType = "";
+                                                            if(finalPart == "SUPPORT-P")
+                                                            {
+                                                             existingSupportType = "PS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-S")
+                                                            {
+                                                             existingSupportType = "SS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-E")
+                                                            {
+                                                             existingSupportType = "ES";
+                                                            }
+                                                            instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                            existingQuantity = get(rt,"TOT_QUANTITY");
+                                                            contractLineNumber = get(rt,"CONTRACT_LINE_NUM");
+                                                            shipToCoutry = get(rt,"SHIP_TO_COUNTRY");
+               operatingUnit = get(rt,"OPERATING_UNIT");
+               licenseeName = get(rt,"LICENSEE_NAME");
+               lineSiteNumber = get(rt,"INST_OWN_SITE_NUM");
+                                                            coveredItemDescription = get(rt, "COVERED_ITEM_DESC");
+                                                                    jsonput(jsonGrp,"partNumber",contractNumber);
+                                                                    jsonput(jsonGrp,"serialNumber",sNo);
+                                                                    jsonput(jsonGrp,"instanceIdentifier",instanceIdentifier);
+                                                                    jsonput(jsonGrp,"contractLineNumber",contractLineNumber);
+                                                                    jsonarrayappend(dataTableJsonArray,jsonGrp);
+                                                                    
+                                                                            documentNumber = documentNumber +1;
+                                                                    jsonObj = json();
+                 jsonput(jsonObj,"lineSiteNumber",lineSiteNumber);
+                 jsonput(jsonObj,"coveredItemDescription",coveredItemDescription);
+                 jsonput(jsonObj,"linecurrency",linecurrency);
+                 jsonput(jsonObj,"billtocontactemail",billtocontactemail);
+                                                                    jsonput(jsonObj,"quoteEffectiveDate",quoteEffectiveDate);
+                                                                    jsonput(jsonObj,"operatingsys",operatingsys);
+                                                                    jsonput(jsonObj,"partNumber",finalPart);
+                                                                    jsonput(jsonObj,"quantity",quantity);
+                                                                    jsonput(jsonObj,"ContractStartDate",contractEndDate);
+                                                                    jsonput(jsonObj,"entitlementStartDate",entitlementStartDate);
+                                                                    jsonput(jsonObj,"entitlementexpDate",entitlementexpDate);
+                                                                    jsonput(jsonObj,"_document_number",documentNumber);
+                                                                    jsonput(jsonObj,"contractNumber",contractNumber);
+                                                                    jsonput(jsonObj,"mpn",mpn);
+                                                                    jsonput(jsonObj,"productName",productName);
+                                                                    jsonput(jsonObj,"migrationType",migrationType);
+                                                                  
+                                                                    jsonput(jsonObj,"replacementProduct",replacementProduct);
+                                                                    jsonput(jsonObj,"replacementPdtVal",replacementPdtVal);
+                                                                    jsonput(jsonObj,"qtyRatioConversion",qtyRatioConversion);
+                                                                    jsonput(jsonObj,"coveredProduct",coveredProduct);
+                                                                    jsonput(jsonObj,"productFamily",productFamily);
+                                                                    jsonput(jsonObj,"upgradeMaterial",upgradeMaterial);
+                                                                    jsonput(jsonObj,"dealType","cADRenewal");
+         
+         jsonput(jsonObj,"licenseAccountNo",licenseAccountNo);
+                                                                    jsonput(jsonObj,"quoteOuteputType","cADRenewal");
+                                                                    jsonput(jsonObj,"billCustName",billCustName);
+                                                                    jsonput(jsonObj,"billCustNumber",billCustNumber);
+                                                                    jsonput(jsonObj,"soldCustName",soldCustName);
+                                                                    jsonput(jsonObj,"soldCustNumber",soldCustNumber);
+                                                                    jsonput(jsonObj,"sNo",sNo);
+                                                                    jsonput(jsonObj,"fullAddress",fullAddress);
+                                                                    jsonput(jsonObj,"endOfSupportDate",endOfSupportDate);
+                                                                    jsonput(jsonObj,"dateShipped",dateShipped);
+                                                                    jsonput(jsonObj,"installedAtCustomerNumber",installedAtCustomerNumber);
+                                                                    jsonput(jsonObj,"siteId",siteId);
+                                                                    jsonput(jsonObj,"siteIdCity",siteIdCity);
+                                                                    jsonput(jsonObj,"siteIdZip",siteIdZip);
+                                                                    jsonput(jsonObj,"siteIdCountry",siteIdCountry);
+                                                                    jsonput(jsonObj,"existingSupportType",existingSupportType);
+                                                                    jsonput(jsonObj,"existingQuantity",existingQuantity);
+                                                                    jsonput(jsonObj,"contractLineNumber",contractLineNumber);
+            jsonput(jsonObj,"contractheaderEndDate",contractheaderEndDate);
+            jsonput(jsonObj,"shipToCoutry",shipToCoutry);
+            jsonput(jsonObj,"operatingUnit",operatingUnit);
+            jsonput(jsonObj,"licenseeName",licenseeName);
+            jsonput(jsonObj,"batchNumber",batchNumber);
+                                                                    instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                                    
+                                                                    if(licenseType == "P" or licenseType == "p")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Perpetual");
+                                                                    }
+                                                                    if(licenseType == "S" or licenseType == "s")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Subscription");
+                                                                    }
+                                                                    if(licenseType == "L" or licenseType == "l")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","UMF");
+                                                                    }
+                                                                    jsonput(jsonObj,"licenseMetric",licenseMetric);
+                                                                    if(environmentCode == "PD" or environmentCode == "pd")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production");
+                                                                    }
+                                                                    if(environmentCode == "NP" or environmentCode == "np")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production");
+                                                                    }
+                                                                    if(environmentCode == "DR" or environmentCode == "dr")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Disaster Recovery");
+                                                                    }
+                                                                    if(environmentCode == "PL" or environmentCode == "pl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production Limited Use");
+                                                                    }
+                                                                    if(environmentCode == "NL" or environmentCode == "nl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production Limited Use");
+                                                                    }
+                                                                    jsonput(jsonObj,"specialMetricType",specialMetricType);
+                                                                    jsonput(jsonObj,"metricQuantity",metricQuantity);
+                                                                    if(atoi(existingQuantity) <> 0 and expAnnualrenewal <> ""){
+         
+         previousprice = round(atof(expAnnualrenewal)/atoi(existingQuantity),4);
+         jsonput(jsonObj,"previousprice",previousprice);
+         expAnnualrenewal = formatascurrency(atof(expAnnualrenewal), linecurrency);
+                                                                    jsonput(jsonObj,"expAnnualrenewal",expAnnualrenewal);
+         }else{jsonput(jsonObj,"previousprice",0.0);
+         jsonput(jsonObj,"expAnnualrenewal",formatascurrency(0.0, linecurrency));}        
+                                                                    
+                                                                    gbuDriverValue_1 = ":" + gbuDriverValue + ":";
+                                                                    jsonput(jsonObj,"CA " + "gbuDriverValue",gbuDriverValue_1);
+                                                                    jsonarrayappend(transactionJasonArray,jsonObj);
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                            
+                                                            }
+                                                            if(jsonarraysize(transactionJasonArray) > 0 )
+                                                            {
+                                                                  createQuote = util.createNewQuote(_transaction_customer_t_company_name, _system_supplier_company_name, dataTableJsonArray, transactionJasonArray);
+                                                    
+                                                           dataTableJsonArray = jsonarray();
+             transactionJasonArray = jsonarray();
+             jsonRenewalJobDetails = json();
+             jsonput(jsonRenewalJobDetails,"RenewalJobDetails",createQuote);
+             
+                                                            
+                                                            }
+                                                    
+                                                    
+    
+                                                            
+                                                            finalPartToadd = bmql("select BRCM_Part_Master.MPN,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Migration_Type, BRCM_Part_Master.Replacement_Product,BRCM_Part_Master.Replacement_Pdt_Val,BRCM_Part_Master.Qty_Ratio_Conversion, BRCM_Part_Master.Upgrade_Material,BRCM_Assets_EXT.CONTRACT_END_DATE,BRCM_Assets.LICENSE_TYPE,BRCM_Assets_EXT.LICENSEE_NAME,BRCM_Assets.EXP_ANNUAL_RENEWAL,BRCM_Assets.LICENSE_METRIC,BRCM_Assets.CONTRACT_LINE_NUM,BRCM_Assets.ENV_TYPE,BRCM_Assets.SPECIAL_METRIC_TYPE,BRCM_Assets.METRIC_QUANTITY,BRCM_Assets.EXISTING_QUANTITY,BRCM_Assets_EXT.OPERATING_SYS,BRCM_Assets.SERVICE_ITEM,BRCM_Assets.SERIAL_NUMBER,BRCM_Assets.UNIT_PRICE,BRCM_Entitlements.ENTITLEMENT_START_DT,BRCM_Entitlements.ENTITLEMENT_EXP_DATE,BRCM_Assets.CONTRACT_NUMBER,BRCM_Assets.COVERED_ITEM,BRCM_Assets.COVERED_PRDCT_FAMILY,BRCM_Assets.COVERED_ITEM_DESC,BRCM_Assets.LICENSEE_ACNT_NUM,BRCM_Assets.BILL_TO_CUST_NAME,BRCM_Assets.BILL_TO_CUST_NUMBER,BRCM_Assets.SOLD_TO_CUST_NAME,BRCM_Assets.SOLD_TO_CUST_NUMBER,BRCM_Assets.INST_POSTAL_CODE,BRCM_Assets.INST_CITY,BRCM_Assets.INST_ADDR1,BRCM_Assets.INST_ADDR2,BRCM_Assets.INST_ADDR3,BRCM_Assets.INST_COUNTRY,BRCM_Assets.INST_OWNER_CUST_NUM,BRCM_Assets.INST_OWNER_NAME,BRCM_Assets.SHIP_DATE,BRCM_Assets.EOS_DATE,BRCM_Assets.EXISTING_SUPPORT_TYP,BRCM_Assets.TOT_QUANTITY,BRCM_Entitlements.INSTANCE_IDENTIFIER,BRCM_Assets.SHIP_TO_COUNTRY,BRCM_Assets.OPERATING_UNIT,BRCM_Assets_EXT.LINE_CURRENCY,BRCM_Assets_EXT.BILL_TO_CNTCT_EMAIL,BRCM_Assets.INST_OWN_SITE_NUM from BRCM_Assets INNER JOIN BRCM_Entitlements ON BRCM_Assets.SERIAL_NUMBER = BRCM_Entitlements.SERIAL_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Entitlements.CONTRACT_LINE_NUM and BRCM_Assets.CONTRACT_NUMBER = BRCM_Entitlements.CONTRACT_NUMBER INNER JOIN BRCM_Part_Master on  BRCM_Assets.SERVICE_ITEM = BRCM_Part_Master.MPN INNER JOIN BRCM_Assets_EXT ON BRCM_Assets.CONTRACT_NUMBER = BRCM_Assets_EXT.CONTRACT_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Assets_EXT.CONTRACT_LINE_NUM and BRCM_Assets.SERIAL_NUMBER = BRCM_Assets_EXT.SERIAL_NUMBER where BRCM_Assets.LICENSEE_ACNT_NUM = $licenseeAccNumber and BRCM_Assets.OPERATING_UNIT = $operatingUnit and BRCM_Entitlements.ENTITLEMENT_EXP_DATE = $entilementExpDt and BRCM_Assets.SHIP_TO_COUNTRY = $shipCountry and BRCM_Assets.COVERED_PRDCT_FAMILY LIKE $caProductfamilyautomic and BRCM_Entitlements.QUOTE_NUMBER IS NULL and BRCM_Entitlements.ACTIVE_STATUS = 'Active' and BRCM_Entitlements.ENTITLEMENT_EXP_DATE <= $renewalDate and BRCM_Entitlements.ENTITLEMENT_EXP_DATE  >= $currentsystemDate and BRCM_Assets.SOURCE = 'CA' and BRCM_Assets.TOT_QUANTITY > 0 and ((BRCM_Assets.LICENSE_TYPE IS NULL or BRCM_Assets.LICENSE_TYPE = 'S') or  ((BRCM_Assets.LICENSE_TYPE = 'P' or BRCM_Assets.LICENSE_TYPE = 'L') and BRCM_Assets.SERVICE_ITEM like 'SUPPORT-%' )) and BRCM_Assets_EXT.LINE_CURRENCY <> 'VES'");
+                                                            
+                                                            documentNumber = 1;
+                                                            
+                                                            for rt in finalPartToadd
+                                                            {
+                                                                 
+                                                                    finalPart = get(rt,"SERVICE_ITEM");
+                                                                    sNo = get(rt,"SERIAL_NUMBER");
+            expAnnualrenewal = get(rt,"EXP_ANNUAL_RENEWAL");
+            licenseAccountNo = get(rt,"LICENSEE_ACNT_NUM");
+                                                                    quantity = get(rt, "EXISTING_QUANTITY");
+                                                                    unitprice = get(rt,"UNIT_PRICE");
+                                                                    contractEndDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    operatingsys = get(rt, "OPERATING_SYS");
+                                                                    entitlementStartDate = get(rt,"ENTITLEMENT_START_DT");
+                                                                    if(entitlementStartDate <> "" and NOT isnull(entitlementStartDate))
+                                                            {
+                                                            entitlementStartDate = datetostr(strtojavadate(entitlementStartDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    
+                                                                    entitlementexpDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    if(entitlementexpDate <> "" and NOT isnull(entitlementexpDate))
+                                                            {
+                                                            entitlementexpDate = datetostr(strtojavadate(entitlementexpDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    contractNumber=get(rt,"CONTRACT_NUMBER");
+                                                                    mpn = get(rt,"MPN");
+                                                                    productName = get(rt,"Product_Name");
+                                                                    migrationType = get(rt,"Migration_Type");
+                                                                
+                                                                    replacementProduct = get(rt,"Replacement_Product");
+                                                                    replacementPdtVal = get(rt,"Replacement_Pdt_Val");
+                                                                    qtyRatioConversion = get(rt,"Qty_Ratio_Conversion");
+                                                                    upgradeMaterial = get(rt,"Upgrade_Material");
+                                                                    coveredProduct = get(rt,"COVERED_ITEM");
+                                                                    productFamily = get(rt,"COVERED_PRDCT_FAMILY");
+                                                                    billCustName = get(rt,"BILL_TO_CUST_NAME");
+                                                                    billCustNumber = get(rt,"BILL_TO_CUST_NUMBER");
+                                                                    soldCustName = get(rt,"SOLD_TO_CUST_NAME");
+                                                                    soldCustNumber = get(rt,"SOLD_TO_CUST_NUMBER");
+                                                                    licenseType = get(rt,"LICENSE_TYPE");
+                                                                    licenseMetric = get(rt,"LICENSE_METRIC");
+                                                                    environmentCode = get(rt,"ENV_TYPE");
+                                                                    specialMetricType = get(rt,"SPECIAL_METRIC_TYPE");
+                                                                    metricQuantity=get(rt,"METRIC_QUANTITY");
+                                                                    endOfSupportDate = get(rt,"EOS_DATE");
+                                                                    shipToCoutry = get(rt,"SHIP_TO_COUNTRY");
+                 linecurrency = get(rt,"LINE_CURRENCY");
+                 billtocontactemail = get(rt,"BILL_TO_CNTCT_EMAIL");
+            operatingUnit = get(rt,"OPERATING_UNIT");
+                                                                    dateShipped = get(rt,"SHIP_DATE");
+                                                                    licenseeName = get(rt,"LICENSEE_NAME");
+                 contractheaderEndDate = get(rt,"CONTRACT_END_DATE");
+                                                                    if(endOfSupportDate <> "" and NOT isnull(endOfSupportDate))
+                                                            {
+                                                            endOfSupportDate = datetostr(strtojavadate(endOfSupportDate,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    if(dateShipped <> "" and NOT isnull(dateShipped))
+                                                            {
+                                                            dateShipped = datetostr(strtojavadate(dateShipped,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    line1 = get(rt, "INST_ADDR1");
+                                                                    line2 = get(rt, "INST_ADDR2");
+                                                                    line3 = get(rt, "INST_ADDR3");
+                                                                    fullAddress = line1 + ", "+line2 + ", "+line3;
+                                                                    fullAddress = substring(fullAddress, 0, 254);
+                                                                    installedAtCustomerNumber = get(rt,"INST_OWNER_CUST_NUM");
+                                                                    siteId = get(rt,"INST_OWNER_NAME");
+                                                                    siteIdCity = get(rt,"INST_CITY");
+                                                                    siteIdZip = get(rt,"INST_POSTAL_CODE");
+                                                                    siteIdCountry = get(rt,"INST_COUNTRY");
+                                                                    existingSupportType = "";
+                                                            if(finalPart == "SUPPORT-P")
+                                                            {
+                                                             existingSupportType = "PS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-S")
+                                                            {
+                                                             existingSupportType = "SS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-E")
+                                                            {
+                                                             existingSupportType = "ES";
+                                                            }
+                                                                    instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                                    existingQuantity = get(rt,"TOT_QUANTITY");
+                                                                    contractLineNumber = get(rt,"CONTRACT_LINE_NUM");
+                                                                    lineSiteNumber = get(rt,"INST_OWN_SITE_NUM");
+                 coveredItemDescription = get(rt, "COVERED_ITEM_DESC");
+                                                                    jsonput(jsonGrp,"partNumber",contractNumber);
+                                                                    jsonput(jsonGrp,"serialNumber",sNo);
+                                                                    jsonput(jsonGrp,"instanceIdentifier",instanceIdentifier);
+                                                                    jsonput(jsonGrp,"contractLineNumber",contractLineNumber);
+                                                                    jsonarrayappend(dataTableJsonArray,jsonGrp);
+                                                                    
+                                                                            documentNumber = documentNumber +1;
+                                                                    jsonObj = json();
+                 jsonput(jsonObj,"lineSiteNumber",lineSiteNumber);
+                 jsonput(jsonObj,"coveredItemDescription",coveredItemDescription);
+                 jsonput(jsonObj,"linecurrency",linecurrency);
+                 jsonput(jsonObj,"billtocontactemail",billtocontactemail);
+                                                                    jsonput(jsonObj,"quoteEffectiveDate",quoteEffectiveDate);
+                                                                    jsonput(jsonObj,"operatingsys",operatingsys);
+                                                                    jsonput(jsonObj,"partNumber",finalPart);
+                                                                    jsonput(jsonObj,"quantity",quantity);
+                                                                    jsonput(jsonObj,"ContractStartDate",contractEndDate);
+                                                                    jsonput(jsonObj,"entitlementStartDate",entitlementStartDate);
+                                                                    jsonput(jsonObj,"entitlementexpDate",entitlementexpDate);
+                                                                    jsonput(jsonObj,"_document_number",documentNumber);
+                                                                    jsonput(jsonObj,"contractNumber",contractNumber);
+                                                                    jsonput(jsonObj,"mpn",mpn);
+                                                                    jsonput(jsonObj,"productName",productName);
+                                                                    jsonput(jsonObj,"migrationType",migrationType);
+                                                                    
+                                                                    jsonput(jsonObj,"replacementProduct",replacementProduct);
+                                                                    jsonput(jsonObj,"replacementPdtVal",replacementPdtVal);
+                                                                    jsonput(jsonObj,"qtyRatioConversion",qtyRatioConversion);
+                                                                    jsonput(jsonObj,"coveredProduct",coveredProduct);
+                                                                    jsonput(jsonObj,"productFamily",productFamily);
+                                                                    jsonput(jsonObj,"upgradeMaterial",upgradeMaterial);
+                                                                    jsonput(jsonObj,"dealType","cADRenewal");
+           
+            jsonput(jsonObj,"licenseAccountNo",licenseAccountNo);
+                                                                    jsonput(jsonObj,"quoteOuteputType","cADRenewal");
+                                                                    jsonput(jsonObj,"billCustName",billCustName);
+                                                                    jsonput(jsonObj,"billCustNumber",billCustNumber);
+                                                                    jsonput(jsonObj,"soldCustName",soldCustName);
+                                                                    jsonput(jsonObj,"soldCustNumber",soldCustNumber);
+                                                                    jsonput(jsonObj,"sNo",sNo);
+                                                                    jsonput(jsonObj,"fullAddress",fullAddress);
+                                                                    jsonput(jsonObj,"endOfSupportDate",endOfSupportDate);
+                                                                    jsonput(jsonObj,"dateShipped",dateShipped);
+                                                                    jsonput(jsonObj,"installedAtCustomerNumber",installedAtCustomerNumber);
+                                                                    jsonput(jsonObj,"siteId",siteId);
+                                                                    jsonput(jsonObj,"siteIdCity",siteIdCity);
+                                                                    jsonput(jsonObj,"siteIdZip",siteIdZip);
+                                                                    jsonput(jsonObj,"siteIdCountry",siteIdCountry);
+                                                                    jsonput(jsonObj,"existingSupportType",existingSupportType);
+                                                                    jsonput(jsonObj,"existingQuantity",existingQuantity);
+            jsonput(jsonObj,"contractheaderEndDate",contractheaderEndDate);
+            jsonput(jsonObj,"shipToCoutry",shipToCoutry);
+            jsonput(jsonObj,"operatingUnit",operatingUnit);
+            jsonput(jsonObj,"licenseeName",licenseeName);
+                                                                    instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                                    jsonput(jsonObj,"batchNumber",batchNumber);
+         if(atoi(existingQuantity) <> 0 and expAnnualrenewal <> ""){
+         
+         previousprice = round(atof(expAnnualrenewal)/atoi(existingQuantity),4);
+         jsonput(jsonObj,"previousprice",previousprice);
+         expAnnualrenewal = formatascurrency(atof(expAnnualrenewal), linecurrency);
+                                                                    jsonput(jsonObj,"expAnnualrenewal",expAnnualrenewal);
+         }else{jsonput(jsonObj,"previousprice",0.0);
+         jsonput(jsonObj,"expAnnualrenewal",formatascurrency(0.0, linecurrency));}        
+                                                                    
+                                                                    gbuDriverValue_1 = ":" + gbuDriverValue + ":";
+                                                                    jsonput(jsonObj,"gbuDriverValue",gbuDriverValue_1);
+                                                                    jsonput(jsonObj,"contractLineNumber",contractLineNumber);
+                                                                    if(licenseType == "P" or licenseType == "p")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Perpetual");
+                                                                    }
+                                                                    if(licenseType == "S" or licenseType == "s")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Subscription");
+                                                                    }
+                                                                    if(licenseType == "L" or licenseType == "l")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","UMF");
+                                                                    }
+                                                                    jsonput(jsonObj,"licenseMetric",licenseMetric);
+                                                                    if(environmentCode == "PD" or environmentCode == "pd")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production");
+                                                                    }
+                                                                    if(environmentCode == "NP" or environmentCode == "np")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production");
+                                                                    }
+                                                                    if(environmentCode == "DR" or environmentCode == "dr")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Disaster Recovery");
+                                                                    }
+                                                                    if(environmentCode == "PL" or environmentCode == "pl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production Limited Use");
+                                                                    }
+                                                                    if(environmentCode == "NL" or environmentCode == "nl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production Limited Use");
+                                                                    }
+                                                                    jsonput(jsonObj,"specialMetricType",specialMetricType);
+                                                                    jsonput(jsonObj,"metricQuantity",metricQuantity);
+                                                                    jsonarrayappend(transactionJasonArray,jsonObj);
+                                                                    
+                                                            }
+                                                            if(jsonarraysize(transactionJasonArray) > 0 )
+                                                            {
+                                                                  createQuote = util.createNewQuote(_transaction_customer_t_company_name, _system_supplier_company_name, dataTableJsonArray, transactionJasonArray);
+                                                    
+                                                           dataTableJsonArray = jsonarray();
+             transactionJasonArray = jsonarray();
+             jsonRenewalJobDetails = json();
+             jsonput(jsonRenewalJobDetails,"RenewalJobDetails",createQuote);
+             
+                                                            
+                                                            }
+                                                   
+    
+                                                            
+                                                            finalPartToadd = bmql("select BRCM_Part_Master.MPN,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Migration_Type, BRCM_Part_Master.Replacement_Product,BRCM_Part_Master.Replacement_Pdt_Val,BRCM_Part_Master.Qty_Ratio_Conversion, BRCM_Part_Master.Upgrade_Material,BRCM_Assets_EXT.CONTRACT_END_DATE,BRCM_Assets.LICENSE_TYPE,BRCM_Assets_EXT.LICENSEE_NAME,BRCM_Assets.EXP_ANNUAL_RENEWAL,BRCM_Assets.LICENSE_METRIC,BRCM_Assets.CONTRACT_LINE_NUM,BRCM_Assets.ENV_TYPE,BRCM_Assets.SPECIAL_METRIC_TYPE,BRCM_Assets.METRIC_QUANTITY,BRCM_Assets.EXISTING_QUANTITY,BRCM_Assets_EXT.OPERATING_SYS,BRCM_Assets.SERVICE_ITEM,BRCM_Assets.SERIAL_NUMBER,BRCM_Assets.UNIT_PRICE,BRCM_Entitlements.ENTITLEMENT_START_DT,BRCM_Entitlements.ENTITLEMENT_EXP_DATE,BRCM_Assets.CONTRACT_NUMBER,BRCM_Assets.COVERED_ITEM,BRCM_Assets.COVERED_PRDCT_FAMILY,BRCM_Assets.COVERED_ITEM_DESC,BRCM_Assets.LICENSEE_ACNT_NUM,BRCM_Assets.BILL_TO_CUST_NAME,BRCM_Assets.BILL_TO_CUST_NUMBER,BRCM_Assets.SOLD_TO_CUST_NAME,BRCM_Assets.SOLD_TO_CUST_NUMBER,BRCM_Assets.INST_POSTAL_CODE,BRCM_Assets.INST_CITY,BRCM_Assets.INST_ADDR1,BRCM_Assets.INST_ADDR2,BRCM_Assets.INST_ADDR3,BRCM_Assets.INST_COUNTRY,BRCM_Assets.INST_OWNER_CUST_NUM,BRCM_Assets.INST_OWNER_NAME,BRCM_Assets.SHIP_DATE,BRCM_Assets.EOS_DATE,BRCM_Assets.EXISTING_SUPPORT_TYP,BRCM_Assets.TOT_QUANTITY,BRCM_Entitlements.INSTANCE_IDENTIFIER,BRCM_Assets.SHIP_TO_COUNTRY,BRCM_Assets.OPERATING_UNIT,BRCM_Assets_EXT.LINE_CURRENCY,BRCM_Assets_EXT.BILL_TO_CNTCT_EMAIL,BRCM_Assets.INST_OWN_SITE_NUM from BRCM_Assets INNER JOIN BRCM_Entitlements ON BRCM_Assets.SERIAL_NUMBER = BRCM_Entitlements.SERIAL_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Entitlements.CONTRACT_LINE_NUM and BRCM_Assets.CONTRACT_NUMBER = BRCM_Entitlements.CONTRACT_NUMBER INNER JOIN BRCM_Part_Master on  BRCM_Assets.SERVICE_ITEM = BRCM_Part_Master.MPN INNER JOIN BRCM_Assets_EXT ON BRCM_Assets.CONTRACT_NUMBER = BRCM_Assets_EXT.CONTRACT_NUMBER and BRCM_Assets.CONTRACT_LINE_NUM = BRCM_Assets_EXT.CONTRACT_LINE_NUM and BRCM_Assets.SERIAL_NUMBER = BRCM_Assets_EXT.SERIAL_NUMBER where BRCM_Assets.LICENSEE_ACNT_NUM = $licenseeAccNumber and BRCM_Assets.OPERATING_UNIT = $operatingUnit and BRCM_Entitlements.ENTITLEMENT_EXP_DATE = $entilementExpDt and BRCM_Assets.SHIP_TO_COUNTRY = $shipCountry and (BRCM_Assets.COVERED_PRDCT_FAMILY NOT LIKE $caProductfamilysecurity and BRCM_Assets.COVERED_PRDCT_FAMILY NOT LIKE $caProductfamilyautomic OR BRCM_Assets.COVERED_PRDCT_FAMILY IS NULL) and BRCM_Entitlements.QUOTE_NUMBER IS NULL and BRCM_Entitlements.ACTIVE_STATUS = 'Active' and BRCM_Entitlements.ENTITLEMENT_EXP_DATE <= $renewalDate and BRCM_Entitlements.ENTITLEMENT_EXP_DATE  >= $currentsystemDate and BRCM_Assets.SOURCE = 'CA' and BRCM_Assets.TOT_QUANTITY > 0 and ((BRCM_Assets.LICENSE_TYPE IS NULL or BRCM_Assets.LICENSE_TYPE = 'S') or  ((BRCM_Assets.LICENSE_TYPE = 'P' or BRCM_Assets.LICENSE_TYPE = 'L') and BRCM_Assets.SERVICE_ITEM like 'SUPPORT-%' )) and BRCM_Assets_EXT.LINE_CURRENCY <> 'VES'");
+                                                           
+                                                            documentNumber = 1;
+                                                            
+                                                            for rt in finalPartToadd
+                                                            {
+                                                                    
+                                                                    finalPart = get(rt,"SERVICE_ITEM");
+                                                                    sNo = get(rt,"SERIAL_NUMBER");
+         licenseAccountNo = get(rt,"LICENSEE_ACNT_NUM");
+         expAnnualrenewal = get(rt,"EXP_ANNUAL_RENEWAL");
+                                                                    unitprice = get(rt,"UNIT_PRICE");
+                                                                    quantity = get(rt, "EXISTING_QUANTITY");
+                                                                    contractEndDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    operatingsys = get(rt, "OPERATING_SYS");
+                                                                    entitlementStartDate = get(rt,"ENTITLEMENT_START_DT");
+                                                                    if(entitlementStartDate <> "" and NOT isnull(entitlementStartDate))
+                                                            {
+                                                            entitlementStartDate = datetostr(strtojavadate(entitlementStartDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    
+                                                                    entitlementexpDate = get(rt,"ENTITLEMENT_EXP_DATE");
+                                                                    if(entitlementexpDate <> "" and NOT isnull(entitlementexpDate))
+                                                            {
+                                                            entitlementexpDate = datetostr(strtojavadate(entitlementexpDate,"yyyy-MM-dd"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    contractNumber=get(rt,"CONTRACT_NUMBER");
+                                                                    mpn = get(rt,"MPN");
+                                                                    productName = get(rt,"Product_Name");
+                                                                    migrationType = get(rt,"Migration_Type");
+                                                                    
+                                                                    replacementProduct = get(rt,"Replacement_Product");
+                                                                    replacementPdtVal = get(rt,"Replacement_Pdt_Val");
+                                                                    qtyRatioConversion = get(rt,"Qty_Ratio_Conversion");
+                                                                    upgradeMaterial = get(rt,"Upgrade_Material");
+                                                                    coveredProduct = get(rt,"COVERED_ITEM");
+                                                                    productFamily = get(rt,"COVERED_PRDCT_FAMILY");
+                                                                    billCustName = get(rt,"BILL_TO_CUST_NAME");
+                                                                    billCustNumber = get(rt,"BILL_TO_CUST_NUMBER");
+                                                                    soldCustName = get(rt,"SOLD_TO_CUST_NAME");
+                                                                    soldCustNumber = get(rt,"SOLD_TO_CUST_NUMBER");
+                                                                    licenseType = get(rt,"LICENSE_TYPE");
+                                                                    licenseMetric = get(rt,"LICENSE_METRIC");
+                                                                    environmentCode = get(rt,"ENV_TYPE");
+                                                                    specialMetricType = get(rt,"SPECIAL_METRIC_TYPE");
+                                                                    metricQuantity=get(rt,"METRIC_QUANTITY");
+                                                                    endOfSupportDate = get(rt,"EOS_DATE");
+                                                                    dateShipped = get(rt,"SHIP_DATE");
+                                                                    contractLineNumber = get(rt,"CONTRACT_LINE_NUM");
+                 linecurrency = get(rt,"LINE_CURRENCY");
+                 billtocontactemail = get(rt,"BILL_TO_CNTCT_EMAIL");
+            contractheaderEndDate = get(rt,"CONTRACT_END_DATE");
+            shipToCoutry = get(rt,"SHIP_TO_COUNTRY");
+            operatingUnit = get(rt,"OPERATING_UNIT");
+            licenseeName = get(rt,"LICENSEE_NAME");
+                                                                    if(endOfSupportDate <> "" and NOT isnull(endOfSupportDate))
+                                                            {
+                                                            endOfSupportDate = datetostr(strtojavadate(endOfSupportDate,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    if(dateShipped <> "" and NOT isnull(dateShipped))
+                                                            {
+                                                            dateShipped = datetostr(strtojavadate(dateShipped,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+                                                            }
+                                                                    line1 = get(rt, "INST_ADDR1");
+                                                                    line2 = get(rt, "INST_ADDR2");
+                                                                    line3 = get(rt, "INST_ADDR3");
+                                                                    fullAddress = line1 + ", "+line2 + ", "+line3;
+                                                                    fullAddress = substring(fullAddress, 0, 254);
+                                                                    installedAtCustomerNumber = get(rt,"INST_OWNER_CUST_NUM");
+                                                                    siteId = get(rt,"INST_OWNER_NAME");
+                                                                    siteIdCity = get(rt,"INST_CITY");
+                                                                    siteIdZip = get(rt,"INST_POSTAL_CODE");
+                                                                    siteIdCountry = get(rt,"INST_COUNTRY");
+                                                                    existingSupportType = "";
+                                                            if(finalPart == "SUPPORT-P")
+                                                            {
+                                                             existingSupportType = "PS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-S")
+                                                            {
+                                                             existingSupportType = "SS";
+                                                            }
+                                                            if(finalPart == "SUPPORT-E")
+                                                            {
+                                                             existingSupportType = "ES";
+                                                            }
+                                                                    instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                                    existingQuantity = get(rt,"TOT_QUANTITY");
+                                                                    lineSiteNumber = get(rt,"INST_OWN_SITE_NUM");
+                 coveredItemDescription = get(rt, "COVERED_ITEM_DESC");
+                                                                    jsonput(jsonGrp,"partNumber",contractNumber);
+                                                                    jsonput(jsonGrp,"serialNumber",sNo);
+                                                                    jsonput(jsonGrp,"instanceIdentifier",instanceIdentifier);
+                                                                    jsonput(jsonGrp,"contractLineNumber",contractLineNumber);
+                                                                    jsonarrayappend(dataTableJsonArray,jsonGrp);
+                                                                    
+                                                                            documentNumber = documentNumber +1;
+                                                                    jsonObj = json();
+                 jsonput(jsonObj,"lineSiteNumber",lineSiteNumber);
+                 jsonput(jsonObj,"coveredItemDescription",coveredItemDescription);
+                 jsonput(jsonObj,"linecurrency",linecurrency);
+                 jsonput(jsonObj,"billtocontactemail",billtocontactemail);
+
+                                                                    jsonput(jsonObj,"quoteEffectiveDate",quoteEffectiveDate);
+                                                                    jsonput(jsonObj,"operatingsys",operatingsys);
+                                                                    jsonput(jsonObj,"partNumber",finalPart);
+                                                                    jsonput(jsonObj,"quantity",quantity);
+                                                                    jsonput(jsonObj,"ContractStartDate",contractEndDate);
+                                                                    jsonput(jsonObj,"entitlementStartDate",entitlementStartDate);
+                                                                    jsonput(jsonObj,"entitlementexpDate",entitlementexpDate);
+                                                                    jsonput(jsonObj,"_document_number",documentNumber);
+                                                                    jsonput(jsonObj,"contractNumber",contractNumber);
+                                                                    jsonput(jsonObj,"mpn",mpn);
+                                                                    jsonput(jsonObj,"productName",productName);
+                                                                    jsonput(jsonObj,"migrationType",migrationType);
+                                                                    
+                                                                    jsonput(jsonObj,"replacementProduct",replacementProduct);
+                                                                    jsonput(jsonObj,"replacementPdtVal",replacementPdtVal);
+                                                                    jsonput(jsonObj,"qtyRatioConversion",qtyRatioConversion);
+                                                                    jsonput(jsonObj,"coveredProduct",coveredProduct);
+                                                                    jsonput(jsonObj,"productFamily",productFamily);
+                                                                    jsonput(jsonObj,"upgradeMaterial",upgradeMaterial);
+                                                                    jsonput(jsonObj,"dealType","cADRenewal");
+           
+            jsonput(jsonObj,"licenseAccountNo",licenseAccountNo);
+                                                                    jsonput(jsonObj,"quoteOuteputType","cADRenewal");
+                                                                    jsonput(jsonObj,"billCustName",billCustName);
+                                                                    jsonput(jsonObj,"billCustNumber",billCustNumber);
+                                                                    jsonput(jsonObj,"soldCustName",soldCustName);
+                                                                    jsonput(jsonObj,"soldCustNumber",soldCustNumber);
+                                                                    jsonput(jsonObj,"sNo",sNo);
+                                                                    jsonput(jsonObj,"fullAddress",fullAddress);
+                                                                    jsonput(jsonObj,"endOfSupportDate",endOfSupportDate);
+                                                                    jsonput(jsonObj,"dateShipped",dateShipped);
+                                                                    jsonput(jsonObj,"installedAtCustomerNumber",installedAtCustomerNumber);
+                                                                    jsonput(jsonObj,"siteId",siteId);
+                                                                    jsonput(jsonObj,"siteIdCity",siteIdCity);
+                                                                    jsonput(jsonObj,"siteIdZip",siteIdZip);
+                                                                    jsonput(jsonObj,"siteIdCountry",siteIdCountry);
+                                                                    jsonput(jsonObj,"existingSupportType",existingSupportType);
+                                                                    jsonput(jsonObj,"existingQuantity",existingQuantity);
+                                                                    jsonput(jsonObj,"shipToCoutry",shipToCoutry);
+            jsonput(jsonObj,"operatingUnit",operatingUnit);
+            jsonput(jsonObj,"licenseeName",licenseeName);
+                                                                    jsonput(jsonObj,"batchNumber",batchNumber);
+        jsonput(jsonObj,"contractheaderEndDate",contractheaderEndDate);
+                                                                    instanceIdentifier = get(rt,"INSTANCE_IDENTIFIER");
+                                                                    if(atoi(existingQuantity) <> 0 and expAnnualrenewal <> ""){
+         
+         previousprice = round(atof(expAnnualrenewal)/atoi(existingQuantity),4);
+         jsonput(jsonObj,"previousprice",previousprice);
+         expAnnualrenewal = formatascurrency(atof(expAnnualrenewal), linecurrency);
+                                                                    jsonput(jsonObj,"expAnnualrenewal",expAnnualrenewal);
+         }else{jsonput(jsonObj,"previousprice",0.0);
+         jsonput(jsonObj,"expAnnualrenewal",formatascurrency(0.0, linecurrency));}  
+                                                                    
+                                                                    
+                                                                    jsonput(jsonObj,"gbuDriverValue",":");
+                                                                    jsonput(jsonObj,"contractLineNumber",contractLineNumber);
+                                                                    if(licenseType == "P" or licenseType == "p")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Perpetual");
+                                                                    }
+                                                                    if(licenseType == "S" or licenseType == "s")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","Subscription");
+                                                                    }
+                                                                    if(licenseType == "L" or licenseType == "l")
+                                                                    {
+                                                                    jsonput(jsonObj,"licenseType","UMF");
+                                                                    }
+                                                                    jsonput(jsonObj,"licenseMetric",licenseMetric);
+                                                                    if(environmentCode == "PD" or environmentCode == "pd")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production");
+                                                                    }
+                                                                    if(environmentCode == "NP" or environmentCode == "np")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production");
+                                                                    }
+                                                                    if(environmentCode == "DR" or environmentCode == "dr")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Disaster Recovery");
+                                                                    }
+                                                                    if(environmentCode == "PL" or environmentCode == "pl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Production Limited Use");
+                                                                    }
+                                                                    if(environmentCode == "NL" or environmentCode == "nl")
+                                                                    {
+                                                                    jsonput(jsonObj,"environmentCode","Non Production Limited Use");
+                                                                    }
+                                                                    jsonput(jsonObj,"specialMetricType",specialMetricType);
+                                                                    jsonput(jsonObj,"metricQuantity",metricQuantity);
+                                                                    jsonarrayappend(transactionJasonArray,jsonObj);
+                                                                    
+                                                            }
+                                                    
+    
+    if(jsonarraysize(transactionJasonArray) > 0 )
+                                                            {
+                                                                  createQuote = util.createNewQuote(_transaction_customer_t_company_name, _system_supplier_company_name, dataTableJsonArray, transactionJasonArray);
+                                                    
+                                                           dataTableJsonArray = jsonarray();
+             transactionJasonArray = jsonarray();
+             jsonRenewalJobDetails = json();
+             jsonput(jsonRenewalJobDetails,"RenewalJobDetails",createQuote);
+             
+                                                            
+                                                            }
+          }
+    
+                                            
+    
+                                    }
+    
+    }
+    batchUpdateResponse = util.renewalBatchUpdate(batchNumber, RenewalBatchStart); 
+   
+    synctoopportunityResponce = util.autoCalltoSyncToOpty_brcm();
+    
+      
+    
+    return "1~quoteOutputComments_t"  + "~" + transactionID;

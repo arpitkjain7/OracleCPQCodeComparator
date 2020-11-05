@@ -1,0 +1,21 @@
+/************************************************************************************************************
+Description: This library function is used to calculate proposed price requested of line items in a quote.
+Return type: string
+History:     Date          Author            Comment 
+      25/01/2019    Satyabrata Acharya         This library function calculates the proposed price 
+                 using ext list price and request discount      
+
+************************************************************************************************************/
+result = 0.0;
+dlim="~";
+dend="|";
+currency=currency_t;
+exch="1";
+resultexchangerate=bmql("SELECT USD_To_Local_Curr from Exchange_Rate_Data WHERE Currency_Code=$currency");
+for exchange in resultexchangerate
+ {
+ exch=get(exchange, "USD_To_Local_Curr");
+ }
+proposedPrice = ExtListPrice - ((ExtListPrice * requestedDiscount)/100);
+
+return proposedPrice;

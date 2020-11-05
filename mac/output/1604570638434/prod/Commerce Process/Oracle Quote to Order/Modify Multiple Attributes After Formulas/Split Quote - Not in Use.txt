@@ -1,0 +1,84 @@
+/***********************************************************
+Function Name : Split Quote 
+Name : Ramesh 
+Description : for teh functioning of split quote
+**********************************************************/
+
+url2 = "https://avagotechtest.bigmachines.com/rest/v7/commerceDocumentsOraclecpqoTransaction/"+bs_id+"/actions/_copy_transaction";
+
+
+
+url = url2 + "?q=" + "{createdBy_t:{$ne:'ssawla'}}";
+
+params = "";
+
+headers = dict("string");
+
+authorization = "Basic " + encodebase64("ssawla:i1(2C#y_Ss");
+
+put(headers, "Content-Type", "application/json");
+
+put(headers, "Authorization", authorization);
+ 
+results = urldatabypost(url2, params, "ERROR", headers,true);
+
+jsonobj = json(results);
+debugPrint = jsonpathgetsingle(jsonobj, "$.documents.links[0]", "string");
+
+
+jsonobj1 = json(debugPrint);
+jsonKeyVal = jsonget(jsonobj1,"href");
+
+bsIDNew = substring(jsonKeyVal,len(jsonKeyVal)-8, len(jsonKeyVal));
+
+
+
+resp = commerce.deleteTransacation(FALSE, bsIDNew);
+
+
+url1 = "https://avagotechtest.bigmachines.com/rest/v7/commerceDocumentsOraclecpqoTransaction/"+bsIDNew+"/actions/cleanSave_t";
+
+params1 = "";
+
+headers1 = dict("string");
+
+authorization1 = "Basic " + encodebase64("ssawla:i1(2C#y_Ss");
+
+put(headers1, "Content-Type", "application/json");
+
+put(headers1, "Authorization", authorization1);
+
+results1 = urldatabypost(url1, params1, "ERROR", headers1, true);
+
+
+attr = dict("string");
+
+put(attr,"bs_id",bsIDNew);
+text = "Split from :"+ transactionID_t;
+data = "<bm:internalComments_t>"+text+"</bm:internalComments_t>";
+put(attr,"data",data);
+res = commerce.updateTransaction_t(attr);
+
+
+
+id = "";
+jsonObj = json(results1);
+if(jsonpathcheck(jsonObj,"$.documents.transactionID_t")){
+id = jsonpathgetsingle(jsonObj,"$.documents.transactionID_t");
+
+
+}
+
+attr = dict("string");
+
+
+put(attr,"bs_id",bs_id);
+text = "New Quote created :"+ id;
+data = "<bm:internalComments_t>"+text+"</bm:internalComments_t>";
+put(attr,"data",data);
+res = commerce.updateTransaction_t(attr);
+
+resp = commerce.deleteTransacation(TRUE, bs_ID);
+
+
+return "";

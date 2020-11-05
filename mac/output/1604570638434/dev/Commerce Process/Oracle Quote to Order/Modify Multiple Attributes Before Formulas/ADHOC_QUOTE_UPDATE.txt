@@ -1,0 +1,75 @@
+/************************************************
+Rule Name: ADHOC_QUOTE_UPDATE
+Description: This action triggers a logic to fetch the transaction id and quote owner from the data table and update it onto quote
+Author: M Vamsi Krishna
+Creation Date: 27-JUL-2020
+*/
+ data = "";
+quoteOwner ="";
+newQuoteOwner = "";
+transactionID = "";
+
+//fetching quote details from ADHOC_QUOTE_UPDATE table
+updateResults = bmql("select * from ADHOC_QUOTE_UPDATE");
+
+for updateResult in updateResults
+{
+ data = "";
+ dtsb = stringbuilder();
+ quoteOwner = "";
+ newQuoteOwner = "";
+ quoteOwnerEmail = "";
+ transactionID = get(updateResult,"TRANSACTION_ID");
+ 
+ attributeValue = get(updateResult,"ATTRIBUTE_VALUE");
+ 
+ 
+  
+  
+  
+   //fetching quote owner details based on quote owner email provided from BRCM_Users Table
+    quoteOwnerDetails = bmql("select Users, PartyResourceId from BRCM_Users where EMailID = $attributeValue");
+    for quoteOwnerDetail in quoteOwnerDetails
+    {
+     quoteOwner = get(quoteOwnerDetail,"Users");
+     partyID1 = get(quoteOwnerDetail,"PartyResourceId");
+     quoteOwnerEmail = attributeValue;
+    }
+    if(quoteOwner <> "")
+     {
+     newQuoteOwner = quoteOwner+"~"+attributeValue;
+     }
+    else
+     {
+     quoteOwner = "Integration User";
+     }
+        
+    data = "<bm:quoteOwner_t>"+quoteOwner+"</bm:quoteOwner_t>";
+    data = data + "<bm:newQuoteOwner_t>"+newQuoteOwner+"</bm:newQuoteOwner_t>";
+    data = data + "<bm:QuoteownerEmail_t>"+quoteOwnerEmail+"</bm:QuoteownerEmail_t>";
+           
+  
+  
+ 
+ 
+ //updating the quote with appropriate quote owner
+ if(NOT isnull(data) and trim(data) <> "")
+ {
+ res=commerce.aDHOC_SAVE(transactionID, data);
+ syncres = util.renewalAdHocSyncToOpty(transactionID);
+ 
+ }
+ 
+ dtsb = sbappend(dtsb,"<bm:TRANSACTION_ID>",transactionID,"</bm:TRANSACTION_ID>");
+ if(quoteOwner <> "Integration User")
+     {
+ dtsb = sbappend(dtsb,"<bm:STATUS>","Quote Owner Updated and Synced","</bm:STATUS>");
+ }
+ else
+ {
+  dtsb = sbappend(dtsb,"<bm:STATUS>","Quote Owner not available in CPQ","</bm:STATUS>");
+ }
+ //updating ADHOC_QUOTE_UPDATE data table to mark the record as processed
+ dataTableUpdate = commerce.aDHOC_DATA_TABLE_UPDATE("ADHOC_QUOTE_UPDATE", sbtostring(dtsb));
+}
+return "";

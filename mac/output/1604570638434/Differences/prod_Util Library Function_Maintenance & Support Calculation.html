@@ -1,0 +1,81 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+
+<head>
+    <meta http-equiv="Content-Type"
+          content="text/html; charset=utf-8" />
+    <title></title>
+    <style type="text/css">
+        table.diff {font-family:Courier; border:medium;}
+        .diff_header {background-color:#e0e0e0}
+        td.diff_header {text-align:right}
+        .diff_next {background-color:#c0c0c0}
+        .diff_add {background-color:#aaffaa}
+        .diff_chg {background-color:#ffff77}
+        .diff_sub {background-color:#ffaaaa}
+    </style>
+</head>
+
+<body>
+    
+    <table class="diff" id="difflib_chg_to278__top"
+           cellspacing="0" cellpadding="0" rules="groups" >
+        <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
+        <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
+        <thead><tr><th class="diff_next"><br /></th><th colspan="2" class="diff_header">dev</th><th class="diff_next"><br /></th><th colspan="2" class="diff_header">prod</th></tr></thead>
+        <tbody>
+            <tr><td class="diff_next" id="difflib_chg_to278__0"><a href="#difflib_chg_to278__top">t</a></td><td class="diff_header" id="from278_1">1</td><td nowrap="nowrap"><span class="diff_sub">/********************************************************************</span></td><td class="diff_next"><a href="#difflib_chg_to278__top">t</a></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_2">2</td><td nowrap="nowrap"><span class="diff_sub">Rule&nbsp;Name:&nbsp;Maintenance&nbsp;&amp;&nbsp;Support&nbsp;Calculation</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_3">3</td><td nowrap="nowrap"><span class="diff_sub">Description:&nbsp;This&nbsp;BML&nbsp;function&nbsp;is&nbsp;used&nbsp;to&nbsp;calculate&nbsp;Maintenance&nbsp;and&nbsp;Support&nbsp;for&nbsp;all&nbsp;added&nbsp;CA&nbsp;products</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_4">4</td><td nowrap="nowrap"><span class="diff_sub">Author:&nbsp;Kumar&nbsp;Satyabrata&nbsp;Acharya</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_5">5</td><td nowrap="nowrap"><span class="diff_sub">Modified&nbsp;by&nbsp;Shruti&nbsp;for&nbsp;adding&nbsp;Base_Support_Value&nbsp;on&nbsp;24th&nbsp;Jan&nbsp;2019</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_6">6</td><td nowrap="nowrap"><span class="diff_sub">********************************************************************/</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_7">7</td><td nowrap="nowrap"><span class="diff_sub">CalcDict=Dict("string");</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_8">8</td><td nowrap="nowrap"><span class="diff_sub">currdate=getDate();</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_9">9</td><td nowrap="nowrap"><span class="diff_sub">//maintset=bmql("SELECT&nbsp;MPN,&nbsp;Maintenance_Rate&nbsp;from&nbsp;BRCM_Part_Master_Ext&nbsp;WHERE&nbsp;MPN=$PartNo");</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_10">10</td><td nowrap="nowrap"><span class="diff_sub">supportset=bmql("SELECT&nbsp;Support_Level,&nbsp;Support_Rate&nbsp;from&nbsp;BRCM_Support_Rate&nbsp;WHERE&nbsp;Support_Type_Code=$SupportType");</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_11">11</td><td nowrap="nowrap"><span class="diff_sub">subset=bmql("SELECT&nbsp;MPN,&nbsp;Base_Support_Value,Start_Date,End_Date&nbsp;from&nbsp;BRCM_Part_Master_Prc&nbsp;WHERE&nbsp;MPN=$PartNo");</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_12">12</td><td nowrap="nowrap"><span class="diff_sub">Days=getdiffindays(PartStartDate,PartEndDate)+1;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_13">13</td><td nowrap="nowrap"><span class="diff_sub">for&nbsp;res1&nbsp;in&nbsp;subset{</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_14">14</td><td nowrap="nowrap"><span class="diff_sub">if(strtojavadate(get(res1,"Start_Date"),"yyyy-MM-dd&nbsp;HH:mm:ss")&nbsp;&lt;=&nbsp;currdate&nbsp;AND&nbsp;strtojavadate(get(res1,"End_Date"),"yyyy-MM-dd&nbsp;HH:mm:ss")&nbsp;&gt;=&nbsp;currdate)</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_15">15</td><td nowrap="nowrap"><span class="diff_sub">{</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_16">16</td><td nowrap="nowrap"><span class="diff_sub">NDP=atof(get(res1,"Base_Support_Value"));</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_17">17</td><td nowrap="nowrap"><span class="diff_sub">}</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_18">18</td><td nowrap="nowrap"><span class="diff_sub">}</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_19">19</td><td nowrap="nowrap"><span class="diff_sub">/*For&nbsp;res&nbsp;in&nbsp;maintset{</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_20">20</td><td nowrap="nowrap"><span class="diff_sub">maint_rate=atof(get(res,"Maintenance_Rate"))/100;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_21">21</td><td nowrap="nowrap"><span class="diff_sub">Maint_Calc=String((atof(partPrice)*maint_rate*NDP*Days)/365);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_22">22</td><td nowrap="nowrap"><span class="diff_sub">put(CalcDict,"Maint",Maint_Calc);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_23">23</td><td nowrap="nowrap"><span class="diff_sub">}*/</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_24">24</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_25">25</td><td nowrap="nowrap"><span class="diff_sub">For&nbsp;result&nbsp;in&nbsp;supportset{</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_26">26</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_27">27</td><td nowrap="nowrap"><span class="diff_sub">supp_rate=atof(get(result,"Support_Rate"));</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_28">28</td><td nowrap="nowrap"><span class="diff_sub">supp_price=String((atof(partPrice)*supp_rate)*NDP*Days/365);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_29">29</td><td nowrap="nowrap"><span class="diff_sub">put(CalcDict,"Support",supp_price);</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_30">30</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_31">31</td><td nowrap="nowrap"><span class="diff_sub">}</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from278_32">32</td><td nowrap="nowrap"><span class="diff_sub">return&nbsp;CalcDict;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+        </tbody>
+    </table>
+    <table class="diff" summary="Legends">
+        <tr> <th colspan="2"> Legends </th> </tr>
+        <tr> <td> <table border="" summary="Colors">
+                      <tr><th> Colors </th> </tr>
+                      <tr><td class="diff_add">&nbsp;Added&nbsp;</td></tr>
+                      <tr><td class="diff_chg">Changed</td> </tr>
+                      <tr><td class="diff_sub">Deleted</td> </tr>
+                  </table></td>
+             <td> <table border="" summary="Links">
+                      <tr><th colspan="2"> Links </th> </tr>
+                      <tr><td>(f)irst change</td> </tr>
+                      <tr><td>(n)ext change</td> </tr>
+                      <tr><td>(t)op</td> </tr>
+                  </table></td> </tr>
+    </table>
+</body>
+
+</html>

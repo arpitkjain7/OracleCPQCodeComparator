@@ -75,6 +75,7 @@ def CompareTxtFiles(
         target_file_location = os.path.join(
             diff_path, os.path.splitext(target_file_name)[0] + ".html"
         )
+        # print(f"source_path: {source_path}")
         # print(f"target_file_location: {target_file_location}")
         if os.path.exists(target_file_location):
             target_file_location = os.path.join(
@@ -136,9 +137,15 @@ def CompareFolders(source_path, target_path, source_env, target_env, root_dir):
                     # txt_file_name = txt_file_path.split("/")[-1]
                     txt_file_name = os.path.split(txt_file_path)[-1]
                     txt_file_parent = os.path.split(os.path.split(txt_file_path)[0])[-1]
-                    txt_file_grand_parent = os.path.split(
-                        os.path.split(os.path.split(txt_file_path)[0])[0]
-                    )[-1]
+                    if txt_file_parent == source_env:
+                        txt_file_parent = "CPQ"
+                        txt_file_grand_parent = "CPQ"
+                    else:
+                        txt_file_grand_parent = os.path.split(
+                            os.path.split(os.path.split(txt_file_path)[0])[0]
+                        )[-1]
+                        if txt_file_grand_parent == source_env:
+                            txt_file_grand_parent = "CPQ"
                     file_name = (
                         txt_file_grand_parent
                         + "_"
@@ -158,7 +165,6 @@ def CompareFolders(source_path, target_path, source_env, target_env, root_dir):
                 dirPath = os.path.join(root, files[0])
                 dirName = dirPath.split(os.path.sep)[-2]
                 masterFiles = master_files.get(dirName)
-                target_files = files
                 if type(masterFiles) == type(None):
                     for files in files:
                         NewFiles(files=files)
@@ -176,9 +182,15 @@ def CompareFolders(source_path, target_path, source_env, target_env, root_dir):
                         txt_file_parent = os.path.split(
                             os.path.split(txt_file_path)[0]
                         )[-1]
-                        txt_file_grand_parent = os.path.split(
-                            os.path.split(os.path.split(txt_file_path)[0])[0]
-                        )[-1]
+                        if txt_file_parent == target_env:
+                            txt_file_parent = "CPQ"
+                            txt_file_grand_parent = "CPQ"
+                        else:
+                            txt_file_grand_parent = os.path.split(
+                                os.path.split(os.path.split(txt_file_path)[0])[0]
+                            )[-1]
+                            if txt_file_grand_parent == target_env:
+                                txt_file_grand_parent = "CPQ"
                         file_name = (
                             txt_file_grand_parent
                             + "_"

@@ -72,14 +72,6 @@ def CompareTxtFiles(
     for target_file_name in master_target_files.keys():
         target_path = master_target_files.get(target_file_name)
         source_path = master_source_files.get(target_file_name)
-        if target_file_name in (
-            "Oracle Quote to Order_Modify Multiple Attributes Before Formulas_Save.txt",
-            "Oracle Quote to Order_Modify Multiple Attributes After Formulas_Save.txt",
-            "Deal Management test_Modify Multiple Attributes Before Formulas_Save.txt",
-            "Deal Management test_Modify Multiple Attributes After Formulas_Save.txt",
-        ):
-            print(f"target_path: {target_path}")
-            print(f"source_path: {source_path}")
         target_file_location = os.path.join(
             diff_path, os.path.splitext(target_file_name)[0] + ".html"
         )

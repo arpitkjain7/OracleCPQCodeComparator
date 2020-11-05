@@ -1,0 +1,16 @@
+/*****************************************
+Name : Sold to customer 
+Author                                Action
+Nandhini Vurimella                   Removed Print Statements
+****************************************/
+soldToCustomer = "";
+if(quoteType_t == "renewalQuote")
+{
+ soldToCustomer = soldToCustomer_t;
+ 
+}
+else
+{
+ soldToCustomer = _transaction_customer_t_company_name;
+}
+return soldToCustomer;

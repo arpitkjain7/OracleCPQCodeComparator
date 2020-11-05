@@ -1,0 +1,17 @@
+/*******************************************************************
+Author - Ravi
+Date   -  18/July/2019
+Enhancement - BROCAD2-5516
+Requirement summary - Make Contracted/ Prior Per Unit Fee Required For Capacity Lines.
+********************************************************************/
+returnmsg=dict("dict<string>");
+PartError=dict("string");
+sb=stringbuilder();
+sbappend(sb, "Contracted/Prior Per Unit Fee is Required For Capacity on line " , substring(errorLines6_t,0,-2));
+error_Statement=sbtostring(sb);
+put(PartError, "message", error_Statement);
+put(PartError, "location", "Top");
+put(PartError, "operator", "=");
+put(PartError, "values", transactionID_t);
+put(returnmsg, "transactionID_t", PartError);
+return returnmsg;

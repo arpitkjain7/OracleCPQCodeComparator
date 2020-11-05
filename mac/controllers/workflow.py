@@ -65,14 +65,20 @@ def NewFiles(files):
 def CompareTxtFiles(
     master_source_files, master_target_files, source_env, target_env, root_dir
 ):
-    print(master_target_files)
     diff_path = root_dir + "/Differences/"
+    doc_count = 0
     for target_file_name in master_target_files:
         target_path = master_target_files.get(target_file_name)
         source_path = master_source_files.get(target_file_name)
-        print(type(source_path))
+        target_file_location = os.path.join(
+            diff_path, os.path.splitext(target_file_name)[0] + ".html"
+        )
+        if os.path.exists(target_file_location):
+            target_file_location = os.path.join(
+                diff_path, os.path.splitext(target_file_name)[0] + doc_count + ".html"
+            )
+            doc_count += 1
         if type(source_path) != type(None):
-            print("1")
             f1_lines = open(source_path).readlines()
             f2_lines = open(target_path).readlines()
             difference = difflib.HtmlDiff().make_file(
@@ -80,9 +86,7 @@ def CompareTxtFiles(
             )
             for lines in difflib.unified_diff(f1_lines, f2_lines):
                 if lines is not None:
-                    difference_report = open(
-                        diff_path + target_file_name + ".html", "w"
-                    )
+                    difference_report = open(target_file_location, "w")
                     difference_report.write(difference)
                     difference_report.close()
             # Row_Num = WriteToFile(workbook=workbook, sheet=sheet, Name=target_file_name, ReportPath=root_dir,Href=diff_path + target_file_name + ".html", RowNum=Row_Num)
@@ -92,7 +96,7 @@ def CompareTxtFiles(
             difference = difflib.HtmlDiff().make_file(
                 f2_lines, "", source_env, target_env
             )
-            difference_report = open(diff_path + target_file_name + ".html", "w")
+            difference_report = open(target_file_location, "w")
             difference_report.write(difference)
             difference_report.close()
             # Row_Num = WriteToFile(workbook=workbook, sheet=sheet, Name=target_file_name, ReportPath=root_dir, Href=diff_path + target_file_name + ".html", RowNum=Row_Num)

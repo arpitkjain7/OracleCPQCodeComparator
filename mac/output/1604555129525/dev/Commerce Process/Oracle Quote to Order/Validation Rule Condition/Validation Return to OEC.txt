@@ -1,0 +1,35 @@
+/*********************************************************************
+              Function Name: Validation Return to Oppty
+              Description: This library function is to validate and throw error message when the Oppty does not exists
+              Author: Keerthivasan
+              Defect ID #: BROCAD2-244
+              Date: 3rd Mar 2019
+              ******************************Change Log*****************************
+              
+*********************************************************************/
+
+result = false;
+errorStatusCode = "404";
+resourceName = "";
+encodedCredential = "";
+url = "";
+if(opportunityNumber_t <> ""){
+  resultSet = bmql("select SoapEndpoint,Username,Password from INT_SYSTEM_DETAILS where System = 'Validate_ReturnToOEC'");
+  for record in resultSet
+  {
+    url = get(record,"SoapEndpoint");
+    encodedCredential = encodebase64(get(record,"Username") + ":" + get(record,"Password"));
+    break;
+  }
+  url = replace(url, "opportunityNumber_t", opportunityNumber_t);
+  auth = "Basic" + " " + encodedCredential;
+  headersDict = dict("string"); 
+  put(headersDict,"Content-Type","application/json"); 
+  put(headersDict,"Authorization",auth);
+  response=Dict("string");
+  response = urldata(url,"GET",headersDict, "5000");
+  if(get(response, "Status-Code") == errorStatusCode) {
+    result = true;
+  }
+}
+return result;

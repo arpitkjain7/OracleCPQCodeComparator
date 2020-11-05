@@ -1,0 +1,39 @@
+/************************************************************************
+Function Name : Constrain Non-CAD Products Based on OU
+Name : Nandhini Vurimella
+Description : constraining Non-CAD Products Based on OU
+************************************************************************/
+ret=false;
+if(operatingUnit_t<>"" and _transaction_shipTo_t_country<>""){
+results = bmql("select OU_Name, ShipToCountry, Group from OU_ShiptTo_Mapping where ShipToCountry=$_transaction_shipTo_t_country and OU_Name=$operatingUnit_t");
+
+
+for each in results{
+  OuName=get(each,"OU_Name");
+  GroupName=get(each,"Group");
+  ShipCountry=get(each,"ShipToCountry");
+  if(get(each,"Group")<>"CAD")
+  {
+  ret = true;
+  result2=bmql("Select MPN from BRCM_Part_Master where Business_Div<>'CAD' and MPN=$_part_number");
+  for each1 in result2
+  {
+  if(get(each1,"MPN")=="")
+  {
+  ret =true;
+  }
+  else{
+  ret=false;
+  }
+  }
+  }
+  else
+  {
+  ret = false;
+  }
+  
+  }
+ }
+ 
+ 
+    return ret;

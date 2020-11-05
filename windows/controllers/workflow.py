@@ -26,6 +26,7 @@ from datetime import datetime
 import threading
 from controllers.get_env_config import get_config_data
 from db_updates.update_db import create_batch, update_batch
+from selenium.webdriver.common.keys import Keys
 
 now = datetime.now()
 todaysdate = now.strftime("%d%m%Y%H%M%S")
@@ -371,11 +372,11 @@ def Script_Extraction_Prod(
     password_input.clear()
     password_input.send_keys(Target_Password)
     checkbox = driver_Prod.find_element_by_xpath("//input[@class='form-check-input']")
-    checkbox.click()
+    checkbox.send_keys(Keys.SPACE)
     driver_Prod.implicitly_wait(200)
     signIn = EC.element_to_be_clickable((By.XPATH, "//input[@type='submit']",))
     signInButton = WebDriverWait(driver_Prod, 30).until(signIn)
-    signInButton.click()
+    signInButton.send_keys("\n")
     logging.info("Navigating to Admin screen")
     driver_Prod.implicitly_wait(200)
     DevTools = EC.element_to_be_clickable(
@@ -390,9 +391,8 @@ def Script_Extraction_Prod(
     Search = EC.element_to_be_clickable((By.XPATH, "//*[@name='search_string']"))
     Search_String = WebDriverWait(driver_Prod, 30).until(Search)
     Search_String.send_keys("*")
-
     Search_button = driver_Prod.find_element_by_xpath("//a[text()='Search']")
-    Search_button.click()
+    Search_button.send_keys("\n")
     logging.info("Searching for scripts")
     Scripts = driver_Prod.find_element_by_xpath("//table//form")
     NumOfScripts = Scripts.find_elements(By.TAG_NAME, "table")

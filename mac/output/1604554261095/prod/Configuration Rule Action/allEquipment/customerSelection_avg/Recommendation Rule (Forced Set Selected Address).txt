@@ -1,0 +1,485 @@
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force operating unit value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=operatingUnit_address[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force core value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=coreaddress_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force restricted customer flag value for selected Address
+*****************************************************************/ 
+
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=restrictedCustomerFlagaddress_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force customer grand parent value for selected Address
+*****************************************************************/ result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=customerGrandparentaddress_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force technical contact mobile value for selected Address
+*****************************************************************/ 
+MobileNumber="";
+result=String[];
+size=range(contact_ac_attr);
+for i in size{
+if(select[i]==true){
+MobileNumber=technicalContactMobileNumber_avg[i];
+}
+}
+addressrange=range(selectedAddressesArrayControl_avg);
+for each in addressrange{
+result[each]=MobileNumber;
+}
+
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force partyNumber value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=partyNumberaddress_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force address value for selected Address
+*****************************************************************/ 
+
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=addressLine4_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force address value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=addressLine3_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force technical contact email address value for selected Address
+*****************************************************************/ 
+party="";
+result=String[];
+size=range(contact_ac_attr);
+for i in size{
+if(select[i]==true){
+party=emailId_contact_avg[i];
+}
+}
+addressrange=range(selectedAddressesArrayControl_avg);
+for each in addressrange{
+result[each]=party;
+}
+
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force default value for selected Address
+*****************************************************************/ 
+result=Boolean[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=defaultInstallAt_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force address value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=addressLine1_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force address status value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=addressStatus_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force set site number value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=partySiteNumber_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force postal code value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=postalCode_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force set address value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=addressPurpose_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force customer erp id value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=customerERPId_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force address value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=addressLine2_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force set array control value for selected Address
+*****************************************************************/ 
+result=false;
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+count=count+1;
+
+}
+
+}
+return count;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force technical contact work number value for selected Address
+*****************************************************************/ 
+WorkNumber="";
+result=String[];
+size=range(contact_ac_attr);
+for i in size{
+if(select[i]==true){
+WorkNumber=technicalContactWorkNumber_avd[i];
+}
+}
+addressrange=range(selectedAddressesArrayControl_avg);
+for each in addressrange{
+result[each]=WorkNumber;
+}
+
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force country code value for selected Address
+*****************************************************************/ 
+
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=countryCode_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force customer name value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=customerNameadd_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force customer id value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=customerIdaddress_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force country value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=country_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force county value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=county_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Rohit Ranjan
+Description : This Rule to Force technical contact name value for selected Address
+*****************************************************************/ 
+party="";
+result=String[];
+size=range(contact_ac_attr);
+for i in size{
+if(select[i]==true){
+party=name_contact[i];
+}
+}
+addressrange=range(selectedAddressesArrayControl_avg);
+for each in addressrange{
+result[each]=party;
+}
+
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force state value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=state_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force customer parent value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=customerParentaddress_avg[each];
+count=count+1;
+
+}
+
+}
+return result;
+/*****************************************************************
+Function Name : Forced Set Selected Address
+Name :Satyabrata Acharya
+Description : This Rule to Force city value for selected Address
+*****************************************************************/ 
+result=String[];
+size=range(addressSearchArray_avg);
+count=0;
+for each in size{
+if(addressselect_avg[each]==true){
+result[count]=city_avg[each];
+count=count+1;
+
+}
+
+}
+return result;

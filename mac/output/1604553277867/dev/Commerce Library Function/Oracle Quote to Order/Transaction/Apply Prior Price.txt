@@ -1,0 +1,40 @@
+/********************************************************************
+Function Name: Apply Prior Price
+Description: To apply Prior Price for capacity transaction lines based on Contract/List unit Price
+Author: Keerthivasan A
+Date: 07/10/2019
+********************************************************************/
+/********************************************************************
+Change Log: BROCAD2-5461 - Adding changes to allocate 0 to each capacity line
+Author: Keerthivasan A
+Date: 07/26/2019
+********************************************************************/
+
+result="";
+dlim="~";
+dend="|";
+sb = stringbuilder();
+
+contractedLicenseeSubFee = 0.0;
+priorPrice = priorPrice_t;
+
+totalCapacityListPrice = totalCapacityListPrice_t;
+
+// Adding changes to allocate 0 to each capacity line as part of BROCAD2-5461
+if(priorPrice >= 0.0) {
+ //For loop to iterate through the transaction lines
+ for line in transactionLine {
+  //restricting customer search parts that get added after customer search and also restricting model lines in case of configured parts
+  if(line._part_number <> "Cust" AND line._model_name <> "Customer Search") {
+  
+   // Calculating only when Transaction Type is Capacity and Contract/List Price is Non-Zero
+   if(line.transactionTypeM_l == "Capacity" AND totalCapacityListPrice <> 0.0) {
+           
+    contractedLicenseeSubFee = (line.perUnitPerListPrice_l*priorPrice)/totalCapacityListPrice;
+    sbappend(sb, line._document_number, dlim, "contractedOrPriorLicenseSubFee_l", dlim, string(contractedLicenseeSubFee), dend);
+   }
+  }
+ }
+}
+result = sbtostring(sb);
+return result;

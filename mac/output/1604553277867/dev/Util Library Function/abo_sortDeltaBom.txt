@@ -1,0 +1,99 @@
+//Function Name: abo_sortDeltaBom
+//input: deltaBom(json)
+//output: delta bom with sorted Child array(jsonarray)
+// Description:
+//   This utility BML is used to sort Update Asset's deltaBom so that parents appear before children for non-delete lines, 
+//        and children appear before parents for delete lines.
+//  we do this for 3 reasons:
+// 1. for tree insert, parent has to be inserted before child otherwise we wont'
+//      be able to resolve FK reference correctly.
+//  2. for tree delete, child has to be deleted before parent otherwise it will
+//     fail to find child as parent deletion will trigger a cascading deletion of children(we
+//     could choose to skip child delete if we are sure original parent will be deleted but
+//     this is not easy to tell from deltaBom)
+//  3. for re-parent, child has to be updated to point to new parent before we
+//     delete old parent as otherwise cascade delete will kick in.
+// Logic: 
+//    first pass, we will move parent before child regardless of action code
+//    second pass, we will go from last to first and move lines with action=delete to the end of array
+
+abocontext = util.abo_getContext();
+bDiagnosisOff=jsonget(abocontext, "AboDiagnosticDisabled", "boolean", true);  
+callContext="sortDeltaBom";
+
+//constant declaration
+ACTION = "oRCL_ABO_ActionCode_l";
+DELETE =  "DELETE";
+
+
+//Step1: we will loop through the childarray 20 times, and move them to sortedChildJsonarray in the order of hierarchy
+
+//mapId2Id store the list of item has been moved from original child to sortedChildJsonarray
+mapId2Id =  dict("string");
+//populate root into mapId2Id.
+id =  jsonget(deltaBom, "id", "string");
+put(mapId2Id, id, id);
+
+//Read children to prepare childAsset
+childBomJsonArr =  jsonget(deltaBom, "children", "jsonarray", jsonarray());
+sizeofChildren =  jsonarraysize(childBomJsonArr);
+sortedChildjsonarray = jsonarray();
+
+ 
+// Assuming maximum depth of BOM is 20.
+dummyarray2 = string[20 * sizeofChildren];
+index= 0;
+for item in dummyArray2{
+     if(sizeofChildren==0){
+        break;  
+     } 
+     
+      curNode = jsonarrayget(childBomJsonArr, index, "json");        
+      parId =  jsonget(curNode, "parentId", "string", "");
+     
+     if(parId<>"" AND containsKey(mapId2Id, parId)){ 
+        //parent has already been processed 
+        jsonarrayappend(sortedChildjsonarray, curNode);
+        id =  jsonget(curNode, "id", "string");
+        put(mapId2Id, id, id);  
+        //jsonarrayremove returns the new size of array after removing element at index
+        sizeofChildren = jsonarrayremove(childBomJsonArr, index);
+
+     }else{ 
+        //only adjust index if we did not delete the item
+        //as for delete the index already points to next item
+        index =  index + 1;
+     }
+     
+     if(index == sizeofChildren){    
+         index =  0;
+     }  
+}
+
+if (jsonarraysize(childBomJsonArr)>0){
+  errMsg="Failed to sort delta configuration BOM, either it is over 20 levels deep or has a dangling reference inside, please contact your system administrator for further diagnosis.";  
+  if(not bDiagnosisOff){
+     dummy=util.abo_addDiagnosticInfo(errMsg+" deltaBom's current state", deltaBom,"");
+     errMsg=errMsg+" childBomJsonArr="+jsonarraytostr(childBomJsonArr);
+  }
+  throwError(errMsg);
+}
+ 
+//Step2: sort from end to start and move lines with 'DELETE' action code at the end
+sizeofChildren = jsonarraysize(sortedChildjsonarray);
+index = sizeofChildren;
+dummyArray =  string[sizeofChildren];
+for item in dummyArray{
+  index  =  index - 1;
+  curNode =  jsonarrayget(sortedChildjsonarray,index, "json");
+  fieldJson =  jsonget(curNode, "fields", "json", json());
+  actionCode  =  jsonget(fieldJson, ACTION, "string", "");
+  if(actionCode == DELETE){
+     jsonarrayremove(sortedChildjsonarray, index);
+     //add node to the end of the list
+     jsonarrayappend(sortedChildjsonarray, curNode);
+     
+  }
+ } 
+jsonput(deltaBom, "children", sortedChildjsonarray);
+return deltaBom;

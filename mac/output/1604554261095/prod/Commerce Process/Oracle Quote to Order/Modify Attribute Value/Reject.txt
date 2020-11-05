@@ -1,0 +1,21 @@
+/*******************************************************************
+27/05/2020 Kavita Lolla VIPER-852 : Missing document link in
+    Final Approval Template 
+*******************************************************************/
+
+linkURL = "";
+
+document_id = "36244074";
+action_id_open = "36244076";
+process_id = "36244034";
+
+ 
+
+linkURL = "https://" + _system_supplier_company_name;
+linkURL = linkURL + ".bigmachines.com/commerce/buyside/document.jsp?formaction=performAction";
+linkURL = linkURL + "&document_id=" + document_id;
+linkURL = linkURL + "&action_id=" + action_id_open;
+linkURL = linkURL + "&bm_cm_process_id=" + process_id;
+linkURL = linkURL + "&id=" + _system_buyside_id;
+
+return linkURL;

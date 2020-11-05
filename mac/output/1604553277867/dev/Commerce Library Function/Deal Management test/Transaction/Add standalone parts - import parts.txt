@@ -1,0 +1,631 @@
+/*********************************************************************
+Function Name: add standalone parts
+Description: This library function is used to add new standalone lines to the quote
+Author: Shruti Sawla
+User Story #:UID-101
+Date: 15 th dec 2018
+******************************Change Log*****************************
+edited by Shruti on 25-Feb-2019 for setting some more line level attributes
+edited by Shruti on 24-Jun-2019 for adding PLA attribute
+edited by Shruti on 19-September-2019 for VIPER-16 - changes done to add divisionApprover 
+edited by Rohit on 07-Oct-2019 for Upgrade issue-changes done to achive addpartstotransaction functionality
+edited by Shruti on 8-Jan-2020 to add attributes as part of SYMINT-3138
+edited by Shruti on 16-Jan-2019 to revert the changes for 19 C upgrade issue as part of SYMINT-4427
+*********************************************************************/
+/* steps performed:
+1) read the file
+2) segregate the lines into new lines and lines to be updated
+3) call update transaction
+4) call addpartstotransaction bml function
+*/
+
+value="";
+sb=stringbuilder();
+// if the file attachment attribute is blank, add the error message as file not attached
+if(importQuoteDetails_t==""){
+ value="File not attached";
+}
+else{
+//import the CSV file
+// if the attribute has attachment, fetch the attachment
+mainattachment = getattachmentdata(importQuoteDetails_t);
+
+//read the CSV and decode it using base 64 format
+content= replace(decodebase64(get(mainattachment ,"filecontent", "string")),"\n","@@");
+// enter the loop if the file has content
+if(content <> ""){
+
+
+
+//declaring variables and array
+
+fileArray = string[]; //split the file and store the value
+lineArray = string[]; //store quote line parts
+jsonObj = json(); //initialize the json Object
+jsonAry = jsonarray(); //extra lines from the file that needs to be added to the quote
+linesFromFile = string[]; //lines from the file
+
+
+// fetching line item data for partNumber/documentNumber
+for line in transactionLine{
+
+if((line._model_name <> "Customer Search" and line._part_number =="") OR (line._part_number <> "Cust" and line._model_name == "")){
+// append the document number in line array if the part is not blank and is not customer search part
+append(lineArray,line._document_number);
+}
+  
+} 
+
+
+
+// reading the imported file, split it and form json structure for the data
+fileArray =split((substring(content,0,len(content)-2)),"@@");
+cnt = 0;
+for each in fileArray{
+ val = split(each,",");
+ if(find(val[0],"Line Number") > -1){
+  // search if "Line Number" is the value in the file
+  cnt = 1;
+  }
+ elif(cnt == 1){
+ 
+ // form the json structure for the imported file
+ 
+ if(val[1] <> ""  AND val[1] <> " " AND NOT(isnull(val[1]))){
+ jsonput(jsonObj,"partNumber",val[1]);
+ }
+ else{
+ jsonput(jsonObj,"partNumber","");
+ }
+ if(val[2] <> ""  AND val[2] <> " " AND NOT(isnull(val[2])) AND isnumber(val[2]) ){
+ jsonput(jsonObj,"quantity",val[2]);
+ }
+ else{
+ jsonput(jsonObj,"quantity","1");
+ }
+ if(val[3] <> ""  AND val[3] <> " " AND NOT(isnull(val[3])) ){
+ jsonput(jsonObj,"hiddenPrice_l",val[3]);
+ }
+ else{
+ jsonput(jsonObj,"hiddenPrice_l","0");
+ }
+
+ if(val[5] <> ""  AND val[5] <> " " AND NOT(isnull(val[5])) ){
+ jsonput(jsonObj,"proposedNetUnitPriceRequested_l",val[5]);
+ jsonput(jsonObj,"hiddenProposedPrice_l",val[5]);
+ }
+ else{
+ jsonput(jsonObj,"proposedNetUnitPriceRequested_l","0");
+ jsonput(jsonObj,"hiddenProposedPrice_l","0");
+ }
+ 
+ if(val[7] <> ""  AND val[7] <> " " AND NOT(isnull(val[7]))){
+ jsonput(jsonObj,"requestedDiscount_l",val[7]);
+ }
+ else{
+ jsonput(jsonObj,"requestedDiscount_l","0");
+ }
+ 
+ 
+ if(val[8] <> ""  AND val[8] <> " " AND NOT(isnull(val[8]))){
+ 
+ jsonput(jsonObj,"cPN_l",val[8]);
+ }
+ else{
+ jsonput(jsonObj,"cPN_l","");
+ }
+
+ if(val[17]<> BRCM_blankDate_t)
+ {
+ 
+ jsonput(jsonObj,"effectiveStartDate_l",val[17]);
+ //jsonput(jsonObj,"effectiveStartDate_l",datetostr(strtojavadate(val[14],"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss","GMT-07"));
+ }
+ else{
+ jsonput(jsonObj,"effectiveStartDate_l",quoteEffectiveDate_t);
+ }
+
+ if(val[18]<> BRCM_blankDate_t)
+ {
+ jsonput(jsonObj,"lineExpirationDate_l",val[18]);
+ //jsonput(jsonObj,"lineExpirationDate_l",datetostr(strtojavadate(val[15],"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss","GMT-07"));
+ }
+ else{
+ jsonput(jsonObj,"lineExpirationDate_l",quoteExpirationDate_t);
+ }
+
+ /*if(val[4] <> ""  AND val[4] <> " " AND NOT(isnull(val[4])) ){
+ jsonput(jsonObj,"extContractListPrice_l",val[4]);
+ }
+ if(val[5] <> ""  AND val[5] <> " " AND NOT(isnull(val[5])) ){
+ jsonput(jsonObj,"proposedNetUnitPriceRequested_l",val[5]);
+ }
+ 
+ if(val[6] <> ""  AND val[6] <> " " AND NOT(isnull(val[6])) ){
+ jsonput(jsonObj,"extProposedNetPriceRequested_l",val[6]);
+ }
+ if(val[11] <> ""  AND val[11] <> " " AND NOT(isnull(val[11]))){
+ jsonput(jsonObj,"productType_l",val[11]);
+ }*/
+
+ if(quoteType_t <> "contractQuote"){
+ if(val[9] <> ""  AND val[9] <> " " AND NOT(isnull(val[9]))){
+ 
+ jsonput(jsonObj,"coveredProduct_l",val[9]);
+ }
+ else{
+ jsonput(jsonObj,"coveredProduct_l","");
+ }
+ 
+ if(val[11] <> ""  AND val[11] <> " " AND NOT(isnull(val[11]))){
+ 
+ jsonput(jsonObj,"transactionTypeM_l",val[11]);
+ }
+ else{
+ 
+ jsonput(jsonObj,"transactionTypeM_l","");
+ }
+ if(val[12] <> ""  AND val[12] <> " " AND NOT(isnull(val[12]))){
+ jsonput(jsonObj,"licenseType_l",val[12]);
+ }
+ else{
+ jsonput(jsonObj,"licenseType_l","");
+ }
+ if(val[13] <> ""  AND val[13] <> " " AND NOT(isnull(val[13]))){
+ jsonput(jsonObj,"licenseMetric_l",val[13]);
+ }
+ else{
+ jsonput(jsonObj,"licenseMetric_l","");
+ }
+ if(val[14] <> ""  AND val[14] <> " " AND NOT(isnull(val[14]))){
+ jsonput(jsonObj,"enterEnvironment_l",val[14]);
+ }
+ else{
+ jsonput(jsonObj,"enterEnvironment_l","");
+ }
+ if(val[15] <> ""  AND val[15] <> " " AND NOT(isnull(val[15]))){
+ jsonput(jsonObj,"languageRequired_l",val[15]);
+ }
+ else{
+ jsonput(jsonObj,"languageRequired_l","");
+ }
+ if(val[16] <> ""  AND val[16] <> " " AND NOT(isnull(val[16]))){
+ jsonput(jsonObj,"supportType_l",val[16]);
+ }
+ else{
+ jsonput(jsonObj,"supportType_l","");
+ }
+ 
+
+ 
+ 
+ /*if(val[30] <> ""  AND val[30] <> " " AND NOT(isnull(val[30]))){
+ jsonput(jsonObj,"businessDivision_l",val[30]);
+ }*/
+ 
+ if(val[19]<> BRCM_blankDate_t)
+ {
+ jsonput(jsonObj,"contractStartDate_l",val[19]);
+ //jsonput(jsonObj,"contractStartDate_l",datetostr(strtojavadate(val[18],"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss","GMT-07"));
+ }
+ else{
+ jsonput(jsonObj,"contractStartDate_l",contractStartDate_t);
+ }
+ 
+ if(val[20]<> BRCM_blankDate_t)
+ {
+ jsonput(jsonObj,"contractEndDate_l",val[20]);
+ //jsonput(jsonObj,"contractEndDate_l",datetostr(strtojavadate(val[19],"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss","GMT-07"));
+ }
+ else{
+ jsonput(jsonObj,"contractEndDate_l",contractEndDate_t);
+ }
+ if(val[21] <> ""  AND val[21] <> " " AND NOT(isnull(val[21]))){
+ jsonput(jsonObj,"installedAtCustomerNumber_l",val[21]);
+ }
+ else{
+ jsonput(jsonObj,"installedAtCustomerNumber_l","");
+ }
+ if(val[22] <> ""  AND val[22] <> " " AND NOT(isnull(val[22]))){
+ jsonput(jsonObj,"siteID_l",val[22]);
+ }
+ else{
+ jsonput(jsonObj,"siteID_l","");
+ }
+ if(val[23] <> ""  AND val[23] <> " " AND NOT(isnull(val[23]))){
+  
+ jsonput(jsonObj,"dropProduct_l",lower(val[23]));
+ }
+ else{
+ jsonput(jsonObj,"dropProduct_l","");
+ }
+ if(val[24] <> ""  AND val[24] <> " " AND NOT(isnull(val[24]))){
+ 
+ jsonput(jsonObj,"dropReason_l",val[24]);
+ }
+ else{
+ jsonput(jsonObj,"dropReason_l","");
+ }
+ if(val[25] <> ""  AND val[25] <> " " AND NOT(isnull(val[25]))){
+ 
+ jsonput(jsonObj,"existingQuantity_l",val[25]);
+ }
+ else{
+ jsonput(jsonObj,"existingQuantity_l","0");
+ }
+ if(val[26] <> ""  AND val[26] <> " " AND NOT(isnull(val[26]))){
+
+ jsonput(jsonObj,"contractedOrPriorDealValue_l",val[26]);
+ }
+ else{
+ jsonput(jsonObj,"contractedOrPriorDealValue_l","");
+ }
+ if(val[27] <> ""  AND val[27] <> " " AND NOT(isnull(val[27]))){
+
+ jsonput(jsonObj,"contractedOrPriorLicenseSubFee_l",val[27]);
+ }
+ else{
+ jsonput(jsonObj,"contractedOrPriorLicenseSubFee_l","0");
+ }
+ }
+ 
+ if(val[29] <> ""  AND val[29] <> " " AND NOT(isnull(val[29]))){
+ 
+ jsonput(jsonObj,"pLA_l",val[29]);
+ }
+ else{
+ jsonput(jsonObj,"pLA_l","");
+ }
+ /*Commented by Rohit Ranjan for Oracle Upgrade Issue 19c
+ // VIPER-16 - changes done to add divisionApprover 
+ if(val[30] <> ""  AND val[30] <> " " AND NOT(isnull(val[30]))){
+ 
+ jsonput(jsonObj,"division_Approver_I",val[30]);
+ }
+ else{
+ jsonput(jsonObj,"division_Approver_I","");
+ }
+ //Viper 16 changes ends..
+ */
+ if(val[30] <> ""  AND val[30] <> " " AND NOT(isnull(val[30]))){
+ 
+ jsonput(jsonObj,"serial_l",val[30]);
+ }
+ else{
+ jsonput(jsonObj,"serial_l","");
+ }
+  //Code Added by Shruti Sawla for SYMINT-3138 to add attributes in Import export functionality
+ if(val[31] <> ""  AND val[31] <> " " AND NOT(isnull(val[31]))){
+ 
+ jsonput(jsonObj,"rollToLine_l",val[31]);
+ }
+ else{
+ jsonput(jsonObj,"rollToLine_l","");
+ }
+ if(val[32] <> ""  AND val[32] <> " " AND NOT(isnull(val[32]))){
+ 
+ jsonput(jsonObj,"specialMetric_l",lower(val[32]));
+ }
+ else{
+ jsonput(jsonObj,"specialMetric_l","");
+ }
+ if(val[33] <> ""  AND val[33] <> " " AND NOT(isnull(val[33]))){
+ 
+ jsonput(jsonObj,"nonStandardLicenseMetric_l",val[33]);
+ }
+ else{
+ jsonput(jsonObj,"nonStandardLicenseMetric_l","");
+ }
+ if(val[34] <> ""  AND val[34] <> " " AND NOT(isnull(val[34])) AND isnumber(val[34]) ){
+ jsonput(jsonObj,"nonStandardQty_l",val[34]);
+ }
+ else{
+ jsonput(jsonObj,"nonStandardQty_l","0");
+ }
+ //Code ends for SYMINT-3138
+
+ if(val[35] <> ""  AND val[35] <> " " AND NOT(isnull(val[35]))){
+ 
+ jsonput(jsonObj,"_document_number",val[35]);
+ }
+ jsonput(jsonObj,"renewalsImportPricing","yes");
+  ret = jsontostr(jsonObj);
+  // append the json structure in linesFromFile array
+  append(linesFromFile,ret);
+  
+  }
+ else{
+  continue;
+  }
+}
+
+
+
+// comparing line item with the imported excel data
+cnt = 0;
+if (isempty(lineArray))
+{
+ // if the quote has no quote lines
+for each in LinesFromFile
+ {
+ if(each<>"" or each<>" " or each <> "null" or not (isnull(each))){
+  //if(each<>"" or each<>" " or each <> "null" or not (isnull(each))){
+ // if the file has no existing data, each row will be considered as new line
+ val1 = json(each);
+ ret1 = jsonremove(val1,"_document_number");
+  jsonarrayappend(jsonAry,val1);
+  //jsonarrayappend(jsonAry,json(each));
+  //}
+ }
+}
+}
+else
+{
+  for each in LinesFromFile
+  { 
+   // if quote has quote lines 
+  
+  jsonObj1 = json(each);
+  docNo = jsonget(jsonObj1,"_document_number");
+   if(lineArray[cnt] == docNo){
+    // compare the document number from file and from quote and increase the counter
+    cnt= cnt + 1;
+    }
+   else{ 
+    // if its new line added, append the data to jsonAry if part number is not blank 
+   row = json(each);
+   
+ partNo = jsonget(row,"partNumber"); 
+ if(partNo <> ""){
+ // if part number is not blank, remove the document number as for adding new lines, document number is not needed.
+   ret = jsonremove(row,"_document_number");
+    jsonarrayappend(jsonAry,row);
+    }
+    }
+  }
+}
+resultArray = jsonarray();
+
+if(jsonarraysize(jsonAry) > 0){
+ // call the bml function if jsonAry has some value
+resultArray = addpartstotransaction(jsonAry,"_default_price_book");
+
+}
+if(jsonarraysize(resultArray) > 0){
+ // if result of the bml has value, quote lines get added with the respective part and attribute details
+value = "Addition of Lines is successfully processed";
+}
+
+}
+else{
+ // if file attached is blank
+value = "Content not available";
+}
+}
+
+return value;
+
+
+//commented code by Shruti on 16-Jan-2019 to revert the changes for 19 C upgrade issue as part of SYMINT-4427
+
+/*
+//fetching the document number from result JSON :- Code added by rohit ranjan on 7th oct 2019 for upgrade issue to solve addpartstotransaction failure
+size=jsonarraysize(resultArray);
+range1=range(size);
+//for each document number, fetching the custom attributes from jsonAry for each doc number:-Code added by rohit ranjan on 7th oct 2019 for upgrade issue to solve addpartstotransaction failure
+for each in range1{
+ jsonResult=jsonarrayget(resultArray,each,"json");
+ jsonExcel=jsonarrayget(jsonAry,each,"json");
+ docNUm=jsonpathgetsingle(jsonResult,"$._document_number");
+//Fetching the custom attribute values  from JSON
+ partNumberVal=jsonpathgetsingle(jsonExcel,"$.partNumber");
+ quantityVal=jsonpathgetsingle(jsonExcel,"$.quantity");
+ hiddenPriceVal=jsonpathgetsingle(jsonExcel,"$.hiddenPrice_l");
+ proposedPriceVal=jsonpathgetsingle(jsonExcel,"$.proposedNetUnitPriceRequested_l");
+ hiddenProposedPriceVal=jsonpathgetsingle(jsonExcel,"$.hiddenProposedPrice_l");
+ trasactionTypeVal=jsonpathgetsingle(jsonExcel,"$.transactionTypeM_l");
+ licenseeTypeVal=jsonpathgetsingle(jsonExcel,"$.licenseType_l");
+ licenseeMetricVal=jsonpathgetsingle(jsonExcel,"$.licenseMetric_l");
+ supportTypeVal=jsonpathgetsingle(jsonExcel,"$.supportType_l");
+ requestedDiscountVal=jsonpathgetsingle(jsonExcel,"$.requestedDiscount_l");
+ effectiveStartDateVal=jsonpathgetsingle(jsonExcel,"$.effectiveStartDate_l");
+ lineExpirationEndDate=jsonpathgetsingle(jsonExcel,"$.lineExpirationDate_l");
+ cpnVal=jsonpathgetsingle(jsonExcel,"$.cPN_l");
+ coveredProductVal=jsonpathgetsingle(jsonExcel,"$.coveredProduct_l");
+ enterEnvVal=jsonpathgetsingle(jsonExcel,"$.enterEnvironment_l");
+ langReqdVal=jsonpathgetsingle(jsonExcel,"$.languageRequired_l");
+ contractStartDateVal=jsonpathgetsingle(jsonExcel,"$.contractStartDate_l");
+ contractEndDateVal=jsonpathgetsingle(jsonExcel,"$.contractEndDate_l");
+ dropProdVal=jsonpathgetsingle(jsonExcel,"$.dropProduct_l");
+ dropReasVal=jsonpathgetsingle(jsonExcel,"$.dropReason_l");
+ plaVal=jsonpathgetsingle(jsonExcel,"$.pLA_l");
+ contVal=jsonpathgetsingle(jsonExcel,"$.contractedOrPriorDealValue_l");
+ contLiceSubVal=jsonpathgetsingle(jsonExcel,"$.contractedOrPriorLicenseSubFee_l");  
+ installedAtCustVal=jsonpathgetsingle(jsonExcel,"$.installedAtCustomerNumber_l");
+ siteIdVal=jsonpathgetsingle(jsonExcel,"$.siteID_l");
+ divAppVal=jsonpathgetsingle(jsonExcel,"$.division_Approver_I");
+ renImpPricVal=jsonpathgetsingle(jsonExcel,"$.renewalsImportPricing");
+ existQuantVal=jsonpathgetsingle(jsonExcel,"$.existingQuantity_l");
+ serialNumVal=jsonpathgetsingle(jsonExcel,"$.serial_l");
+ 
+  //Seeting the value using string builder for upgrade issue by rohit ranjan
+if(hiddenProposedPriceVal<>"" AND NOT isnull(hiddenProposedPriceVal) AND hiddenProposedPriceVal<>" "){
+ sbappend(sb,docNUm,"~hiddenProposedPrice_l~",hiddenProposedPriceVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~hiddenProposedPrice_l~","0","|");
+ }
+if(proposedPriceVal<>"" AND NOT isnull(proposedPriceVal) AND proposedPriceVal<>" "){
+ sbappend(sb,docNUm,"~proposedNetUnitPriceRequested_l~",proposedPriceVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~proposedNetUnitPriceRequested_l~","0","|");
+ }
+if(hiddenPriceVal<>"" AND NOT isnull(hiddenPriceVal) AND hiddenPriceVal<>" "){
+ sbappend(sb,docNUm,"~hiddenPrice_l~",hiddenPriceVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~hiddenPrice_l~","0","|");
+ }
+ if(requestedDiscountVal<>"" AND NOT isnull(requestedDiscountVal) AND requestedDiscountVal<>" "){
+ sbappend(sb,docNUm,"~requestedDiscount_l~",requestedDiscountVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~requestedDiscount_l~","0","|");
+ }
+ if(cpnVal<>"" AND NOT isnull(cpnVal) AND cpnVal<>" "){
+ sbappend(sb,docNUm,"~cPN_l~",cpnVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~cPN_l~","","|");
+ }
+ if(lineExpirationEndDate<>"" AND NOT isnull(lineExpirationEndDate) AND lineExpirationEndDate<>" "){
+ sbappend(sb,docNUm,"~lineExpirationDate_l~",lineExpirationEndDate,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~lineExpirationDate_l~",quoteExpirationDate_t,"|");
+ }
+ if(effectiveStartDateVal<>"" AND NOT isnull(effectiveStartDateVal) AND effectiveStartDateVal<>" "){
+ sbappend(sb,docNUm,"~effectiveStartDate_l~",effectiveStartDateVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~effectiveStartDate_l~",quoteEffectiveDate_t,"|");
+ }
+if(quoteType_t <> "contractQuote"){
+ 
+ if(licenseeTypeVal<>"" AND NOT isnull(licenseeTypeVal) AND licenseeTypeVal<>" "){
+ sbappend(sb,docNUm,"~licenseType_l~",licenseeTypeVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~licenseType_l~","","|");
+ }
+ if(trasactionTypeVal<>"" AND NOT isnull(trasactionTypeVal) AND trasactionTypeVal<>" "){
+ sbappend(sb,docNUm,"~transactionTypeM_l~",trasactionTypeVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~transactionTypeM_l~","","|");
+ }
+if(licenseeMetricVal<>"" AND NOT isnull(licenseeMetricVal) AND licenseeMetricVal<>" "){
+ sbappend(sb,docNUm,"~licenseMetric_l~",licenseeMetricVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~licenseMetric_l~","","|");
+ }
+if(supportTypeVal<>"" AND NOT isnull(supportTypeVal) AND supportTypeVal<>" "){
+ sbappend(sb,docNUm,"~supportType_l~",supportTypeVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~supportType_l~","","|");
+ }
+
+if(contractStartDateVal<>"" AND NOT isnull(contractStartDateVal) AND contractStartDateVal<>" "){
+ sbappend(sb,docNUm,"~contractStartDate_l~",contractStartDateVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~contractStartDate_l~",contractStartDate_t,"|");
+ }
+if(contractEndDateVal<>"" AND NOT isnull(contractEndDateVal) AND contractEndDateVal<>" "){
+ sbappend(sb,docNUm,"~contractEndDate_l~",contractEndDateVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~contractEndDate_l~","contractEndDate_t","|");
+ }
+if(langReqdVal<>"" AND NOT isnull(langReqdVal) AND langReqdVal<>" "){
+ sbappend(sb,docNUm,"~languageRequired_l~",langReqdVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~languageRequired_l~","","|");
+ }
+if(enterEnvVal<>"" AND NOT isnull(enterEnvVal) AND enterEnvVal<>" "){
+ sbappend(sb,docNUm,"~enterEnvironment_l~",enterEnvVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~enterEnvironment_l~","","|");
+ }
+if(dropProdVal<>"" AND NOT isnull(dropProdVal) AND dropProdVal<>" "){ 
+ sbappend(sb,docNUm,"~dropProduct_l~",dropProdVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~dropProduct_l~","","|");
+ }
+if(dropReasVal<>"" AND NOT isnull(dropReasVal) AND dropReasVal<>" "){           
+ sbappend(sb,docNUm,"~dropReason_l~",dropReasVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~dropReason_l~","","|");
+ }
+if(contVal<>"" AND NOT isnull(contVal) AND contVal<>" "){
+ sbappend(sb,docNUm,"~contractedOrPriorDealValue_l~",contVal,"|");       
+ }
+ else{
+   sbappend(sb,docNUm,"~contractedOrPriorDealValue_l~","","|");
+ }
+if(contLiceSubVal<>"" AND NOT isnull(contLiceSubVal) AND contLiceSubVal<>" "){  
+ sbappend(sb,docNUm,"~contractedOrPriorLicenseSubFee_l~",contLiceSubVal,"|");           
+ }
+ else{
+   sbappend(sb,docNUm,"~contractedOrPriorLicenseSubFee_l~","0","|");
+ }
+if(coveredProductVal<>"" AND NOT isnull(coveredProductVal) AND coveredProductVal<>" "){
+ sbappend(sb,docNUm,"~coveredProduct_l~",coveredProductVal,"|");                 
+ }
+ else{
+   sbappend(sb,docNUm,"~coveredProduct_l~","","|");
+ }
+if(installedAtCustVal<>"" AND NOT isnull(installedAtCustVal) AND installedAtCustVal<>" "){  
+ sbappend(sb,docNUm,"~installedAtCustomerNumber_l~",installedAtCustVal,"|");     
+ }
+ else{
+   sbappend(sb,docNUm,"~installedAtCustomerNumber_l~","","|");
+ }
+if(siteIdVal<>"" AND NOT isnull(siteIdVal) AND siteIdVal<>" "){  
+   sbappend(sb,docNUm,"~siteID_l~",siteIdVal,"|");
+    }
+ else{
+   sbappend(sb,docNUm,"~siteID_l~","","|");
+ }
+if(existQuantVal<>"" AND NOT isnull(existQuantVal) AND existQuantVal<>" "){ 
+  sbappend(sb,docNUm,"~existingQuantity_l~",existQuantVal,"|");
+ }
+ else{
+   sbappend(sb,docNUm,"~existingQuantity_l~","0","|");
+ }
+ 
+}
+if(plaVal<>"" AND NOT isnull(plaVal) AND plaVal<>" "){
+ sbappend(sb,docNUm,"~pLA_l~",plaVal,"|");      
+ }
+ else{
+  sbappend(sb,docNUm,"~pLA_l~","","|");      
+ } 
+ //Code added by Rohit Ranjan for VIPER-574 to add Seial Number in Import/Exp
+ if(serialNumVal<>"" AND NOT isnull(serialNumVal) AND serialNumVal<>" "){
+ sbappend(sb,docNUm,"~serial_l~",serialNumVal,"|");      
+ }
+ else{
+  sbappend(sb,docNUm,"~serial_l~","","|");      
+ } 
+ //COde ends for VIPER-574
+if(renImpPricVal<>"" AND NOT isnull(renImpPricVal) AND renImpPricVal<>" "){ 
+ sbappend(sb,docNUm,"~renewalsImportPricing~",renImpPricVal,"|");
+ } 
+   }
+   //Code ends by rohit ranjan:-Code added by rohit ranjan on 7th oct 2019 for upgrade issue to solve addpartstotransaction failure
+}
+if(jsonarraysize(resultArray) > 0){
+ // if result of the bml has value, quote lines get added with the respective part and attribute details
+ //updated by rohit ranjan for upgrade issue
+ value = value+"";
+}
+
+}
+else{
+ // if file attached is blank
+ // Updated by rohit ranjan for upgrade issue
+ value = value+"";
+}
+}
+
+ value = sbtostring(sb);
+return value;
+*/

@@ -1,0 +1,29 @@
+/********************************************************************
+Function Name : Serial Number Validation
+Description : Symantec - Validation for Serial Number  Required on submit for approval if Transaction Type = Renewal/Capacity and PL = SED - VIPER-447
+Author  :  Satyabrata Acharya
+History  : Date             Author                         Comment 
+        30-01-2020    Satyabrata Acharya         Initial Version:VIPER-447
+        13-08-2020    Sindhura Chintakindi       Modified as part of VIPER-966
+********************************************************************/
+KeyGenType="";
+//fetches Key gen type for part master data table for the part to check if it is virtual appliance
+
+resultset= bmql("SELECT KEY_GEN_TYPE FROM BRCM_Part_Master WHERE MPN=$_part_number");
+for each in resultset
+{
+KeyGenType=get(each,"KEY_GEN_TYPE");
+}
+
+//This statement checks for Deal Type, Business Division, product group or Key gen type and transaction type for validating
+
+if((dealType_t=="cADStandard" OR dealType_t=="cADRenewal") AND businessDivision_l=="SED" AND (productGroup_l=="Hardware" OR KeyGenType=="NP-VA" OR KeyGenType=="NP-NVA") AND ( transactionTypeM_l=="Upgrade" or transactionTypeM_l=="New"))
+{
+return true;
+}
+//This is to exclude Validation of Renewal Lines with key "NP-VA" as part of VIPER-966
+if((dealType_t=="cADStandard" OR dealType_t=="cADRenewal") AND businessDivision_l=="SED" AND (productGroup_l=="Hardware" OR KeyGenType=="NP-NVA") AND ( transactionTypeM_l=="Renew"))
+{
+return true;
+}
+return false;

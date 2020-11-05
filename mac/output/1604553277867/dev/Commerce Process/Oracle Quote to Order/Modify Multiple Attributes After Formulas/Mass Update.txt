@@ -1,0 +1,7 @@
+/***********************************************************
+Function Name : Mass Update
+Name : Nandhini Vurimella / Adithya Suresh
+Description : To mass update the attributes in line level
+**********************************************************/
+result =commerce.massUpdate_avg();
+return result;

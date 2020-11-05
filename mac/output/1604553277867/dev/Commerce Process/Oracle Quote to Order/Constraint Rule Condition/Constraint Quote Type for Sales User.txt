@@ -1,0 +1,19 @@
+/*********************************************************************
+           
+              Description: This is to constraint Contract Quote type for Sales rep when user belongs to multiple Sales groups.
+              Author: Shivendra
+              Date: 4th Apr 2019
+              ******************************Change Log*****************************
+              
+*********************************************************************/
+
+
+result = "";
+usergroups=split(_system_user_groups,"+");
+
+
+if((findinarray(usergroups,"salesAdministrator")<>-1) OR (findinarray(usergroups,"salesUser")<>-1))
+{
+return true;
+}
+return false;

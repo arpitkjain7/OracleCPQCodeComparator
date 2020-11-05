@@ -1,0 +1,41 @@
+/*****************************************************************
+Function Name :Recommend Attributes to Commerce for Customer Selection
+Name : Satyabrata Acharya
+Description : This rule is created to chek the endCustomerFlag value.
+*****************************************************************/ 
+ret = "";
+
+resultSet = bmql("SELECT businessDivision_t from commerce.transaction");
+for each in resultSet{
+ret = get(each,"businessDivision_t");
+}
+return ret;
+/*****************************************************************
+Function Name :Recommend Attributes to Commerce for Customer Selection
+Name : Satyabrata Acharya
+Description : This rule is created to fetch OU value from commerce.
+*************************************************************************/
+
+ret = "";
+resultSet = bmql("SELECT operatingUnit_t from commerce.transaction");
+for each in resultSet{
+ret = get(each,"operatingUnit_t");
+}
+return ret;
+/*****************************************************************
+Function Name :Recommend Attributes to Commerce for Customer Selection
+Name : Satyabrata Acharya
+Description : This rule is created to chek the endCustomerFlag value.
+*****************************************************************/ 
+ret = "";
+
+resultSet = bmql("SELECT endCustomerSelectFlag_t from commerce.transaction");
+for each in resultSet{
+ret = get(each,"endCustomerSelectFlag_t");
+}
+if(ret == "true"){
+ return True;
+}
+else{
+ return False;
+}

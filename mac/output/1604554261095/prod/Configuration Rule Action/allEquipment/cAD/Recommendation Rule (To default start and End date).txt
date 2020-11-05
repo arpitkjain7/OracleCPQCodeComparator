@@ -1,0 +1,18 @@
+/*********************************************************************
+              Function Name: Default Attributes based on parent child
+              Description: This condition will default start date
+              Author: Sindhura
+              User Story #:configuration story
+              Date: 22th May 2020
+              ******************************Change Log*****************************
+           
+*********************************************************************/
+result = getdate();
+data=getdate();
+jsonObj = json();
+resultSet = bmql("SELECT contractStartDate_t from commerce.transaction");
+for each in resultSet{
+result = getDate(each,"contractStartDate_t");
+data= result;
+}
+return result;

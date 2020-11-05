@@ -1,0 +1,41 @@
+/********************************************************************
+Function Name: Validate Education Line Items
+Description: This validation rule checks that education type SKUs cannot have support flag set to "Y"
+Date: 20 March 2019
+User Story: UID-25
+Author: Raghav 
+/********************************************************************/
+/*QuoteDealType = lower(dealType_t);
+searchString = "education";
+parentPartDictionary = Dict("integer");
+if(find(QuoteDealType, searchString) >= 0)
+{
+ for line in transactionLine
+ {
+  if(line._part_number <> "")
+  {
+   if(not containsKey(parentPartDictionary,line._part_number))
+   {
+    put(parentPartDictionary, line._part_number, line._price_quantity);
+   }
+  }
+ }
+ parentPartArray = keys(parentPartDictionary);
+ yesLiteral = "Y";
+ resultSet = bmql("select MPN,Support_Required from BRCM_Part_Master_Ext where MPN IN $parentPartArray and Support_Required = $yesLiteral");
+ count = 0;
+ for record in resultSet
+ {
+  count = count + 1;
+ }
+ if(count <> 0){
+  return true;
+ }
+}*/
+
+if(constrainEducationLineItems_t=="true"){
+return true;
+}
+else{
+return false;
+}

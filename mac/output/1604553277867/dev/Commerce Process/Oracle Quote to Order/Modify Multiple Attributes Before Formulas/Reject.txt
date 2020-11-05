@@ -1,0 +1,40 @@
+/*****************************************************************
+ Author - Kavita Lolla
+ Date - 06/03/2019
+ Defect id - BROCAD2-611
+ USer story summary - Cancel approvals on reject.
+*****************************************************************
+Description: VIPER-737 - Quote Approval/Reject Email
+Date - 14/05/2020
+Summary - Changed the final approval/rejection template. The new attribute for quote creator email will be populated here if not populated before.
+*******************************************************************/
+result = "|";
+creatorNm = trim(createdBy_t);
+creator = "";
+for line in transactionLine{
+ if(line.workflowStatus_l <> "pending_approval"){
+  sb=stringbuilder(result,line._document_number , "~lineApprovalStatus_l~" , upper(line.workflowStatus_l) , "|");
+  result=sbtostring(sb);
+ }
+ else
+ {
+  sb=stringbuilder(result,line._document_number , "~lineApprovalStatus_l~" , "REJECTED" , "|");
+  result=sbtostring(sb);
+ }
+}
+
+  sb=stringbuilder(result,"1~status_t~REJECTED", "|",commerce.invokingSOAService_brcm("B"));
+ //VIPER-737 - Populating quotecreator email.
+if(quoteCreatorEmail_t == "")
+{
+ res = bmql("select EMailID from BRCM_Users where Users = $creatorNm");
+ for each in res
+ {
+  creator = get(each,"EMailID");
+ }
+ sbappend(sb,"1~quoteCreatorEmail_t~",creator,"|");
+}
+//VIPER-737 - End
+  result=sbtostring(sb);
+
+return result;

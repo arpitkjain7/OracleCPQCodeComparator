@@ -1,0 +1,100 @@
+/********************************************************************
+Function Name: Updating Customer Assets View
+Description: To display the Customer Assets on Commerce.
+Author: Adithya Suresh
+Date: 28-02-2019
+********************************************************************/
+
+result="";
+dlim="~";
+dend="|";
+dateFormat = "yyyy-MM-dd HH:mm:ss";
+
+res = bmql("select BRCM_Assets.SERIAL_NUMBER,BRCM_Assets.CONTRACT_NUMBER,BRCM_Entitlements.ENTITLEMENT_START_DT,BRCM_Entitlements.ENTITLEMENT_EXP_DATE,BRCM_Assets.BILL_TO_CUST_NAME,BRCM_Assets.SHIP_TO_COUNTRY,BRCM_Assets.COVERED_PRDCT_FAMILY,BRCM_Assets.CUSTOMER_PO_NUMBER,BRCM_Assets.SHIP_DATE,BRCM_Assets.SERVICE_ITEM,BRCM_Assets.SERVICE_PRDCT_FAMILY,BRCM_Assets.COVERED_ITEM,BRCM_Assets.COVERED_PRODUCT_LINE,BRCM_Assets.INSTANCE_NUMBER,BRCM_Assets.EOS_DATE,BRCM_Assets.UNIT_PRICE,BRCM_Assets.INST_OWNER_NAME,BRCM_Assets.INST_OWNER_CUST_NUM,BRCM_Assets.SERVICE_ITEM_DESC,BRCM_Assets.NEW_QUANTITY,BRCM_Assets.EXISTING_QUANTITY,BRCM_Assets.TOT_QUANTITY from BRCM_Assets INNER JOIN BRCM_Entitlements ON BRCM_Assets.SERIAL_NUMBER = BRCM_Entitlements.SERIAL_NUMBER ORDER BY BRCM_Assets.SERIAL_NUMBER");
+if(billToCustomerName_t <> ""){
+ res = bmql("select BRCM_Assets.SERIAL_NUMBER,BRCM_Assets.CONTRACT_NUMBER,BRCM_Entitlements.ENTITLEMENT_START_DT,BRCM_Entitlements.ENTITLEMENT_EXP_DATE,BRCM_Assets.BILL_TO_CUST_NAME,BRCM_Assets.SHIP_TO_COUNTRY,BRCM_Assets.COVERED_PRDCT_FAMILY,BRCM_Assets.CUSTOMER_PO_NUMBER,BRCM_Assets.SHIP_DATE,BRCM_Assets.SERVICE_ITEM,BRCM_Assets.SERVICE_PRDCT_FAMILY,BRCM_Assets.COVERED_ITEM,BRCM_Assets.COVERED_PRODUCT_LINE,BRCM_Assets.INSTANCE_NUMBER,BRCM_Assets.EOS_DATE,BRCM_Assets.UNIT_PRICE,BRCM_Assets.INST_OWNER_NAME,BRCM_Assets.INST_OWNER_CUST_NUM,BRCM_Assets.SERVICE_ITEM_DESC,BRCM_Assets.NEW_QUANTITY,BRCM_Assets.EXISTING_QUANTITY,BRCM_Assets.TOT_QUANTITY from BRCM_Assets INNER JOIN BRCM_Entitlements ON BRCM_Assets.SERIAL_NUMBER = BRCM_Entitlements.SERIAL_NUMBER where BRCM_Assets.BILL_TO_CUST_NAME = $billToCustomerName_t ORDER BY BRCM_Assets.SERIAL_NUMBER");
+}
+customerAssetsView = jsonarray();
+
+
+serialNumber = "";
+contractNumber = "";
+entitlementStartDate = "";
+entitlementExpDate = "";
+billToCustomerName = "";
+shipToCountry = "";
+coveredProductFamily = "";
+customerPONumber = "";
+shipDate = "";
+serviceItem = "";
+serviceProductFamily = "";
+coveredItem = "";
+coveredProductLine = "";
+instanceNumber = "";
+eOSDate = "";
+unitPrice = "";
+instOwnerName = "";
+instOwnerCustomerNumber = "";
+serviceProductDesc = "";
+qty = "";
+existingQty = "";
+totalQty = "";
+payment = json();
+for record in res{
+ 
+ serialNumber = get(record,"SERIAL_NUMBER");
+ contractNumber = get(record,"CONTRACT_NUMBER");
+ entitlementStartDate = get(record,"ENTITLEMENT_START_DT");
+ entitlementExpDate = get(record,"ENTITLEMENT_EXP_DATE");
+ billToCustomerName = get(record,"BILL_TO_CUST_NAME");
+ shipToCountry = get(record,"SHIP_TO_COUNTRY");
+ coveredProductFamily = get(record,"COVERED_PRDCT_FAMILY");
+ customerPONumber = get(record,"CUSTOMER_PO_NUMBER");
+ 
+ shipDate = get(record,"SHIP_DATE");
+ 
+ 
+ serviceItem = get(record,"SERVICE_ITEM");
+ serviceProductDesc = get(record,"SERVICE_ITEM_DESC");
+ serviceProductFamily = get(record,"SERVICE_PRDCT_FAMILY");
+ coveredItem = get(record,"COVERED_ITEM");
+ coveredProductLine = get(record,"COVERED_PRODUCT_LINE");
+ instanceNumber = get(record,"INSTANCE_NUMBER");
+ eOSDate = get(record,"EOS_DATE");
+ unitPrice = get(record,"UNIT_PRICE");
+ instOwnerName = get(record,"INST_OWNER_NAME");
+ instOwnerCustomerNumber = get(record,"INST_OWNER_CUST_NUM");
+ qty = get(record,"NEW_QUANTITY");
+ existingQty = get(record,"EXISTING_QUANTITY");
+ totalQty = get(record,"TOT_QUANTITY");
+
+
+ jsonput(payment,"billCustomerName",billToCustomerName);
+ jsonput(payment,"shipCountry",shipToCountry);
+ jsonput(payment,"cPProductFamily",coveredProductFamily);
+ jsonput(payment,"svcSerialNumber",serialNumber);
+ jsonput(payment,"svcContractNumber",contractNumber);
+ jsonput(payment,"svcContractPONumber",customerPONumber);
+ jsonput(payment,"dateShipped",shipDate);
+ jsonput(payment,"svcProductNumber",serviceItem);
+ jsonput(payment,"svcProductFamily",serviceProductFamily);
+ jsonput(payment,"cPProductNumber",coveredItem);
+ jsonput(payment,"cPProductLine",coveredProductLine);
+ jsonput(payment,"iBInstanceNumber",instanceNumber);
+ jsonput(payment,"sSDDate",entitlementStartDate);
+ jsonput(payment,"sEDDate",entitlementExpDate);
+ jsonput(payment,"cPEndOfSupportDate",eOSDate);
+ jsonput(payment,"svcNegotiatedPrice",unitPrice);
+ jsonput(payment,"installedAtPartyName",instOwnerName);
+ jsonput(payment,"installedAtPartyNumber",instOwnerCustomerNumber);
+ jsonput(payment,"svcProductDesc",serviceProductDesc);
+ jsonput(payment,"qty",qty);
+ jsonput(payment,"existingQty",existingQty);
+ jsonput(payment,"totalQty",totalQty);
+ 
+ jsonarrayappend(customerAssetsView, payment);
+}
+ 
+result= result + _transaction_document_number + dlim + "customerAssetsView_t" + dlim + jsonarraytostr(customerAssetsView) + dend;
+
+return result;

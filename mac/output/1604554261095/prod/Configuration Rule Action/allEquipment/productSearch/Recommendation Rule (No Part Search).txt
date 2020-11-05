@@ -1,0 +1,8 @@
+/*****************************************************************
+Function Name : No Part Search
+Name :Suresh Adithya
+Description : This Rule to set product string
+*****************************************************************/ 
+
+array = jsonarray();
+return jsonarraytostr(array);

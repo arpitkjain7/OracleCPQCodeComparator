@@ -1,0 +1,62 @@
+/*****************************************************************
+Function Name : Set Line Comment Field
+Name :Satyabrata Acharya
+Description : This Rule to Force set line comment
+*****************************************************************/ 
+
+
+MainObj = json();
+counter=0;
+childObj = json();
+jsonArrObj = jsonarray();
+
+if(line_Comment_Field_avg<>" " AND line_Comment_Field_avg<>"" AND not isnull(line_Comment_Field_avg)){
+ MainObj = json(line_Comment_Field_avg);
+}
+loop = selectedAddressPurpose_avg;
+jsonObjKeys = jsonkeys(MainObj);
+for each in loop{
+
+if(each<>""){
+parentObj = json();
+if(findinarray(jsonObjKeys,each)<> -1){
+parentObj = jsonget(MainObj,each,"json");
+}
+if(defaultInstallAtselected_avg[counter]==true)
+{
+jsonput(parentObj,"Address Purpose",each);
+jsonput(parentObj,"Address Site Use Id",selectedPartySiteNumber_avg[counter]);
+jsonput(parentObj,"Name",technicalContactName_avg[counter]);
+jsonput(parentObj,"Email Id",technicalContactEmailAddress_avg[counter]);
+jsonput(parentObj,"Work Phone",techConWorkNum_avg[counter]);
+jsonput(parentObj,"Mobile Phone",techConMobNum_avg[counter]);
+
+
+jsonput(parentObj,"Customer Name",selectedcustomerName_avg[counter]);
+jsonput(parentObj,"Customer ERP Id",customerERPIdselected_avg[counter]);
+jsonput(parentObj,"Customer Id",selectedcustomerId_avg[counter]);
+jsonput(parentObj,"Address Line 1",selectedaddressLine1_avg[counter]);
+jsonput(parentObj,"Address Line 2",addressLine2selected_avg[counter]);
+jsonput(parentObj,"Address Line 3",addressLine3selected_avg[counter]);
+jsonput(parentObj,"Address Line 4",addressLine4selected_avg[counter]);
+jsonput(parentObj,"City",selectedcity_avg[counter]);
+jsonput(parentObj,"Country",selectedcountry_avg[counter]);
+jsonput(parentObj,"State",selectedstate_avg[counter]);
+jsonput(parentObj,"Postal Code",postalCodeselected_avg[counter]);
+jsonput(parentObj,"County",selectedcounty_avg[counter]);
+jsonput(parentObj,"Address Status",addressStatusselected_avg[counter]);
+jsonput(parentObj,"Default/Install At",defaultInstallAtselected_avg[counter]);
+jsonput(parentObj,"Customer Parent",customerParentselectaddress_avg[counter]);
+jsonput(parentObj,"Customer Grandparent",customerGrandparentselectaddress_avg[counter]);
+jsonput(parentObj,"Operating Unit",operatingUnit_selectedaddress[counter]);
+jsonput(parentObj,"Core",coreselectaddress_avg[counter]);
+jsonput(parentObj,"Restricted Customer Flag",restrictedCustomerFlagselectaddress_avg[counter]);
+jsonput(parentObj,"Party Number",partyNumberselectaddress_avg[counter]);
+jsonput(MainObj,each,parentObj);
+}
+counter=counter+1;
+}
+}
+result = jsontostr(MainObj);
+
+return result;

@@ -1,0 +1,22 @@
+/*****************************************************************
+ Author - Kavita Lolla
+ Date - 06/03/2019
+ Defect id - BROCAD2-611
+ USer story summary - Cancel approvals on reject.
+*****************************************************************/
+result = "|";
+for line in transactionLine{
+ if(line.workflowStatus_l <> "pending_approval"){
+  sb=stringbuilder(result,line._document_number , "~lineApprovalStatus_l~" , upper(line.workflowStatus_l) , "|");
+  result=sbtostring(sb);
+ }
+ else
+ {
+  sb=stringbuilder(result,line._document_number , "~lineApprovalStatus_l~" , "REJECTED" , "|");
+  result=sbtostring(sb);
+ }
+}
+  sb=stringbuilder(result,"1~status_t~REJECTED", "|",commerce.invokingSOAService_brcm("B"));
+  result=sbtostring(sb);
+
+return result;

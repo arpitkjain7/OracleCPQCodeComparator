@@ -1,0 +1,45 @@
+/*****************************************************************
+Function Name : Set End Customer String
+Name :Satyabrata Acharya
+Description : This Rule to set line coment field
+******************************************************************
+//added condition for Symantec in Line 28; This sends values of End Customer Address from Config to Commerce; VIPER-438
+*/ 
+result="";
+size=range(customersArrayControl_avg);
+counter=0;
+i=0;
+parentObj = json();
+mainObj = json();
+select= false;
+for each in size{
+
+if(selectCustomer_t[each]==true){
+ jsonput(parentObj,"Customer Name",customerNameArr_avg[counter]);
+ jsonput(parentObj,"Customer ERP Id",customerNumberArr_avg[counter]);
+ jsonput(parentObj,"Customer Id",customerId_avg[counter]);
+ jsonput(parentObj,"Customer Parent",customerParent_avg[counter]);
+ jsonput(parentObj,"Customer Grandparent",customerGrandparent_avg[counter]);
+ jsonput(parentObj,"Global Parent Name",endCustomerGlobalParentName_avg[counter]);
+ jsonput(parentObj,"Payment Terms",paymentTerm_avg[counter]);
+ jsonput(parentObj,"Core",core_avg[counter]);
+ jsonput(parentObj,"Party Number",partyNumber_avg[counter]);
+ jsonput(parentObj,"Restricted Customer Flag",restrictedCustomerFlag_avg[counter]);
+ //added for Symantec; This sends values of End Customer Address from Config to Commerce; VIPER-438
+ 
+ jsonput(parentObj,"End Customer Site Number",selectedPartySiteNumber_avg[0]);
+ jsonput(parentObj,"End Customer Address",selectedaddressLine1_avg[0]);
+ jsonput(parentObj,"End Customer Address 2",addressLine2selected_avg[0]);
+ jsonput(parentObj,"End Customer City",selectedcity_avg[0]);
+ jsonput(parentObj,"End Customer State",selectedstate_avg[0]);
+ jsonput(parentObj,"End Customer Zip",postalCodeselected_avg[0]);
+ jsonput(parentObj,"End Customer Country",selectedcountry_avg[0]);
+ 
+ //end of code
+ jsonput(mainObj,"END_TO",parentObj);
+ 
+ 
+}
+counter = counter + 1;
+}
+return jsontostr(mainObj);

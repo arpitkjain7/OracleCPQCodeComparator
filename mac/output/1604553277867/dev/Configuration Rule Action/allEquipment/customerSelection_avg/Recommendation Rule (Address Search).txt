@@ -1,0 +1,757 @@
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set core values for Address search result
+*****************************************************************/ 
+party="";
+result=String[];
+size=range(customersArrayControl_avg);
+for i in size{
+if(selectCustomer_t[i]==true){
+party=core_avg[i];
+}
+}
+addressrange=range(addressSearchArray_avg);
+for each in addressrange{
+result[each]=party;
+}
+
+return result;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set registered customer flag values for Address search result
+*****************************************************************/ 
+party="";
+result=String[];
+size=range(customersArrayControl_avg);
+for i in size{
+if(selectCustomer_t[i]==true){
+party=restrictedCustomerFlag_avg[i];
+}
+}
+addressrange=range(addressSearchArray_avg);
+for each in addressrange{
+result[each]=party;
+}
+
+return result;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer grand parent values for Address search result
+*****************************************************************/ 
+party="";
+result=String[];
+size=range(customersArrayControl_avg);
+for i in size{
+if(selectCustomer_t[i]==true){
+party=customerGrandparent_avg[i];
+}
+}
+addressrange=range(addressSearchArray_avg);
+for each in addressrange{
+result[each]=party;
+}
+
+return result;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer part name  for Address search result
+*****************************************************************/ 
+party="";
+result=String[];
+size=range(customersArrayControl_avg);
+for i in size{
+if(selectCustomer_t[i]==true){
+party=customerParent_avg[i];
+}
+}
+addressrange=range(addressSearchArray_avg);
+for each in addressrange{
+result[each]=party;
+}
+
+return result;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer erp id values for Address search result
+*****************************************************************/ 
+party="";
+result=String[];
+size=range(customersArrayControl_avg);
+for i in size{
+if(selectCustomer_t[i]==true){
+party=customerNumberArr_avg[i];
+}
+}
+addressrange=range(addressSearchArray_avg);
+for each in addressrange{
+result[each]=party;
+}
+
+return result;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set postal code values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;        // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..PostalCode");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set address values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;            // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.                     
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..Address4");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set address values for Address search result
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addresstypeselected=split(addressType_avg_cs,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..Address3");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set operating unit values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;                // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..PartySiteEO_BRCM_Addr_OperatingUnit_c");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set party number values for Address search result
+*****************************************************************/ 
+party="";
+result=String[];
+size=range(customersArrayControl_avg);
+for i in size{
+if(selectCustomer_t[i]==true){
+party=partyNumber_avg[i];
+}
+}
+addressrange=range(addressSearchArray_avg);
+for each in addressrange{
+result[each]=party;
+}
+
+return result;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set city value for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;             // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.                 
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..City");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set addresvalues for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;            // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..Address1");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set site number for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;                      // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.                              
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..PartySiteEO_BRCM_SiteUseNumber_c");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set all the array set values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+count=jsonget(jsonObj,"count");
+delim=",";
+addressType_avg_cs_var=addressType_avg_cs;    // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addresstypes=String[];
+counter=0;
+if(atoi(count)<>0)
+{
+ret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+size=jsonarraysize(ret);
+i=range(size);
+result=String[];
+for each in i{
+valsplit=split(jsonarrayget(ret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+addresstypes[counter]=valsplit[res];
+if(isnull(addresstypes[counter])==true){
+addresstypes[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(addresstypes);
+}
+return addresstypes;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set all the array set values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+count=jsonget(jsonObj,"count");
+addressType_avg_cs_var=addressType_avg_cs;    // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+print addresstypeselected;
+delim=",";
+addresstypes=String[];
+counter=0;
+if(atoi(count)<>0)
+{
+ret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+size=jsonarraysize(ret);
+i=range(size);
+result=String[];
+for each in i{
+valsplit=split(jsonarrayget(ret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+addresstypes[counter]=valsplit[res];
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(addresstypes);
+}
+else
+{
+counter=1;
+}
+return counter;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set country code values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;            // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..Status");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set address status values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;        // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..Status");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer namevalues for Address search result
+*****************************************************************/ 
+party="";
+result=String[];
+size=range(customersArrayControl_avg);
+for i in size{
+if(selectCustomer_t[i]==true){
+party=customerNameArr_avg[i];
+}
+}
+addressrange=range(addressSearchArray_avg);
+for each in addressrange{
+result[each]=party;
+}
+
+return result;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer id values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;                // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");     
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..PartyId");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set country values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;         // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..Country");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set county values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;        // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..County");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set address values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;        // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..Address2");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;
+/*****************************************************************
+Function Name :Address Search
+Name :Satyabrata Acharya
+Description : This Rule to Force set state values for Address search result
+Modified by Rohit Ranjan on 5th of july 2019 for jira id:3273 i.e. Customer Search Enhancment
+*****************************************************************/ 
+jsonObj=json(customerAddressesString_avg);
+delim=",";
+partynumbers=String[];
+counter=0;
+addressType_avg_cs_var=addressType_avg_cs;       // checking whether address type has "ALL" value if yes then set address type as sell to,ship to and sold to value.         
+checkAll=find(addressType_avg_cs_var, "ALL");
+if(checkAll<>-1)
+{
+ addressType_avg_cs_var="ALL~BILL_TO~SOLD_TO~SHIP_TO";
+}
+addresstypeselected=split(addressType_avg_cs_var,"~");
+addressret = jsonpathgetmultiple(jsonObj,"$..AddressType");
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..State");
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+valsplit=split(jsonarrayget(addressret,each), delim);
+Arraysize=sizeofarray(valsplit);
+splitrange=range(Arraysize);
+for res in splitrange{
+if(findinarray(addresstypeselected,valsplit[res])<>-1 OR sizeofarray(addresstypeselected)==0){
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter])==true){
+partynumbers[counter]="";
+}
+counter=counter+1;
+}
+}
+}
+counter=sizeofarray(partynumbers);
+
+return partynumbers;

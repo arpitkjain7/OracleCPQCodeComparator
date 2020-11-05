@@ -1,0 +1,32 @@
+/************************************************
+Name : Promotion Quantity Single
+Author                    Action 
+Nandhini Vurimella        removed print statements 
+************************************************/
+
+Line_no=atoi(_document_number)-1;
+mpn_var=_part_number;
+flag=false;
+
+returnmsg=dict("dict<string>");
+QuantityError=dict("string");
+
+Curr_date=getdate(false);
+Promotion_var="Single";
+ results = bmql("select Minimum_Qty,Start_Date,End_Date from BRCM_Promotion_Tb where MPN =$mPN_var and Promotion_Type=$Promotion_var");
+    for result in results {
+        if(strtojavadate(get(result,"Start_Date"),"dd/MM/yyyy") <= Curr_date AND strtojavadate(get(result,"End_Date"),"dd/MM/yyyy") >= Curr_date AND _price_quantity < atoi(get(result,"Minimum_Qty")))
+   {
+   
+   error_Statment="Quote Line Number:-"+string(Line_no)+" For SKU:-"+mpn_var+" Quantity should be greater than or equal to "+get(result,"Minimum_Qty")+".";
+    put(QuantityError, "message", error_Statment);
+    put(QuantityError, "location", "Top");
+    put(QuantityError, "operator", "<");
+    put(QuantityError, "values", get(result,"Minimum_Qty"));
+    put(returnmsg, "_price_quantity", QuantityError);
+   }
+   else{
+   flag = false;
+   } 
+    }
+    return returnmsg;

@@ -1,8 +1,0 @@
-/*************************************************************
-04/07/2019 Kavita Lolla BROCAD2-5427 - Discrepancy in Quote status between CPQ
-    and Batch table on Quote revision. 
-*************************************************************/
-sb = stringbuilder();
-sbappend(sb,commerce.invokingSOAService_brcm("B"));
-result = sbtostring(sb);
-return result;

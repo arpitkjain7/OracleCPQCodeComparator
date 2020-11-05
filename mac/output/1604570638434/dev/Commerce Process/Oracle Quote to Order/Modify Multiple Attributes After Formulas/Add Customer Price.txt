@@ -1,7 +1,0 @@
-/********************************************************************
-Function Name : Add Customer Price
-Name : Nandhini Vurimella
-Description : To Add Customer Price 
-********************************************************************/
-res = commerce.updateCustomerPricingList_avg();
-return "1~status_t~APPROVED";

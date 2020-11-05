@@ -1,6 +1,0 @@
-/*****************************************************************************************************
-Function Name : Order Date
-Author : Nandhini Vurimella.
-Description : Updates a transaction's order date when the order is created.
-*****************************************************************************************************/
-return _system_date;

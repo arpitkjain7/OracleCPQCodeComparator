@@ -1,7 +1,0 @@
-/*****************************************************************************************************
-Function Name : Default Line Request Date
-Author : Nandhini Vurimella.
-Description : Defaults the Request Date on the transaction line to the value of Default Request Date on the transaction when the line is initially created. 
-              Subsequently this line default value can be overridden by the user.
-*****************************************************************************************************/
-return defaultRequestDate_t;

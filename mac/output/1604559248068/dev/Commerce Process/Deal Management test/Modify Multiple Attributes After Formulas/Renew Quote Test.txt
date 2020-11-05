@@ -1,6 +1,0 @@
-/***********************************************************
-Function Name : Renew Quote Test
-Name : Nandhini Vurimella
-Description : To Renew Quote
-**********************************************************/
-return "";

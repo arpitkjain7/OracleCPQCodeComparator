@@ -1,6 +1,0 @@
-/*****************************************************************************************************
-Function Name : OrderBy
-Author : Nandhini Vurimella.
-Description : Updates a transaction's ordered by attribute with the current user when an order is created.
-*****************************************************************************************************/
-return _system_user_name;

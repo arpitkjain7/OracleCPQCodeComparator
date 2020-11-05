@@ -1,9 +1,0 @@
-/***********************************************************
-Function Name : Select All/None
-Name : Nandhini Vurimella
-Description : For select lines
-**********************************************************/
-result = "";
-result = result + commerce.selectAllLineItems();
-
-return result;

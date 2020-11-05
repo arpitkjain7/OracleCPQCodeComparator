@@ -1,8 +1,0 @@
-/***********************************************************
-Function Name : Select Quotes To be Merged
-Name : Nandhini Vurimella
-Description : for quote to be merged
-**********************************************************/
-result = "";
-result = result + commerce.populateQuoteDetails() + "|";
-return result;

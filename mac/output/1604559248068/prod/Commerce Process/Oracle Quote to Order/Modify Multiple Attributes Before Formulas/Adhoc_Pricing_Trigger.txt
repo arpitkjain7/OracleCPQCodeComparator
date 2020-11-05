@@ -1,8 +1,0 @@
-/************************************************
-Rule Name: Adhoc_Pricing_Trigger
-Description: This action triggers a logic to update the pricing logic of a given quote
-Author: M Vamsi Krishna
-Creation Date: 27-JUL-2020
-*/
-res = commerce.updatinPerUnitPerListPriceAsPerSelections_brcm();
-return res;

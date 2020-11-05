@@ -1,8 +1,0 @@
-/***********************************************************
-Function Name : Change Currency
-Name : Nandhini vurimella
-Description : To change Currency
-**********************************************************/
-result= "1~" + "currency_t~"+_system_current_document_currency_pref;
-
-return result;

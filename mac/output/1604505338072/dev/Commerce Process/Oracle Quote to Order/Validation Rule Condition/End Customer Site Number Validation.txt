@@ -1,8 +1,0 @@
-/**************************************************************************
-08/07/2020 Kavita Lolla VIPER-906 - Throw validation if End customer ERP <> Ship to ERP and end customer site number is blank
-**************************************************************************/
-if(endCustomerSiteNumber_t=="" AND customerERPId_t<>shipToPartyID_t)
-{
- return true;
-}
-return false;

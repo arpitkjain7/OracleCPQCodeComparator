@@ -1,7 +1,0 @@
-/*****************************************************************
-Function Name : Set Contact Details String to blank
-Name :Rohit Ranjan
-Description : This Rule to Force set empty json string so that contact array will not set when customer is not selected
-*****************************************************************/ 
-
-return "";

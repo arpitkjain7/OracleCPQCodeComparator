@@ -1,0 +1,32 @@
+/************************************************
+*Rule Name: Set Transaction Type 
+*Description: This rule is used to set transaction type
+*Author: Keerthivasan
+*Creation Date: 19-Dec-2018
+**************************************************/
+part = selectedProductNumberInt_avg;
+result = false;
+delim = "|^|";
+size=range(partSelectionArrayControl_avg);
+for each in size
+{
+ if(select_avg[each]==true)
+ {
+  part=PartNumber_avg[each];
+  resultset = bmql("SELECT New_Sales_Allowed, Renewal_Allowed, Capacity_Allowed FROM BRCM_Part_Master WHERE MPN=$part");
+
+  for res in resultset
+  {
+   if(get(res,"New_Sales_Allowed") == "Y" and get(res,"Renewal_Allowed") == "N" and get(res,"Capacity_Allowed") == "N"){
+    result = true;
+   }
+   elif(get(res,"New_Sales_Allowed") == "N" and get(res,"Renewal_Allowed") == "Y" and get(res,"Capacity_Allowed") == "N"){
+    result = true;
+   }
+   elif(get(res,"New_Sales_Allowed") == "N" and get(res,"Renewal_Allowed") == "N" and get(res,"Capacity_Allowed") == "Y"){
+    result = true;
+   }
+  }
+ }
+}
+return result;

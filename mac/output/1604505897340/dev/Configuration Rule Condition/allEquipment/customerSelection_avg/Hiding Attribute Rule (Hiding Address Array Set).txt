@@ -1,0 +1,24 @@
+/*****************************************************************
+Function Name : Hiding Address Array Set
+Name :Satyabrata Acharya
+Description : This Rule used to hide address array set
+*****************************************************************/ 
+result=false;
+size=range(customersArrayControl_avg);
+counter=1;
+count="0";
+for each in size{
+if(selectCustomer_t[each]==true){
+counter=counter+1;
+
+}
+
+}
+if(customerAddressesString_avg<>""){
+jsonObj=json(customerAddressesString_avg);
+count=jsonget(jsonObj,"count");
+}
+if(counter<=1 OR (atoi(count)==0)){
+result=true;
+}
+return result;

@@ -340,15 +340,32 @@ def Script_Extraction_Prod(
     driver_Prod.set_page_load_timeout(2000)
     driver_Prod.get(Target_URL)
     logging.info("Logging into Target Environment")
+    # accepting cookies
+    cookie = WebDriverWait(driver_Prod, 100).until(
+        EC.element_to_be_clickable(
+            (By.XPATH, "//button[@id='onetrust-pc-btn-handler']")
+        )
+    )
+    cookie.click()
+    cookie_allow_all = WebDriverWait(driver_Prod, 100).until(
+        EC.element_to_be_clickable(
+            (By.XPATH, "//button[@id='accept-recommended-btn-handler']")
+        )
+    )
+    cookie_allow_all.click()
+    driver_Prod.implicitly_wait(200)
     # Global Search on BML
-    element = WebDriverWait(driver_Prod, 10).until(
+    element = WebDriverWait(driver_Prod, 100).until(
         EC.presence_of_element_located((By.XPATH, "//input[@name='username']"))
     )
     # elem = driver_Prod.find_element_by_xpath("//input[@name='username']")
     element.clear()
     element.send_keys(Target_Username)
-    elem = driver_Prod.find_element_by_xpath("//input[@type='submit']")
-    elem.click()
+    driver_Prod.implicitly_wait(200)
+    next_button = WebDriverWait(driver_Prod, 30).until(
+        EC.element_to_be_clickable((By.XPATH, "//input[@type='submit']"))
+    )
+    next_button.click()
     password = EC.element_to_be_clickable((By.XPATH, "//input[@name='password']",))
     password_input = WebDriverWait(driver_Prod, 30).until(password)
     password_input.clear()

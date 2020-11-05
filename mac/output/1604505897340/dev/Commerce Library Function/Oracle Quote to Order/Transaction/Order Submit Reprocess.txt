@@ -1,0 +1,171 @@
+/*********************************************************************
+              Function Name: Order Submit Reprocess
+              Description: This library function is used to call updateTransaction for cleanSave action
+              Author: M Vamsi
+              User Story #: UID- 101
+              Date: 1st march 2019
+              ******************************Change Log*****************************
+
+*********************************************************************/
+
+value = "Order Submit Reprocess";
+
+//code for calling update transaction for soap v2
+dictUpdate= dict("string");
+headerDict= dict("string");
+userName = "";
+pwd = "";
+url = "";
+fileLocation ="";
+transactionID = "";
+batchUserName = "";
+batchPwd = "";
+batchFileLocation = "";
+batchUrl ="";
+usernameFlagUpdate = "";
+passwordFlagUpdate = "";
+fileLocationFlagUpdate = "";
+soapendpointFlagUpdate = "";
+renewalFlagUpdatePayload = dict("string");
+recordUpdateString = "";
+retVal1= "";
+recordUpdateString = "";
+
+resultSet = bmql("SELECT Username,Password,File_Location,SoapEndpoint FROM INT_SYSTEM_DETAILS WHERE System='Renewal_Submit_To_Order'");
+
+for vals in resultSet
+ {
+  userName = get(vals,"Username");
+   pwd = get(vals,"Password");
+   fileLocation = get(vals,"File_Location");
+   url = get(vals,"SoapEndpoint");
+  }
+//fetching the username, password, template location and url to hit for webservice call
+// pass values in dictionary 
+
+
+batchResultSet = bmql("SELECT Username,Password,File_Location,SoapEndpoint FROM INT_SYSTEM_DETAILS WHERE System='ORDER_BATCH_REPROCESS'");
+
+  for vals in batchResultSet
+   {
+    batchUserName = get(vals,"Username");
+     batchPwd = get(vals,"Password");
+     batchFileLocation = get(vals,"File_Location");
+     batchUrl = get(vals,"SoapEndpoint");
+    }
+
+renewalFlagUpdatePayload = dict("string");
+  resultFlagUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'ORDER_REPROCESS_UPDATE'");
+  for flagUpdate in resultFlagUpdate
+  {
+   usernameFlagUpdate = get(flagUpdate,"Username");
+   passwordFlagUpdate = get(flagUpdate,"Password");
+   fileLocationFlagUpdate = get(flagUpdate,"File_Location");
+   soapendpointFlagUpdate = get(flagUpdate,"SoapEndpoint");
+  }
+put(renewalFlagUpdatePayload,"USERNAME", usernameFlagUpdate);
+put(renewalFlagUpdatePayload,"PASSWORD", passwordFlagUpdate);
+  
+  
+recordsToReprocess = bmql("select * from BRCM_ORDER_REPRCS where REPROCESS_STATUS <> 'Success'");
+for record in recordsToReprocess
+{
+transactionID = get(record,"TRANSACTION_ID");
+batchDictUpdate = dict("string");
+dictUpdate= dict("string");
+ if(get(record,"TABLE_TO_UPDATE") == "O")
+  {
+  print "inside O";
+   put(dictUpdate,"companyName",_system_company_name);
+   put(dictUpdate,"userName",userName);
+   put(dictUpdate,"password",pwd);
+   put(dictUpdate,"bm_id",transactionID);
+   //apply template
+   
+   retVal = applytemplate(fileLocation,dictUpdate,"Not_Found");
+   retVal = replace(retVal,"&lt;","<");
+   retVal = replace(retVal,"&gt;",">");
+   retVal = replace(retVal,"&quot;","\"");
+   
+   
+   // post data in the webservice
+   print retVal;
+   print dictUpdate;
+   retVal1 = urldatabypost(url,retVal,"",headerDict,true);
+   transactionDetails = gettransaction(atoi(transactionID));
+   QuotenoStartPosition = find(transactionDetails, "<sOAPResponse_ct><![CDATA[");
+   QuotenoEndPosition = find(transactionDetails, "]]></sOAPResponse_ct>");
+   message= substring(transactionDetails, QuotenoStartPosition+len("<sOAPResponse_ct><![CDATA["), QuotenoEndPosition);
+   print message;
+   print retVal1;
+   if(find(message,"SUCCESS_") > 0)
+   {
+     
+   recordUpdateString = recordUpdateString +"<bm:each_record>";
+   recordUpdateString = recordUpdateString +"<bm:TRANSACTION_ID>"+transactionID+"</bm:TRANSACTION_ID>";
+   recordUpdateString = recordUpdateString +"<bm:REPROCESS_STATUS>Success</bm:REPROCESS_STATUS>";
+   recordUpdateString = recordUpdateString +"</bm:each_record>";
+  
+  
+  
+   }
+  }
+ else 
+  {
+  
+     
+    put(batchDictUpdate,"companyName",_system_company_name);
+    put(batchDictUpdate,"userName",batchUserName);
+    put(batchDictUpdate,"password",batchPwd);
+    put(batchDictUpdate,"bm_id",transactionID);
+   //apply template
+   
+   retVal = applytemplate(batchFileLocation,batchDictUpdate,"Not_Found");
+   retVal = replace(retVal,"&lt;","<");
+   retVal = replace(retVal,"&gt;",">");
+   retVal = replace(retVal,"&quot;","\"");
+   
+   
+   // post data in the webservice
+   print retVal;
+   retVal1 = urldatabypost(batchUrl,retVal,"",headerDict,true);
+   print retVal1;
+   transactionDetails = gettransaction(atoi(transactionID));
+   QuotenoStartPosition = find(transactionDetails, "<batchRequestResponse><![CDATA[");
+   QuotenoEndPosition = find(transactionDetails, "]]></batchRequestResponse>");
+   message= substring(transactionDetails, QuotenoStartPosition+len("<batchRequestResponse><![CDATA["), QuotenoEndPosition);
+   print message;
+   if(find(message,"SUCCESS_") > 0)
+   {
+   print "inside if";
+   recordUpdateString = recordUpdateString +"<bm:each_record>";
+   recordUpdateString = recordUpdateString +"<bm:TRANSACTION_ID>"+transactionID+"</bm:TRANSACTION_ID>";
+   recordUpdateString = recordUpdateString +"<bm:REPROCESS_STATUS>Success</bm:REPROCESS_STATUS>";
+   recordUpdateString = recordUpdateString +"</bm:each_record>";
+  
+  
+  
+   }
+  
+  }
+}
+
+put(renewalFlagUpdatePayload,"forLoop", recordUpdateString);
+  
+defaultErrorMessage="";
+quoteRequestRenewalFalgUpdate=applytemplate(fileLocationFlagUpdate,renewalFlagUpdatePayload,defaultErrorMessage);
+quoteRequestRenewalFalgUpdate = replace(quoteRequestRenewalFalgUpdate,"&lt;","<");
+quoteRequestRenewalFalgUpdate= replace(quoteRequestRenewalFalgUpdate,"&gt;",">");
+quoteRequestRenewalFalgUpdate = replace(quoteRequestRenewalFalgUpdate,"&quot;","\"");
+headersDict = dict("string"); 
+  
+response="";
+//Trigger the web service to update response status in Order Reprocess table
+print quoteRequestRenewalFalgUpdate;
+if(usernameFlagUpdate <> "" and passwordFlagUpdate <> "" and recordUpdateString <> "")
+{
+response = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalFalgUpdate, "error",headersDict);
+}
+print response;
+
+return value;

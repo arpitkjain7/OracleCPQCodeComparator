@@ -1,0 +1,6 @@
+/***********************************************************
+Function Name : Renew Quote 
+Name : Nandhini Vurimella
+Description : To renew quote
+**********************************************************/
+return "";

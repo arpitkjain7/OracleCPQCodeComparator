@@ -1,0 +1,30 @@
+/*************************************************************************************************************************
+Function Name : Approve Or Reject.
+Author : Kavita Lolla.
+Description : Call Approve / Reject action.
+*************************************************************************************************************************/
+defaultErrorMessage_1 = "Failed template creation";
+//payload = dict("string");
+payload_1 = dict("string");
+username = "";
+password = "";
+fileLocation = "";
+soapendpoint = "";
+result = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'APPROVE_OR_REJECT'");
+for r in result
+{
+ username = get(r,"Username");
+ password = get(r,"Password");
+ fileLocation = get(r,"File_Location");
+ soapendpoint = get(r,"SoapEndpoint");
+}
+put(payload_1,"Username", username);
+put(payload_1,"pwd", password);
+put(payload_1,"BS_ID",bs_id);
+put(payload_1,"action_Id",action_Id);
+
+approveRejectRequest=applytemplate(fileLocation,payload_1,defaultErrorMessage_1);
+headerDict = dict("string");
+response = urldatabypost(soapendpoint,approveRejectRequest,"error",headerDict,true);
+
+return response;

@@ -1,0 +1,63 @@
+/*********************************************************************
+Function Name: apply Discount
+Description: This library function is used to apply discounts for line items.
+Author: Shruthi
+Date: 2nd jan 2019
+*********************************************************************/
+result = "";
+dlim="~";
+dend="|";
+
+if(avoidPricingCalculations_t == false){
+
+output1="";
+output2="";  
+output3="";
+output4="";
+output5="";
+output6="";
+
+
+// fetch and set precision of the currency from data table 
+res = bmql("SELECT Precision from Func_Curr_Prec_Map WHERE Functional_Currency=$_system_current_document_currency_pref");
+
+for line in res
+ {
+ precision=atoi(get(line,"Precision"));
+ }
+headerDisc = string(discount_t);
+headerDiscFloat = discount_t;
+// set discount , pricing related line level attributes based on the header discount
+if(headerDiscFloat >= 0 and headerDiscFloat <=100)
+{
+ for line in transactionLine
+ {
+  requestedDisc = string(line.requestedDiscount_l);
+  if(line._model_name == "" and line.perUnitPerListPrice_l<>0.0 and line._part_number<>"Cust" and line.dropProduct_l<>true )
+  {
+   
+    result= result + line._document_number + dlim + "hiddenCalculatedDisc_l" + dlim + headerDisc + dend;
+   
+   if(discount_t>=0.0)
+   {  proposedPrice = round((line.extContractListPrice_l - ((line.extContractListPrice_l * atof(headerDisc))/100)),precision);
+     sb1=stringbuilder(output1,line._document_number,"~proposedNetUnitPriceRequested_l~",string(round(proposedPrice/line._price_quantity,precision)),"|");
+     output1=sbtostring(sb1);
+     sb2=stringbuilder(output2,line._document_number,"~proposedNetPriceRequestedHidden_ct~",string(round(proposedPrice/line._price_quantity,precision)),"|");
+     output2=sbtostring(sb2);  
+     sb3=stringbuilder(output3,line._document_number,"~extProposedNetPriceRequested_l~",string(proposedPrice),"|");
+     output3=sbtostring(sb3);
+     sb4=stringbuilder(output4,line._document_number,"~requestedDiscount_l~",headerDisc,"|");
+     output4=sbtostring(sb4);
+     sb5=stringbuilder(output5,line._document_number,"~customDiscountValue_l~",headerDisc,"|");
+     output5=sbtostring(sb5);
+     sb6=stringbuilder(output6,line._document_number,"~applyProposedPriceFlag_l~","false","|");
+     output6=sbtostring(sb6);
+   }
+  }
+ }
+}
+
+sb=stringbuilder(output1,output2,output3,output4,output5,output6);
+result=sbtostring(sb);
+}
+return result;

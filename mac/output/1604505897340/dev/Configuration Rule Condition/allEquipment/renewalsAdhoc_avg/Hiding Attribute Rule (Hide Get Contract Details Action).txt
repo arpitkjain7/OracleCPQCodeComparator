@@ -1,0 +1,26 @@
+/*****************************************************************
+Function Name :Hide Get Contract Details Action
+Author : Satyabrata Acharya
+Description : This function will hide Get Contract Details Action for the below mentioned scenarios:
+1. When both Search by Customer and Search by Contract number are false
+2. When Search by Contract number is true, it will always show the button
+3. When Search by Customer is true, either Customer Name or Customer number need to be populated for the action to be available
+/*****************************************************************/
+result=false;
+if(selectByCustomer_avg==false AND searchByContractNumber_avg==false)
+{
+result=true;
+}
+if(searchByContractNumber_avg==true)
+{
+result=false;
+}
+elif(selectByCustomer_avg==true)
+{
+
+if(customerName_avg=="" AND customerNumber_avg== "")
+{
+result=true;
+}
+}
+return result;

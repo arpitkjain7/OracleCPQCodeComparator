@@ -1,0 +1,54 @@
+/********************************************************************
+Function Name: Constraint Serial No based on Current SKU and SHip to details 
+Description: This rule constrain serial number based on ship to cust ERP and site ID and current SKU
+Author: Shivendra Sharma
+Date: 17-01-2020
+Jira: SYMINT-4173
+********************************************************************/
+/***********************************************Change Log*************************************************************/
+ 
+//Initalization of variables
+result = "";
+currSKU = "";
+serial_no = "";
+res=recordset();
+serNo = "";
+//checking whether user has configured upgrade product 
+if(selectUpgradeProduct_avg == True)
+{
+ loop = range(upgradeSKUArrayController_avg);
+ ErpNo = shipToCust_ErpNo_avg;
+ SiteNo = shipToCust_SiteNo_avg;
+ endCustERP=endCustERPNO_Avg;
+ endCustERPSiteNo=endCustSiteNo_avg;
+ currSKU = currentSKU_avg_picker;
+ 
+ serNo = serialNumber_avg;
+ 
+ //print currSKU;
+ 
+ 
+ //Fetching Srial number value from data table based on Ship to ERP and SIte Id and current SKU
+ //SYMINT-7850 Modified BMQL query to return only records with "Active" Contract Status
+ if(endCustERPNO_Avg<>"" and endCustSiteNo_avg<>"")
+ {
+  res = bmql("select SERIAL_NUMBER from SERIAL_NO_HW_UPG where CONTRACT_STATUS = 'Active' and Current_SKU = $currSKU and SHIPTOCUST_ERP_No = $endCustERP and SHIPTOCUST_SiteNo = $endCustERPSiteNo and SERIAL_NUMBER = $serNo");
+ }
+ else{
+ 
+  res = bmql("select SERIAL_NUMBER from SERIAL_NO_HW_UPG where CONTRACT_STATUS = 'Active' and Current_SKU = $currSKU and SHIPTOCUST_ERP_No = $ErpNo and SHIPTOCUST_SiteNo = $SiteNo and SERIAL_NUMBER = $serNo");
+ }
+ print res;
+ for every in res
+ {
+  serial_no=  get(every,"SERIAL_NUMBER");
+ }
+ //print serial_no;
+ //print serialNumber_avg;
+ //COndition at which constrain message should be thrown 
+ if(serialNumber_avg <> serial_no)
+ {
+  result = serialNumber_avg;
+ }
+}
+return result;

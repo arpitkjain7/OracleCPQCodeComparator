@@ -1,0 +1,79 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+
+<head>
+    <meta http-equiv="Content-Type"
+          content="text/html; charset=utf-8" />
+    <title></title>
+    <style type="text/css">
+        table.diff {font-family:Courier; border:medium;}
+        .diff_header {background-color:#e0e0e0}
+        td.diff_header {text-align:right}
+        .diff_next {background-color:#c0c0c0}
+        .diff_add {background-color:#aaffaa}
+        .diff_chg {background-color:#ffff77}
+        .diff_sub {background-color:#ffaaaa}
+    </style>
+</head>
+
+<body>
+    
+    <table class="diff" id="difflib_chg_to180__top"
+           cellspacing="0" cellpadding="0" rules="groups" >
+        <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
+        <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
+        <thead><tr><th class="diff_next"><br /></th><th colspan="2" class="diff_header">dev</th><th class="diff_next"><br /></th><th colspan="2" class="diff_header">prod</th></tr></thead>
+        <tbody>
+            <tr><td class="diff_next"><a href="#difflib_chg_to180__0">f</a></td><td class="diff_header" id="from180_1">1</td><td nowrap="nowrap">/*******************************************************************</td><td class="diff_next"><a href="#difflib_chg_to180__0">f</a></td><td class="diff_header" id="to180_1">1</td><td nowrap="nowrap">/*******************************************************************</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_2">2</td><td nowrap="nowrap">Rule&nbsp;Name:Validation&nbsp;of&nbsp;Business&nbsp;Type</td><td class="diff_next"></td><td class="diff_header" id="to180_2">2</td><td nowrap="nowrap">Rule&nbsp;Name:Validation&nbsp;of&nbsp;Business&nbsp;Type</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_3">3</td><td nowrap="nowrap">Description:This&nbsp;rule&nbsp;validates&nbsp;if&nbsp;Business&nbsp;type&nbsp;is&nbsp;blank&nbsp;as&nbsp;per&nbsp;BROCAD2-1046</td><td class="diff_next"></td><td class="diff_header" id="to180_3">3</td><td nowrap="nowrap">Description:This&nbsp;rule&nbsp;validates&nbsp;if&nbsp;Business&nbsp;type&nbsp;is&nbsp;blank&nbsp;as&nbsp;per&nbsp;BROCAD2-1046</td></tr>
+            <tr><td class="diff_next" id="difflib_chg_to180__0"></td><td class="diff_header" id="from180_4">4</td><td nowrap="nowrap">Author:&nbsp;Thushaara</td><td class="diff_next"></td><td class="diff_header" id="to180_4">4</td><td nowrap="nowrap">Author:&nbsp;Thushaara</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_5">5</td><td nowrap="nowrap">Date:04-07-2019</td><td class="diff_next"></td><td class="diff_header" id="to180_5">5</td><td nowrap="nowrap">Date:04-07-2019</td></tr>
+            <tr><td class="diff_next" id="difflib_chg_to180__1"></td><td class="diff_header" id="from180_6">6</td><td nowrap="nowrap">********************************************************************/</td><td class="diff_next"></td><td class="diff_header" id="to180_6">6</td><td nowrap="nowrap">********************************************************************/</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_7">7</td><td nowrap="nowrap">returnmsg=dict("dict&lt;string&gt;");</td><td class="diff_next"></td><td class="diff_header" id="to180_7">7</td><td nowrap="nowrap">returnmsg=dict("dict&lt;string&gt;");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_8">8</td><td nowrap="nowrap">PartError=dict("string");</td><td class="diff_next"></td><td class="diff_header" id="to180_8">8</td><td nowrap="nowrap">PartError=dict("string");</td></tr>
+            <tr><td class="diff_next"><a href="#difflib_chg_to180__1">n</a></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to180__1">n</a></td><td class="diff_header" id="to180_9">9</td><td nowrap="nowrap"><span class="diff_add">if(priorContractExpiredFlag_t){</span></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_9">9</td><td nowrap="nowrap">sb=stringbuilder();</td><td class="diff_next"></td><td class="diff_header" id="to180_10">10</td><td nowrap="nowrap">sb=stringbuilder();</td></tr>
+            <tr><td class="diff_next"><a href="#difflib_chg_to180__2">n</a></td><td class="diff_header" id="from180_10">10</td><td nowrap="nowrap"><span class="diff_sub">if(priorContractExpiredFlag_t){</span></td><td class="diff_next"><a href="#difflib_chg_to180__2">n</a></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_11">11</td><td nowrap="nowrap">sbappend(sb,&nbsp;"The&nbsp;prior&nbsp;contract&nbsp;must&nbsp;be&nbsp;active&nbsp;on&nbsp;support&nbsp;prior&nbsp;to&nbsp;licensing&nbsp;capacity/upgrade&nbsp;on&nbsp;line(s):&nbsp;"&nbsp;,&nbsp;substring(errorLinesContractStatus_t,0,-2));</td><td class="diff_next"></td><td class="diff_header" id="to180_11">11</td><td nowrap="nowrap">sbappend(sb,&nbsp;"The&nbsp;prior&nbsp;contract&nbsp;must&nbsp;be&nbsp;active&nbsp;on&nbsp;support&nbsp;prior&nbsp;to&nbsp;licensing&nbsp;capacity/upgrade&nbsp;on&nbsp;line(s):&nbsp;"&nbsp;,&nbsp;substring(errorLinesContractStatus_t,0,-2));</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_12">12</td><td nowrap="nowrap">error_Statement=sbtostring(sb);</td><td class="diff_next"></td><td class="diff_header" id="to180_12">12</td><td nowrap="nowrap">error_Statement=sbtostring(sb);</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_13">13</td><td nowrap="nowrap">put(PartError,&nbsp;"message",&nbsp;error_Statement);</td><td class="diff_next"></td><td class="diff_header" id="to180_13">13</td><td nowrap="nowrap">put(PartError,&nbsp;"message",&nbsp;error_Statement);</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_14">14</td><td nowrap="nowrap">put(PartError,&nbsp;"location",&nbsp;"Top");</td><td class="diff_next"></td><td class="diff_header" id="to180_14">14</td><td nowrap="nowrap">put(PartError,&nbsp;"location",&nbsp;"Top");</td></tr>
+            <tr><td class="diff_next" id="difflib_chg_to180__2"></td><td class="diff_header" id="from180_15">15</td><td nowrap="nowrap">put(PartError,&nbsp;"operator",&nbsp;"=");</td><td class="diff_next"></td><td class="diff_header" id="to180_15">15</td><td nowrap="nowrap">put(PartError,&nbsp;"operator",&nbsp;"=");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_16">16</td><td nowrap="nowrap">put(PartError,&nbsp;"values",&nbsp;"");</td><td class="diff_next"></td><td class="diff_header" id="to180_16">16</td><td nowrap="nowrap">put(PartError,&nbsp;"values",&nbsp;"");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_17">17</td><td nowrap="nowrap">put(returnmsg,&nbsp;"contractStatusValidation_t",&nbsp;PartError);</td><td class="diff_next"></td><td class="diff_header" id="to180_17">17</td><td nowrap="nowrap">put(returnmsg,&nbsp;"contractStatusValidation_t",&nbsp;PartError);</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_18">18</td><td nowrap="nowrap">}</td><td class="diff_next"></td><td class="diff_header" id="to180_18">18</td><td nowrap="nowrap">}</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_19">19</td><td nowrap="nowrap">if(noPriorContractDataFlag_t){</td><td class="diff_next"></td><td class="diff_header" id="to180_19">19</td><td nowrap="nowrap">if(noPriorContractDataFlag_t){</td></tr>
+            <tr><td class="diff_next"><a href="#difflib_chg_to180__top">t</a></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to180__top">t</a></td><td class="diff_header" id="to180_20">20</td><td nowrap="nowrap"><span class="diff_add">sb=stringbuilder();</span></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_20">20</td><td nowrap="nowrap">sbappend(sb,&nbsp;"The&nbsp;prior&nbsp;contract&nbsp;#&nbsp;and/or&nbsp;prior&nbsp;contract&nbsp;line&nbsp;#&nbsp;is/are&nbsp;not&nbsp;valid.&nbsp;Please&nbsp;review&nbsp;and&nbsp;update:&nbsp;"&nbsp;,&nbsp;substring(errorLinesContractStatus_t,0,-2));</td><td class="diff_next"></td><td class="diff_header" id="to180_21">21</td><td nowrap="nowrap">sbappend(sb,&nbsp;"The&nbsp;prior&nbsp;contract&nbsp;#&nbsp;and/or&nbsp;prior&nbsp;contract&nbsp;line&nbsp;#&nbsp;is/are&nbsp;not&nbsp;valid.&nbsp;Please&nbsp;review&nbsp;and&nbsp;update:&nbsp;"&nbsp;,&nbsp;substring(errorLinesContractStatus_t,0,-2));</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_21">21</td><td nowrap="nowrap">error_Statement=sbtostring(sb);</td><td class="diff_next"></td><td class="diff_header" id="to180_22">22</td><td nowrap="nowrap">error_Statement=sbtostring(sb);</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_22">22</td><td nowrap="nowrap">put(PartError,&nbsp;"message",&nbsp;error_Statement);</td><td class="diff_next"></td><td class="diff_header" id="to180_23">23</td><td nowrap="nowrap">put(PartError,&nbsp;"message",&nbsp;error_Statement);</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_23">23</td><td nowrap="nowrap">put(PartError,&nbsp;"location",&nbsp;"Top");</td><td class="diff_next"></td><td class="diff_header" id="to180_24">24</td><td nowrap="nowrap">put(PartError,&nbsp;"location",&nbsp;"Top");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_24">24</td><td nowrap="nowrap">put(PartError,&nbsp;"operator",&nbsp;"=");</td><td class="diff_next"></td><td class="diff_header" id="to180_25">25</td><td nowrap="nowrap">put(PartError,&nbsp;"operator",&nbsp;"=");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_25">25</td><td nowrap="nowrap">put(PartError,&nbsp;"values",&nbsp;"");</td><td class="diff_next"></td><td class="diff_header" id="to180_26">26</td><td nowrap="nowrap">put(PartError,&nbsp;"values",&nbsp;"");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_26">26</td><td nowrap="nowrap">put(returnmsg,&nbsp;"contractStatusValidation_t",&nbsp;PartError);</td><td class="diff_next"></td><td class="diff_header" id="to180_27">27</td><td nowrap="nowrap">put(returnmsg,&nbsp;"contractStatusValidation_t",&nbsp;PartError);</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_27">27</td><td nowrap="nowrap">}</td><td class="diff_next"></td><td class="diff_header" id="to180_28">28</td><td nowrap="nowrap">}</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from180_28">28</td><td nowrap="nowrap">return&nbsp;returnmsg;</td><td class="diff_next"></td><td class="diff_header" id="to180_29">29</td><td nowrap="nowrap">return&nbsp;returnmsg;</td></tr>
+        </tbody>
+    </table>
+    <table class="diff" summary="Legends">
+        <tr> <th colspan="2"> Legends </th> </tr>
+        <tr> <td> <table border="" summary="Colors">
+                      <tr><th> Colors </th> </tr>
+                      <tr><td class="diff_add">&nbsp;Added&nbsp;</td></tr>
+                      <tr><td class="diff_chg">Changed</td> </tr>
+                      <tr><td class="diff_sub">Deleted</td> </tr>
+                  </table></td>
+             <td> <table border="" summary="Links">
+                      <tr><th colspan="2"> Links </th> </tr>
+                      <tr><td>(f)irst change</td> </tr>
+                      <tr><td>(n)ext change</td> </tr>
+                      <tr><td>(t)op</td> </tr>
+                  </table></td> </tr>
+    </table>
+</body>
+
+</html>

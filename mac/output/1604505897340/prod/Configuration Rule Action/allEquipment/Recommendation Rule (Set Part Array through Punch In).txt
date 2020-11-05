@@ -28,3 +28,20 @@ Author  : Adithya Suresh
 startDate = strtojavadate(effectiveStartDateMU, "MM-dd-yyyy");
 
 return startDate;
+/********************************************************************
+Jira Number : VIPER-803
+Description : Updating the part numbers in the array
+Author  : Adithya Suresh
+********************************************************************/
+partList = split(partNumberListUpdating_avg, "*");
+return partList;
+/********************************************************************
+Jira Number : VIPER-803
+Description : Updating the part array size
+Author  : Adithya Suresh
+********************************************************************/
+partList = split(partNumberListUpdating_avg, "*");
+
+
+
+return sizeofarray(partList);

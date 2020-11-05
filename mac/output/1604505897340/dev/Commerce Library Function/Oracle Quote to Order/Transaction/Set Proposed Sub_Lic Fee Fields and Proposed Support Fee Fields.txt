@@ -1,0 +1,72 @@
+/*********************************************************************
+Function Name: Set Proposed Sub/Lic Fee Fields 
+Description: This library function is used to populate Proposed Lic/Sub Fee fields in Financial Summary.
+Author: Nandhini Vurimella
+Date: 30 APR 2019
+ *********************************************************************/
+ coveredProduct = "" ;
+ proposedLicSubFeeNew =0.0;
+ proposedLicSubFeeRenew =0.0;
+ proposedLicSubFeeCapacity =0.0;
+ proposedSupportNew =0.0;
+ proposedSupportRenew =0.0;
+ proposedSupportCapacity =0.0;
+ innerDictionary = dict("string");
+ existingValue = 0.0;
+ if(lineItemComment <> "")
+{
+ teststring=lineItemComment;
+ obj=json(teststring);
+ PartNumber=jsonget(obj,"PartNumber");
+ child=jsonget(obj,"child");
+ childObj=json(child);
+ transactiontype=jsonget(childObj,"transactionType");
+ supportPartsPicklist=jsonget(childObj,"supportPartsPicklist");//supportPartsPicklist
+ if (linePartNumber == supportPartsPicklist)
+ {
+  coveredProduct = PartNumber;
+ }
+ if ( transactiontype == "New" AND coveredProduct == "")
+ {
+  innerDictionary = get(summaryDictionary,"result");
+  existingValue = atof(get(innerDictionary,"proposedLicSubFeeNew"));
+     proposedLicSubFeeNew = existingValue + extProposedNetPrice;
+     put(innerDictionary,"proposedLicSubFeeNew",string(proposedLicSubFeeNew));
+    } 
+ if(transactiontype == "Renew" and coveredProduct == "")
+ {
+  innerDictionary = get(summaryDictionary,"result");
+  existingValue = atof(get(innerDictionary,"proposedLicSubFeeRenew"));
+     proposedLicSubFeeRenew = existingValue + extProposedNetPrice;
+     put(innerDictionary,"proposedLicSubFeeRenew",string(proposedLicSubFeeRenew));
+ } 
+ if(transactiontype == "Capacity" and coveredProduct == "")
+ {
+  innerDictionary = get(summaryDictionary,"result");
+  existingValue = atof(get(innerDictionary,"proposedLicSubFeeCapacity"));
+     proposedLicSubFeeCapacity = existingValue + extProposedNetPrice;
+     put(innerDictionary,"proposedLicSubFeeCapacity",string(proposedLicSubFeeCapacity));
+ }
+ if(transactiontype == "New" and coveredProduct <> "")
+ {
+  innerDictionary = get(summaryDictionary,"result");
+  existingValue = atof(get(innerDictionary,"proposedSupportNew"));
+     proposedSupportNew = existingValue + extProposedNetPrice;
+     put(innerDictionary,"proposedSupportNew",string(proposedSupportNew));
+ }
+ if(transactiontype== "Renew" and coveredProduct<> "")
+ {
+  innerDictionary = get(summaryDictionary,"result");
+  existingValue = atof(get(innerDictionary,"proposedSupportRenew"));
+     proposedSupportRenew = existingValue + extProposedNetPrice;
+     put(innerDictionary,"proposedSupportRenew",string(proposedSupportRenew));
+ }
+ if(transactiontype == "Capacity" and coveredProduct <> "")
+ {
+  innerDictionary = get(summaryDictionary,"result");
+  existingValue = atof(get(innerDictionary,"proposedSupportCapacity"));
+     proposedSupportCapacity = existingValue + extProposedNetPrice;
+     put(innerDictionary,"proposedSupportCapacity",string(proposedSupportCapacity));
+ }
+}
+return summaryDictionary;

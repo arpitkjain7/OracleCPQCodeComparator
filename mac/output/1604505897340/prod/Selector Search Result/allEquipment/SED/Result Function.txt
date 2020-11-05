@@ -1,0 +1,186 @@
+/********************************************************************
+Function Name : Rule To Populate Parts based on User Selection
+Description : This rule is to populate the search result page of Guided Selling which shows parts based on the filters 
+Author  : Sindhura Chintakindi
+History  : Date             Author                         Comment 
+        04-30-2020    Sindhura Chintakindi           Initial Version:Jira-803
+********************************************************************/
+result="";
+
+result = "<SelectorSearchResults>";
+
+subDom = lower(_BM_USER_COMPANY);
+count = 1;
+item = "";
+//businessdiv="SED";
+ConfigureProducts="Configure Products";
+link=modell_guidedsellingSED;
+perc = "%";
+license = perc + licenseType_guidedsellingSED + perc; 
+supot="false";
+spemetr="false";
+enddate="";
+startdate="";
+quant="";
+unlim="false";
+businessdiv="SED";
+selectRes=recordset();
+result = result + "<Columns>";
+result = result + "</Columns>";
+result = result + "<Items>";
+
+//Converting all attributes of different datatypes to String as Punch in Url accepts only Strings.
+if(supportOptOut_guidedSelling_SED ==true){
+supot="true";
+}
+if(specialMetric_guidedSelling_SED ==true){
+spemetr="true";
+}
+if(unlimited_guidedSelling ==true){
+unlim="true";
+}
+
+enddate=datetostr(effectiveEndDate_guidedSelling_SED);
+startdate=datetostr(effectiveStartDate_guidedSelling_SED);
+quant=string(quantity_guidedSelling_SED);
+
+//Starting of html format
+
+h = "";
+h = h + "<link rel=\"stylesheet\" type=\"text/css\""; 
+h = h + "href=\"https://" + subDom + ".bigmachines.com/bmfsweb/" + subDom + "/config/style/selector_server_alt.css\">";
+h = h + "<script type='text/javascript'>function djfDiv(){alert('dean alert')}</script>";
+h = h + "<script type='text/javascript' src='$BASE_PATH$/javascript/guidedSellingJS.js' ></script>";
+
+//Since Transaction type has three columns in Part Master table three conditions are added.
+if(transactionType_guidedsellingSED=="New")
+{
+selectRes = bmql("select BRCM_Part_Master_Ext.MPN,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Business_Div,BRCM_Part_Master.PRODUCT_LINE from BRCM_Part_Master_Ext inner join BRCM_Part_Master on BRCM_Part_Master_Ext.MPN = BRCM_Part_Master.MPN where BRCM_Part_Master.PRODUCT_GROUP=$productGroup_guidedsellingSED AND Business_Div='SED' AND BRCM_Part_Master_Ext.License_Type_Allowed LIKE $license AND BRCM_Part_Master.New_Sales_Allowed='Y' AND BRCM_Part_Master.Active='Y' ORDER BY BRCM_Part_Master_Ext.MPN");
+}
+elif(transactionType_guidedsellingSED=="Renew"){
+selectRes = bmql("select BRCM_Part_Master_Ext.MPN,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Business_Div,BRCM_Part_Master.PRODUCT_LINE from BRCM_Part_Master_Ext inner join BRCM_Part_Master on BRCM_Part_Master_Ext.MPN = BRCM_Part_Master.MPN where BRCM_Part_Master.PRODUCT_GROUP=$productGroup_guidedsellingSED AND Business_Div='SED' AND BRCM_Part_Master_Ext.License_Type_Allowed LIKE $license AND BRCM_Part_Master.Renewal_Allowed='Y' AND  BRCM_Part_Master.Active='Y' ORDER BY BRCM_Part_Master_Ext.MPN");
+}
+elif(transactionType_guidedsellingSED=="Capacity"){
+selectRes = bmql("select BRCM_Part_Master_Ext.MPN,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Business_Div,BRCM_Part_Master.PRODUCT_LINE from BRCM_Part_Master_Ext inner join BRCM_Part_Master on BRCM_Part_Master_Ext.MPN = BRCM_Part_Master.MPN where BRCM_Part_Master.PRODUCT_GROUP=$productGroup_guidedsellingSED AND Business_Div='SED' AND BRCM_Part_Master_Ext.License_Type_Allowed LIKE $license AND BRCM_Part_Master.Capacity_Allowed='Y' AND BRCM_Part_Master.Active='Y' ORDER BY BRCM_Part_Master_Ext.MPN");
+}
+
+//To improve performance and to add only once some elements to html table 
+count=0;
+for each in selectRes{
+partno = get(each, "MPN");
+if(partno <>""){
+count=count+1;
+break;
+}
+}
+print count;
+
+if(count > 0)
+{
+h = h + "<h1 style='margin-top: 12px;font-size:18px;margin-left:215px'>Here are the list of products based on your selection of Product Group,License Type and Transaction Type</h1>";
+h = h + "<h2 style='font-size:12px;font-weight:100;margin-left:215px'>Product Group = "+productGroup_guidedsellingSED +"</h2>";
+h = h + "<h2 style='font-size:12px;font-weight:100;margin-left:411px;margin-top:-23px'>License Type = "+licenseType_guidedsellingSED +"</h2>";
+h = h + "<h2 style='font-size:12px;font-weight:100;margin-left:595px;margin-top:-24px'>Transaction Type = "+transactionType_guidedsellingSED +"</h2>";
+h = h +"<label for='search' style='font-size:12px;font-weight:bolder;margin-left:221px;margin-top:-24px'>Search</label>";
+h = h +"<input type='text' id='Search' name='Search' style='color:black;width:20%;background-image: url(https://avagotechtest3.bigmachines.com/bmfsweb/avagotechtest3/image/images/searchicon.jpg);background-position: 10px 6px;background-repeat: no-repeat; font-size: 16px;padding: 8px 10px 7px 40px;border: 1px solid #ddd;margin-bottom: 30px;margin-left: 13px;color:black' onkeyup='searchFunction()'>";
+h = h +"<input type='text' id='Searchinput'>";
+ h = h + "<div class='GuidedSellingpage'>";  
+  h = h + "<div class='ProductListTable'>";
+     h = h + "<div class='tabHead' id='partdetails'>";
+     h = h + "<div id='tab1Details'>";
+     h = h + "<table id='selectorresultpage' style='border:1px solid black;   border-collapse: collapse;margin-left: 220px'>";
+      h = h + "<tr>";
+      h = h + "<th style='font-size:14px;border:1px solid black;  border-collapse: collapse;'>Select</th>";
+          h = h + "<th style='font-size:14px;border:1px solid black;   border-collapse: collapse;'>Part Number</th>";
+          h = h + "<th style='font-size:14px;border:1px solid black;  border-collapse: collapse; text-align:left;'>Part Description</th>";
+        h = h + "</tr>";
+       
+       
+for each in selectRes{
+
+
+ partnumber = get(each, "MPN");
+ productname=get(each,"Product_Name");
+ productline=get(each,"PRODUCT_LINE");
+ businessdiv=get(each,"Business_Div");
+
+
+       h = h + "<tr>";
+       
+        h = h + "<td style='border:1px solid black;'><input type='checkbox' id=checkboxtype>";
+        h = h + "</td>";
+        
+        h = h + "<td style='border:1px solid black;'>";
+        h = h + "<span> "+partnumber+" </span>";        
+        h = h + "</td>";
+        
+        h =  h + "<td style='border:1px solid black;'>";
+        h = h + "<span> "+productname+"</span></a>";
+        h = h + "</td>";        
+        h = h + "</td>";
+       h = h + "</tr>";
+}
+     
+     h = h + "<tr>";
+     h = h + "<span id=transactiontype>" + transactionType_guidedsellingSED + "</span>";
+         h = h + "<span id=supporttype>" + supportType_guidedselling_SED + "</span>";
+         h = h + "<span id=supportparts>" + supportParts_guidedSelling_SED+ "</span>";
+     h = h + "<span id=supportopt>" + supot + "</span>";
+         h = h + "<span id=startdate>" + startdate + "</span>";
+         h = h + "<span id=endadate>" + enddate + "</span>";
+     h = h + "<span id=model>" + link + "</span>";
+         h = h + "<span id=sepecialmetrc>" + spemetr + "</span>";
+         h = h + "<span id=quantity>" + quant + "</span>";
+     h = h + "<span id=unlimited>" + unlim + "</span>";
+         h = h + "<span id=productgrp>" + productGroup_guidedsellingSED + "</span>";
+     h = h + "<span id=license>" + licenseType_guidedsellingSED + "</span>";
+     h = h + "<span id=busdiv>" + businessdiv + "</span>";
+     h = h + "<span id=prodline>" + productLine_guidedsellingSED + "</span>";
+     h = h + "<span id=environment>" + environment_guidedSelling_SED+ "</span>";  
+       h = h + "</tr>";
+     h = h + "</table>";
+      h = h + "</div>";
+      h = h + "</div>";
+     h = h + "</div>";
+      h = h + "</div>";
+     h = h + "</div>";
+     h=h+"<div class='paginate' style='margin-left:250px;'>";
+     h=h+"<div class='prev'>Prev</div>";
+         h=h+"<div id='divPages'></div>";
+         h=h+"<div class='next'>Next</div>";
+         h = h + "</div>";
+     h = h + "<div class='Configbutton' style='position: absolute;left: 870px;top: 180px;   padding: 6px 20px 0px 20px;height: 26px;'>";
+     h = h + "<div class='selButton'>";
+      h = h + "<a href='model_configs.jsp?segment=SED&product_line="+productLine_guidedsellingSED+"&model=" + link + "&_variable_name_punchin=true' style='color: white;font-weight:bold' >"; 
+      h = h + ConfigureProducts + "</a>";
+      h = h + "</div>";
+     h = h + "</div>";
+     h = h + "</div>";
+  h = h + "</div>";
+  
+ //Create actual Item 
+ item = "";
+ item = item + "<Item>";
+ item = item + "<Attributes>";
+  item = item + "<Attribute title='Product Details' align='left'>";
+   item = item + "<![CDATA[";
+    item = item + h;
+   item = item + "]]>";
+  item = item + "</Attribute>";
+ item = item + "</Attributes>";  
+ item = item + "</Item>";
+ 
+ result = result + item;
+ h = "";
+
+}
+//if there are no Parts filtered on Selection
+if(item == ""){
+ result = result + "<Item><Attributes><Attribute title='Product Details' align='left'>";
+ result = result + "There are no Parts that are based on your Productgroup,License Group And Transaction type Selection</Attribute></Attributes>";
+ result = result + "<Attributes><Attribute title='Base Price' align='left'></Attribute></Attributes></Item>";
+}
+result = result + "</Items>";
+result = result + "</SelectorSearchResults>";
+
+return result;

@@ -1,0 +1,111 @@
+/*********************************************************************
+Function Name:Split Quote  
+Description:Delete model lines and stand alone lines from transaction
+Author: Ramesh Nellimarla
+User Story #:UID 212
+Date: 05th March 2019
+******************************Change Log*****************************
+             
+*********************************************************************/
+
+result       = "";
+response     = " ";
+docnumArray  = string[];
+jsonObj      = json();
+lineSelected = False;
+strDel       = " ";
+
+for line in transactionLine{
+       
+ if(line.selectLineItem_l == true){
+
+        lineSelected = true;
+ }
+ }
+
+
+if (lineSelected == true)
+{      
+    for line in transactionLine
+    {  
+      if ( line.selectLineItem_l == SelectedLines AND line._model_variable_name <> "" )
+      { 
+        jsonput(jsonobj,"documentNum",line._document_number);
+        jsonModelString = jsontostr(jsonobj);
+        append(docnumArray,jsonModelString);   
+      } 
+              
+     if(line.selectLineItem_l == SelectedLines AND line._parent_doc_number == "" AND line._model_variable_name == ""  )
+       {       
+        jsonput(jsonobj,"documentNum",line._document_number);
+        jsonModelString = jsontostr(jsonobj);
+        append(docnumArray,jsonModelString);   
+        }
+     }     
+  
+  
+  for each1 in docnumArray
+  {
+   jsonObj2      = json(each1);
+   docNum        = jsonget(jsonObj2,"documentNum");
+  
+  }
+  
+  strDel = TransactionID; 
+ } 
+ 
+  
+// code for calling delete 
+payload = dict("string");
+returnString = " ";
+strdocNum = " ";
+
+
+
+
+for each in docnumArray
+{
+line = json(each);
+strdocNum = strdocNum + jsonget(line,"documentNum") + ",";
+}
+
+strdocNum = substring(strdocNum ,1,(len(strdocNum)-1));
+
+//===========================================================================
+  username = "";
+  pwd = "";
+  
+  resultSet = bmql("SELECT Username,Password FROM INT_SYSTEM_DETAILS WHERE System='Split'");
+  
+  for vals in resultSet{
+    username = get(vals,"Username");
+    pwd = get(vals,"Password");
+   }
+  
+//=============================================================================
+  
+   fileLocation1="$BASE_PATH$/Integration/deletefromTransaction.xml";
+   ENDPOINTURL="https://"+_system_company_name+".bigmachines.com/v2_0/receiver/commerce/oraclecpqo";
+   
+   
+   put(payload,"username", username);
+   put(payload,"pwd", pwd);             
+   put(payload,"docID",strdocNum);
+   put(payload,"bs_id",TransactionID);
+   Errormsg= "Error Deleteing Transaction";
+              
+   delRequest = applytemplate(fileLocation1,payload, Errormsg);  
+
+   delresponse = urldatabypost(ENDPOINTURL,delRequest, "error");
+   
+   if (delresponse <> "Failed to Connect") 
+      {
+   returnString = "Deletion Successful";
+      }
+       else
+       { 
+    returnString = "Deletion Failed";
+          
+        }
+
+return returnString ;

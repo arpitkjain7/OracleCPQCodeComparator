@@ -107,3 +107,28 @@ else
 counter=1;
 }
 return counter;
+/*****************************************************************
+Function Name : Set Contact Array For Customer
+Name :Rohit Ranjan
+Description : This Rule to Force set contact name
+*****************************************************************/ 
+jsonObj=json(contactDetailsJsonString_avg); // creating a JSON object of the string
+delim=",";
+partynumbers=String[];
+counter=0;
+Partysitenumberret=jsonpathgetmultiple(jsonObj,"$..SubjectPartyName"); //fetching subjectpartyname from json obj
+size=jsonarraysize(Partysitenumberret);
+jsonrange=range(size);
+result=String[];
+for each in jsonrange{
+partynumbers[counter]=jsonarrayget(Partysitenumberret,each);
+if(isnull(partynumbers[counter]))
+{
+ partynumbers[counter]="";
+ }
+counter=counter+1;
+}
+
+counter=sizeofarray(partynumbers);// counted total number of contact name present
+
+return partynumbers;// returning the contact name

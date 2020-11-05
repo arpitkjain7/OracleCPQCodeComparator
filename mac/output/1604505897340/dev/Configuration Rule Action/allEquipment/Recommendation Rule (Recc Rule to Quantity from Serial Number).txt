@@ -1,0 +1,126 @@
+/********************************************************************
+Function Name: Setting Prior Contract Line Number from SN table
+Description: This rule is to auto populate the Upgrade Prior Contract Line Number from the SN table based on the active Serial Number given
+Author:   Adithya Suresh
+History:     Date          Author                    Comment 
+      05-27-2020    Adithya Suresh             Initial Version
+********************************************************************/
+result = String[];
+
+loop = sizeofarray(currentSKU_avg_picker);
+looper = range(loop);
+bigEndDate = "";
+newQuantity = 0;
+
+for each in looper{
+currentSKU = currentSKU_avg_picker[each];
+serialNumber = serialNumber_avg[each];
+newPriorNumber = "";
+bigEndDate = "";
+statusRes = bmql("SELECT Contract_Line_Number, CONTRACT_END_DATE from SERIAL_NO_HW_UPG where CONTRACT_STATUS = 'Active' and Current_SKU = $currentSKU and SERIAL_NUMBER = $serialNumber and SHIPTOCUST_ERP_No = $endCustERPNO_Avg and SHIPTOCUST_SiteNo = $endCustSiteNo_avg");
+for each1 in statusRes {
+ priorNumber = get(each1,"Contract_Line_Number");
+ endDate = get(each1,"CONTRACT_END_DATE");
+ if(bigEndDate == ""){
+  bigEndDate = endDate;
+  newPriorNumber = priorNumber;
+ }
+ endDateComp = strtojavadate(endDate, "yyyy-MM-dd");
+ bigEndDateComp = strtojavadate(bigEndDate, "yyyy-MM-dd");
+ diff = comparedates(endDateComp,bigEndDateComp);
+ 
+ if(diff == 1){
+  bigEndDate = endDate;
+  newPriorNumber = priorNumber; 
+ }
+ 
+}
+result[each] = newPriorNumber;
+}
+
+
+return result;
+/********************************************************************
+Function Name: Setting Prior Contract Number from SN table
+Description: This rule is to auto populate the Upgrade Prior Contract Number from the SN table based on the active Serial Number given
+Author:   Adithya Suresh
+History:     Date          Author                    Comment 
+      05-27-2020    Adithya Suresh             Initial Version
+********************************************************************/
+result = String[];
+
+loop = sizeofarray(currentSKU_avg_picker);
+looper = range(loop);
+bigEndDate = "";
+newQuantity = 0;
+
+for each in looper{
+currentSKU = currentSKU_avg_picker[each];
+serialNumber = serialNumber_avg[each];
+newPriorNumber = "";
+bigEndDate = "";
+statusRes = bmql("SELECT Contract_Number, CONTRACT_END_DATE from SERIAL_NO_HW_UPG where CONTRACT_STATUS = 'Active' and Current_SKU = $currentSKU and SERIAL_NUMBER = $serialNumber and SHIPTOCUST_ERP_No = $endCustERPNO_Avg and SHIPTOCUST_SiteNo = $endCustSiteNo_avg");
+for each1 in statusRes {
+ priorNumber = get(each1,"Contract_Number");
+ endDate = get(each1,"CONTRACT_END_DATE");
+ if(bigEndDate == ""){
+  bigEndDate = endDate;
+  newPriorNumber = priorNumber;
+ }
+ endDateComp = strtojavadate(endDate, "yyyy-MM-dd");
+ bigEndDateComp = strtojavadate(bigEndDate, "yyyy-MM-dd");
+ diff = comparedates(endDateComp,bigEndDateComp);
+ 
+ if(diff == 1){
+  bigEndDate = endDate;
+  newPriorNumber = priorNumber; 
+ }
+ 
+}
+result[each] = newPriorNumber;
+}
+
+
+return result;
+/********************************************************************
+Function Name: Setting Quantity from SN table
+Description: This rule is to auto populate the Upgrade quantity from the SN table based on the active Serial Number given
+Author:   Adithya Suresh
+History:     Date          Author                    Comment 
+      05-27-2020    Adithya Suresh             Initial Version
+********************************************************************/
+result = Integer[];
+
+loop = sizeofarray(currentSKU_avg_picker);
+looper = range(loop);
+bigEndDate = "";
+newQuantity = 0;
+
+for each in looper{
+currentSKU = currentSKU_avg_picker[each];
+serialNumber = serialNumber_avg[each];
+newQuantity = 0;
+bigEndDate = "";
+statusRes = bmql("SELECT Quantity, CONTRACT_END_DATE from SERIAL_NO_HW_UPG where CONTRACT_STATUS = 'Active' and Current_SKU = $currentSKU and SERIAL_NUMBER = $serialNumber and SHIPTOCUST_ERP_No = $endCustERPNO_Avg and SHIPTOCUST_SiteNo = $endCustSiteNo_avg");
+for each1 in statusRes {
+ quantity = get(each1,"Quantity");
+ endDate = get(each1,"CONTRACT_END_DATE");
+ if(bigEndDate == ""){
+  bigEndDate = endDate;
+  newQuantity = atoi(quantity);
+ }
+ endDateComp = strtojavadate(endDate, "yyyy-MM-dd");
+ bigEndDateComp = strtojavadate(bigEndDate, "yyyy-MM-dd");
+ diff = comparedates(endDateComp,bigEndDateComp);
+ 
+ if(diff == 1){
+  bigEndDate = endDate;
+  newQuantity = atoi(quantity); 
+ }
+ 
+}
+result[each] = newQuantity;
+}
+
+
+return result;

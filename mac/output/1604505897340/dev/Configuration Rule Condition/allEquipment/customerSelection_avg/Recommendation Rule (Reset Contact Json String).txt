@@ -1,0 +1,22 @@
+/*****************************************************************
+Function Name :Setting Address string to blank
+Name :Rohit Ranjan
+Description : This function return boolean value to set address string to blank
+*****************************************************************/ 
+result=false;
+size=range(customersArrayControl_avg);
+print size;
+counter=0;
+i=0;
+for each in size{
+
+if(selectCustomer_t[each]==true){
+counter=counter+1;
+
+}
+
+}
+if(counter==0){
+result=true;
+}
+return result;

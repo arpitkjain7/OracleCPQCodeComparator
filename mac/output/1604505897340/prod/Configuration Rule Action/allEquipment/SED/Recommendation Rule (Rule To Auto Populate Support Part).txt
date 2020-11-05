@@ -1,0 +1,17 @@
+/********************************************************************
+Function Name: Rule To Auto Populate Support Part
+Description: This rule is to auto populate the support part(text attribute) value based on the support type selected by the user
+Author:   Nandhini Vurimella
+History:     Date          Author                    Comment 
+      04-30-2020    Nandhini Vurimella            Initial Version
+********************************************************************/
+supportProduct = "";
+
+result = bmql("select Support_Level from BRCM_Support_Rate where Support_Type_Code = $supportType_guidedselling_SED");
+
+for res in result
+{
+supportProduct = get(res,"Support_Level");
+}
+
+return supportProduct;

@@ -1,0 +1,19 @@
+/**********************************************************************
+Function Name : Constraint_Rule_Select_Product
+Name : Nandhini Vurimella
+Description : constraint rule on select products
+**********************************************************************/
+arrayRange=range(partSelectionArrayControl_avg);
+count=0;
+for each in arrayRange{
+ if(select_avg[each]==true){
+  count=count+1;
+ }
+}
+if(count>1)
+{
+return true;
+}
+else{
+return false;
+}

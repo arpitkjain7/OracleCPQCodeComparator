@@ -1,0 +1,526 @@
+/************************************************
+/Rule Name: Create Quote
+/Description: On click of this action all the entitlements that are expiring in 90 or 180 days will be renewed
+/Author: M Vamsi Krishna
+/Creation Date: 21-Jan-2019
+/Modified by Ravi 17-Feb-2019 Added addtional Attributes to populate in Renewal Quotes.
+/Modified by Ravi 25-Jan-2019 Added Contract Line number new field to Asset and Entitilements 
+/Data table to Populate Contract Line Number for CA Quotes.*/
+supportPart = "";
+Quantity="";
+quoteRequest= "";
+payload = dict("string");
+username = "";
+password = "";
+fileLocation = "";
+soapendpoint = "";
+jsonObj = json();
+transactionID_t = "";
+usernameFlagUpdate = "";
+passwordFlagUpdate = "";
+fileLocationFlagUpdate = "";
+soapendpointFlagUpdate = "";
+usernameFlagDeploy = "";
+passwordFlagDeploy = "";
+fileLocationFlagDeploy = "";
+soapendpointFlagDeploy = "";
+partItemstring = "";
+payload_1 =dict("string");
+defaultErrorMessage_1="";
+createtransactionRequest = "";
+headersDict = dict("string"); 
+contractStartDate_1 = "";
+
+
+
+Filelocation="/bmfsweb/"+_company_name+"/image/Integration/create_transaction_1.xml";
+ENDPOINTURL="https://"+_company_name+".bigmachines.com/v2_0/receiver/commerce/oraclecpqo";
+currentsystemDate = datetostr(_current_date);
+
+
+
+response="";
+if(isempty(TransactionArray))
+{
+ print "No parts to renew";
+}
+else
+{
+result = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_CREATE_TRANSACTION'");
+
+
+for r in result
+{
+username = get(r,"Username");
+password = get(r,"Password");
+fileLocation = get(r,"File_Location");
+soapendpoint = get(r,"SoapEndpoint");
+}
+for each in TransactionArray
+{
+jsonObj = json(each);
+partNo = jsonget(jsonObj,"partNumber");
+qty =jsonget(jsonObj,"existingQuantity");
+
+
+partItemstring = partItemstring +"<bm:partItem>";
+partItemstring = partItemstring +"<bm:part>"+partNo+"</bm:part>";
+partItemstring = partItemstring +"<bm:quantity>"+qty+"</bm:quantity>";
+partItemstring = partItemstring +"<bm:price_book_var_name>_default_price_book</bm:price_book_var_name>";
+partItemstring = partItemstring +"</bm:partItem>";
+}
+put(payload_1,"USERNAME", username);
+put(payload_1,"PASSWORD", password);
+put(payload_1,"PASSWORD", password);
+put(payload_1,"forloop", partItemstring);
+//put(payload,"soapendpoint", password);
+
+//response = util.createTransaction(TransactionArray);
+createtransactionRequest=applytemplate(fileLocation,payload_1,defaultErrorMessage_1);
+createtransactionRequest = replace(createtransactionRequest,"&lt;","<");
+createtransactionRequest= replace(createtransactionRequest,"&gt;",">");
+createtransactionRequest = replace(createtransactionRequest,"&quot;","\"");
+
+
+response = urldatabypost(soapendpoint,createtransactionRequest, "error",headersDict);
+
+}
+
+
+if (response <> "")
+{
+
+pos                      = find(response,"<bm:transactionID_l>");
+transactionID= substring(response,pos+20,find(response,"</bm:transactionID_l>"));
+
+
+
+dealType="";
+outputType="";
+billToCustomer = "";
+quoteName = "";
+billToCustomerNumber = "";
+soldToCustomer = "";
+soldToCustomerNumber = "";
+quoteEffectiveDate = "";
+contractStartDate_1 = "";
+startDate = "";
+endDate = "";
+endCustomerERPName = "";
+endCustomerERPID = "";
+endOfsupportDate = "";
+gBU_Driver = "";
+quoteExpirationDate = "";
+//contractEndDate = "";
+contractEndDate_1 = "";
+contractheaderEndDate1 = "";
+batchNumber = "";
+quotetype = "";
+billtocontactemail = "";
+functionalcurrency = "";
+status = "IN_PROGRESS";
+for each in TransactionArray
+{
+jsonObj = json(each);
+autoRenwalFlag = jsonget(jsonObj,"AutoRenewFlag");
+quoteEffectiveDate = jsonget(jsonObj ,"quoteEffectiveDate");
+contractStartDate_1 = jsonget(jsonObj ,"ContractStartDate");
+
+contractStartDate = adddays(strtojavadate(jsonget(jsonObj ,"ContractStartDate"),"MM/dd/yyyy"),1);
+stringStartDate = datetostr(contractStartDate);
+startDate = datetostr(contractStartDate,"yyyy-MM-dd HH:mm:ss");
+
+contractEndDate = adddays(strtojavadate(stringStartDate,"MM/dd/yyyy"),365);
+endDate = datetostr(contractEndDate,"yyyy-MM-dd HH:mm:ss");
+batchNumber = jsonget(jsonObj,"batchNumber");
+billToCustomer = jsonget(jsonObj,"billCustName");
+billToCustomerNumber = jsonget(jsonObj,"billCustNumber");
+billtocontactemail = jsonget(jsonObj,"billtocontactemail");
+functionalcurrency = jsonget(jsonObj,"linecurrency");
+soldToCustomer = jsonget(jsonObj,"soldCustName");
+soldToCustomerNumber = jsonget(jsonObj,"soldCustNumber");
+endCustomerERPName = jsonget(jsonObj,"siteId");
+endCustomerERPID = jsonget(jsonObj,"installedAtCustomerNumber");
+endOfsupportDate = jsonget(jsonObj,"endOfSupportDate");
+gBU_Driver = jsonget(jsonObj,"gbuDriverValue");
+contractheaderEndDate1 = datetostr(strtojavadate(jsonget(jsonObj,"contractheaderEndDate"),"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+
+if(jsonget(jsonObj,"dealType") == "bSNRenewal")
+{
+
+dealType = "bSNRenewal";
+outputType = "bSNRenewal";
+quoteEffectiveDate_1 = substring(quoteEffectiveDate,0,10);
+quoteName = gBU_Driver + " - " + endCustomerERPName + " " + quoteEffectiveDate_1;
+quoteExpirationDate = datetostr(adddays(strtojavadate(QuoteEffectiveDate,"yyyy-MM-dd HH:mm:ss"),90),"yyyy-MM-dd HH:mm:ss");
+quotetype = "BSN";
+
+
+}
+if(jsonget(jsonObj,"dealType") == "cADRenewal")
+{
+endCustomerERPID = jsonget(jsonObj,"licenseAccountNo");
+endCustomerERPName = jsonget(jsonObj,"licenseeName");
+
+dealType = "cADRenewal";
+outputType = "cADirectDealRenewalOnly";
+quotetype = "CA";
+endOfSupportDate_1 = substring(EndOfSupportDate,0,10);
+quoteName = gBU_Driver + " - " + endCustomerERPName + " " + endOfSupportDate_1;
+quoteExpirationDate = datetostr(adddays(strtojavadate(QuoteEffectiveDate,"yyyy-MM-dd HH:mm:ss"),365),"yyyy-MM-dd HH:mm:ss");
+//Commented out Logic as Part of Enhancement id BROCAD2-824 now for Auto Renewal Quotes Status is In progress
+/*if(isnull(autoRenwalFlag))
+{
+
+print "AutoRenewalFlag inside IF++++++++++++++++++++++++";
+}
+else
+{
+
+status = "APPROVED";
+}*/
+
+
+
+}
+break;
+}
+lineApprovalStatus ="";
+autoRenewal = "no";
+
+
+if (status == "APPROVED")
+{
+
+ lineApprovalStatus = "APPROVED";
+ autoRenewal = "yes";
+}
+//response = util.updateTransaction(TransactionArray, transactionID);
+//response = util.updateTransaction1(TransactionArray,transactionID,dealType,outputType);
+//response = util.updateTransaction2(TransactionArray, transactionID, DealType, OutputType, billToCustomer, billToCustomerNumber, soldToCustomer, soldToCustomerNumber);
+//response = util.updateTransaction3(TransactionArray, transactionID, DealType, OutputType, billToCustomer, billToCustomerNumber, soldToCustomer, soldToCustomerNumber,quoteEffectiveDate,startDate,endDate,status);
+//response = util.updateTransaction5(TransactionArray, transactionID, DealType, OutputType, billToCustomer, billToCustomerNumber, soldToCustomer, soldToCustomerNumber,quoteEffectiveDate,startDate,endDate,status,endCustomerERPID,endCustomerERPName,endOfsupportDate,gBU_Driver,"");
+//response = util.updateTransaction(TransactionArray, transactionID);
+
+
+//fileLocation1="/bmfsweb/"+_company_name+"/image/Integration/updatetransaction_7.xml";
+//fileLocation1="/bmfsweb/"+_company_name+"/image/Integration/RenewalsUpdateTransaction_1.xml";
+//fileLocation2="/bmfsweb/"+_company_name+"/image/Integration/updateTransaction_save.xml";
+
+
+quoteRequest= "";
+payload = dict("string");
+
+trans = "";
+returnString = "";
+for each in TransactionArray{
+
+line = json(each);
+contractStartDate = datetostr(adddays(strtojavadate(jsonget(line,"ContractStartDate"),"MM/dd/yyyy"),1));
+contractEndDate = datetostr(adddays(strtojavadate(contractStartDate,"MM/dd/yyyy"),365));
+licenseType = jsonget(line,"licenseType");
+licenseMetric = jsonget(line,"licenseMetric");
+environmentCode = jsonget(line,"environmentCode");
+specialMetricType = jsonget(line,"specialMetricType");
+metricQuantity = jsonget(line,"metricQuantity");
+contractheaderEndDate = datetostr(strtojavadate(jsonget(line,"contractheaderEndDate"),"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+
+
+
+
+
+
+
+  returnString = returnString + "<bm:transactionLine bm:bs_id=\""+transactionID+"\" bm:buyer_company_name=\"avagotechtest2\" bm:buyer_user_name=\"kmrinal\" bm:currency_pref=\"USD\" bm:data_type=\"2\" bm:document_name=\"Transaction Line\" bm:document_number=\""+jsonget(line,"_document_number")+"\" bm:document_var_name=\"transactionLine\" bm:process_var_name=\"oraclecpqo\" bm:supplier_company_name=\"avagotechtest2\">";
+         returnString = returnString + "<bm:_document_number>"+jsonget(line,"_document_number")+"</bm:_document_number>";
+            returnString = returnString + "<bm:_price_book_var_name>_default_price_book</bm:_price_book_var_name>";
+              returnString = returnString +  "<bm:_price_quantity>"+jsonget(line,"existingQuantity")+"</bm:_price_quantity>";
+              //returnString = returnString +  "<bm:existingQuantity_l>"+jsonget(line,"quantity")+"</bm:existingQuantity_l>";
+              returnString = returnString +  "<bm:contractStartDate_l>"+startDate+"</bm:contractStartDate_l>";
+              returnString = returnString +  "<bm:existingSupportStartDate_l>"+jsonget(line,"entitlementStartDate")+"</bm:existingSupportStartDate_l>";
+              returnString = returnString +  "<bm:existingSupportExpirationDate_l>"+contractStartDate_1+"</bm:existingSupportExpirationDate_l>";
+              returnString = returnString +  "<bm:contractEndDate_l>"+contractheaderEndDate+"</bm:contractEndDate_l>";
+              //returnString = returnString +  "<bm:contractEndDate_l>"+endDate+"</bm:contractEndDate_l>";
+              returnString = returnString +  "<bm:priorContract>"+jsonget(line,"contractNumber")+"</bm:priorContract>";
+              returnString = returnString +  "<bm:mPN_l>"+jsonget(line,"mpn")+"</bm:mPN_l>";
+              returnString = returnString +  "<bm:productName_l>"+jsonget(line,"productName")+"</bm:productName_l>";
+              returnString = returnString +  "<bm:migrationType_l>"+jsonget(line,"migrationType")+"</bm:migrationType_l>";
+             // returnString = returnString +  "<bm:baseMaterial_1>"+jsonget(line,"baseMaterial")+"</bm:baseMaterial_1>";
+              returnString = returnString +  "<bm:productReplacementCode1_l>"+jsonget(line,"replacementProduct")+"</bm:productReplacementCode1_l>";
+              returnString = returnString +  "<bm:coveredProduct_l>"+jsonget(line,"coveredProduct")+"</bm:coveredProduct_l>";
+              returnString = returnString +  "<bm:cPProductFamily_l>"+jsonget(line,"productFamily")+"</bm:cPProductFamily_l>";
+              returnString = returnString +  "<bm:productReplacementCode2_l>"+jsonget(line,"replacementPdtVal")+"</bm:productReplacementCode2_l>";
+              returnString = returnString +  "<bm:quantityRatioConversion_l>"+jsonget(line,"qtyRatioConversion")+"</bm:quantityRatioConversion_l>";
+              returnString = returnString +  "<bm:upgradeMaterial_l>"+jsonget(line,"upgradeMaterial")+"</bm:upgradeMaterial_l>";
+              returnString = returnString +  "<bm:dateShipped_l>"+jsonget(line,"endOfSupportDate")+"</bm:dateShipped_l>";
+       returnString = returnString +  "<bm:serial_l>"+jsonget(line,"sNo")+"</bm:serial_l>";
+       if(licenseType <> "" and NOT isnull(licenseType)){
+  returnString = returnString +  "<bm:licenseType_l>"+licenseType+"</bm:licenseType_l>";}
+       returnString = returnString +  "<bm:licenseMetric_l>"+licenseMetric+"</bm:licenseMetric_l>";
+        if(environmentCode <> "" and NOT isnull(environmentCode)){
+    returnString = returnString +  "<bm:enterEnvironment_l>"+environmentCode+"</bm:enterEnvironment_l>";}
+     returnString = returnString +  "<bm:nonStandardLicenseMetric_l>"+specialMetricType+"</bm:nonStandardLicenseMetric_l>";
+      returnString = returnString +  "<bm:nonStandardQty_l>"+metricQuantity+"</bm:nonStandardQty_l>";
+      returnString = returnString +  "<bm:priorContractLineItem_l>"+jsonget(line,"contractLineNumber")+"</bm:priorContractLineItem_l>";
+     //returnString = returnString +  "<bm:extProposedNetPriceRequested_l>"+jsonget(line,"previousprice")+"</bm:extProposedNetPriceRequested_l>";
+    
+    
+    returnString = returnString +  "<bm:eOSDate_l>"+jsonget(line,"dateShipped")+"</bm:eOSDate_l>";
+       returnString = returnString +  "<bm:siteIDStreetAddress_l>"+jsonget(line,"fullAddress")+"</bm:siteIDStreetAddress_l>";
+       returnString = returnString +    "<bm:installedAtCustomerNumber_l>"+jsonget(line,"installedAtCustomerNumber")+"</bm:installedAtCustomerNumber_l>";  
+       returnString = returnString +  "<bm:siteID_l>"+jsonget(line,"siteId")+"</bm:siteID_l>";
+       returnString = returnString +  "<bm:siteIDCityStateZip_l>"+jsonget(line,"siteIdCity")+"</bm:siteIDCityStateZip_l>";
+       returnString = returnString +  "<bm:siteIDZip_l>"+jsonget(line,"siteIdZip")+"</bm:siteIDZip_l>";
+       returnString = returnString +  "<bm:siteIDCountry_l>"+jsonget(line,"siteIdCountry")+"</bm:siteIDCountry_l>";
+       returnString = returnString +  "<bm:supportType_l>"+jsonget(line,"existingSupportType")+"</bm:supportType_l>";
+       returnString = returnString +  "<bm:previousPrice_l>"+jsonget(line,"previousprice")+"</bm:previousPrice_l>";
+       returnString = returnString +  "<bm:lineApprovalStatus_l>"+lineApprovalStatus+"</bm:lineApprovalStatus_l>";
+       returnString = returnString +  "<bm:existingQuantity_l>"+jsonget(line,"quantity")+"</bm:existingQuantity_l>";
+       returnString = returnString +  "<bm:hiddenPrice_l>"+jsonget(line,"previousprice")+"</bm:hiddenPrice_l>";
+       returnString = returnString +  "<bm:lineExpirationDate_l>"+quoteExpirationDate+"</bm:lineExpirationDate_l>";
+       
+       returnString = returnString +  "<bm:transactionTypeM_l>Renew</bm:transactionTypeM_l>";
+          returnString = returnString + "</bm:transactionLine>";
+              
+              
+}
+
+result = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_UPDATE'");
+
+
+for r in result
+{
+username = get(r,"Username");
+password = get(r,"Password");
+fileLocation = get(r,"File_Location");
+soapendpoint = get(r,"SoapEndpoint");
+}
+
+
+put(payload,"USERNAME", username);
+put(payload,"status", status);
+put(payload,"autorenewalnotification", autoRenewal);
+put(payload,"PASSWORD", password);
+put(payload,"quoteName",quoteName);
+put(payload,"bs_id",transactionID);
+put(payload,"billtocustomername",billToCustomer);
+put(payload,"billtocustomerno",billToCustomerNumber);
+put(payload,"soldtocustomername",soldToCustomer);
+put(payload,"soldtocustomerno",soldToCustomerNumber);
+put(payload,"companyname",endCustomerERPName);
+put(payload,"customerERPID",endCustomerERPID);
+put(payload,"Transaction_ID",transactionID);
+put(payload,"BuyerCompanyName",CustomerCompanyName);
+put(payload,"SupplierCompanyName",SupplierCompanyName);
+put(payload,"QuoteOutputType",outputType);
+put(payload,"DealType",dealType);
+//put(payload,"customerERPID",endCustomerERPID);
+//put(payload,"companyname",endCustomerERPName);
+put(payload,"contractstartdate",startDate);
+put(payload,"contractenddate",endDate);
+put(payload,"quoteEffectiveDate",quoteEffectiveDate);
+put(payload,"quoteExpirationDate",quoteExpirationDate);
+put(payload,"createdDate",quoteEffectiveDate);
+put(payload,"closedate",startDate);
+put(payload,"billtocontactemail",billtocontactemail);
+put(payload,"functionalcurrency",functionalcurrency);
+put(payload,"forloop",returnString);
+
+
+
+str1=encodebase64("Integration:Welcome@01");
+
+
+
+auth="Basic" + " " + str1;
+
+defaultErrorMessage="";
+quoteRequest1=applytemplate(fileLocation,payload,defaultErrorMessage);
+quoteRequest1 = replace(quoteRequest1,"&lt;","<");
+quoteRequest1= replace(quoteRequest1,"&gt;",">");
+quoteRequest1 = replace(quoteRequest1,"&quot;","\"");
+
+
+put(headersDict,"Content-Type","text/xml;charset=UTF-8"); 
+put(headersDict,"Authorization",auth);
+response="";
+response = urldatabypost(soapendpoint,quoteRequest1, "error",headersDict);
+
+//response = util.updateTransaction(TransactionArray, transactionID);
+
+
+result = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System ='SAVE_TRANSACTION'");
+
+
+for r in result
+{
+username = get(r,"Username");
+password = get(r,"Password");
+fileLocation = get(r,"File_Location");
+soapendpoint = get(r,"SoapEndpoint");
+}
+put(payload,"userName", username);
+//put(payload,"status", status);
+//put(payload,"autorenewalnotification", autoRenewal);
+put(payload,"password", password);
+put(payload,"bs_id", transactionID);
+
+quoteRequest2=applytemplate(fileLocation,payload,defaultErrorMessage);
+
+
+response = urldatabypost(soapendpoint,quoteRequest2, "error",headersDict);
+
+
+
+
+
+if(find(response,"Success") > 0){
+
+renewalFlagUpdatePayload = dict("string");
+resultFlagUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_FLAG_UPDATE'");
+
+
+for flagUpdate in resultFlagUpdate
+{
+usernameFlagUpdate = get(flagUpdate,"Username");
+passwordFlagUpdate = get(flagUpdate,"Password");
+fileLocationFlagUpdate = get(flagUpdate,"File_Location");
+soapendpointFlagUpdate = get(flagUpdate,"SoapEndpoint");
+}
+put(renewalFlagUpdatePayload,"USERNAME", usernameFlagUpdate);
+put(renewalFlagUpdatePayload,"PASSWORD", passwordFlagUpdate);
+recordUpdateString = "";
+for eachRecord in DataTableUpdateArray
+{
+
+jsonObj = json(eachRecord);
+partNumber = jsonget(jsonObj,"partNumber");
+serialNumber = jsonget(jsonObj,"serialNumber");
+instanceIdentifier = jsonget(jsonObj,"instanceIdentifier");
+contractlinenumber = jsonget(jsonObj,"contractLineNumber");
+
+recordUpdateString = recordUpdateString +"<bm:each_record>";
+recordUpdateString = recordUpdateString +"<bm:SERIAL_NUMBER>"+serialNumber+"</bm:SERIAL_NUMBER>";
+recordUpdateString = recordUpdateString +"<bm:CONTRACT_NUMBER>"+partNumber+"</bm:CONTRACT_NUMBER>";
+recordUpdateString = recordUpdateString +"<bm:QUOTE_NUMBER>"+transactionID+"</bm:QUOTE_NUMBER>";
+recordUpdateString = recordUpdateString +"<bm:INSTANCE_IDENTIFIER>"+instanceIdentifier+"</bm:INSTANCE_IDENTIFIER>";
+recordUpdateString = recordUpdateString +"<bm:CONTRACT_LINE_NUM>"+contractLineNumber+"</bm:CONTRACT_LINE_NUM>";
+recordUpdateString = recordUpdateString +"<bm:Quote_Type>"+quotetype+"</bm:Quote_Type>";
+recordUpdateString = recordUpdateString +"</bm:each_record>";
+}
+put(renewalFlagUpdatePayload,"forLoop", recordUpdateString);
+
+str1=encodebase64("Integration:Welcome@01");
+
+
+
+auth="Basic" + " " + str1;
+
+defaultErrorMessage="";
+quoteRequestRenewalFalgUpdate=applytemplate(fileLocationFlagUpdate,renewalFlagUpdatePayload,defaultErrorMessage);
+quoteRequestRenewalFalgUpdate = replace(quoteRequestRenewalFalgUpdate,"&lt;","<");
+quoteRequestRenewalFalgUpdate= replace(quoteRequestRenewalFalgUpdate,"&gt;",">");
+quoteRequestRenewalFalgUpdate = replace(quoteRequestRenewalFalgUpdate,"&quot;","\"");
+
+headersDict = dict("string"); 
+put(headersDict,"Content-Type","text/xml;charset=UTF-8"); 
+put(headersDict,"Authorization",auth);
+response="";
+response = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalFalgUpdate, "error",headersDict);
+
+
+//updateRenewalFlag = util.renewalFlagUpdate(DataTableUpdateArray, transactionID);
+
+
+renewalFlagDeployPayload = dict("string");
+resultFlagDeploy = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_FLAG_DEPLOY'");
+
+for flagDeploy in resultFlagDeploy
+{
+usernameFlagDeploy = get(flagDeploy,"Username");
+passwordFlagDeploy = get(flagDeploy,"Password");
+fileLocationFlagDeploy = get(flagDeploy,"File_Location");
+soapendpointFlagDeploy = get(flagDeploy,"SoapEndpoint");
+}
+put(renewalFlagDeployPayload,"USERNAME", usernameFlagDeploy);
+put(renewalFlagDeployPayload,"PASSWORD", passwordFlagDeploy);
+str1=encodebase64("Integration:Welcome@01");
+
+
+
+auth="Basic" + " " + str1;
+
+defaultErrorMessage="";
+quoteRequestRenewalFalgDeploy=applytemplate(fileLocationFlagDeploy,renewalFlagDeployPayload,defaultErrorMessage);
+
+
+headersDict = dict("string"); 
+put(headersDict,"Content-Type","text/xml;charset=UTF-8"); 
+put(headersDict,"Authorization",auth);
+response="";
+response = urldatabypost(soapendpointFlagDeploy,quoteRequestRenewalFalgDeploy, "error",headersDict);
+
+//renewalFlagDeploy = util.renewalFlagDeploy();
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++/
+transactionDetails = gettransaction(atoi(transactionID));
+
+
+//transactionDetails = util.getTransactions(transactionID);
+  QuotenoStartPosition = find(transactionDetails, "<transactionID_t><![CDATA[");
+  QuotenoEndPosition = find(transactionDetails, "]]></transactionID_t>");
+  quoteNumber = substring(transactionDetails, QuotenoStartPosition+len("<transactionID_t><![CDATA["), QuotenoEndPosition);
+  
+  //quotenoendposition = find(fullfillmentsetid,"_");
+  //quoteNumber = substring(fullfillmentsetid,0,quotenoendposition);
+
+  
+  
+  renewalJobUpdatePayload = dict("string");
+renewaljobUpdate = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'RENEWAL_JOB_UPDATE'");
+
+
+for each in renewaljobUpdate
+{
+usernameFlagUpdate = get(each,"Username");
+passwordFlagUpdate = get(each,"Password");
+fileLocationFlagUpdate = get(each,"File_Location");
+soapendpointFlagUpdate = get(each,"SoapEndpoint");
+}
+put(renewalJobUpdatePayload,"USERNAME", usernameFlagUpdate);
+put(renewalJobUpdatePayload,"PASSWORD", passwordFlagUpdate);
+recordUpdateString = "";
+
+recordUpdateString = recordUpdateString +"<bm:each_record>";
+recordUpdateString = recordUpdateString +"<bm:Quote_Number>"+quoteNumber+"</bm:Quote_Number>";
+recordUpdateString = recordUpdateString +"<bm:Batch_Date>"+currentsystemDate+"</bm:Batch_Date>";
+recordUpdateString = recordUpdateString +"<bm:User>"+"Integration"+"</bm:User>";
+recordUpdateString = recordUpdateString +"<bm:Transaction_ID>"+transactionID+"</bm:Transaction_ID>";
+recordUpdateString = recordUpdateString +"<bm:Batch_Number>"+batchNumber+"</bm:Batch_Number>";
+recordUpdateString = recordUpdateString +"</bm:each_record>";
+
+put(renewalJobUpdatePayload,"forLoop", recordUpdateString);
+
+auth="Basic" + " " + str1;
+
+defaultErrorMessage="";
+quoteRequestRenewalJobUpdate=applytemplate(fileLocationFlagUpdate,renewalJobUpdatePayload,defaultErrorMessage);
+quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&lt;","<");
+quoteRequestRenewalJobUpdate= replace(quoteRequestRenewalJobUpdate,"&gt;",">");
+quoteRequestRenewalJobUpdate = replace(quoteRequestRenewalJobUpdate,"&quot;","\"");
+
+headersDict = dict("string"); 
+put(headersDict,"Content-Type","text/xml;charset=UTF-8"); 
+put(headersDict,"Authorization",auth);
+response="";
+response = urldatabypost(soapendpointFlagUpdate,quoteRequestRenewalJobUpdate, "error",headersDict);
+
+
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++/
+
+
+}
+}
+
+return "Quote Created Successfully";

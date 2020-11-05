@@ -1,0 +1,29 @@
+/***********************************************************
+Function Name : Product Renewal Notification
+Name : Shruti Sawla
+Description : To set attributes which will be used for conditionalities in CA Document 
+**********************************************************/
+result="";
+dlim="~";
+dend="|";
+address1="";
+address2="";
+address3="";
+
+
+
+
+              headerRecord=bmql("Select OU,Address1,Address2,Address3 from BRCM_Headers where OU=$operatingUnit_t");
+              
+              for eachRecord in headerRecord{
+               address1= get(eachRecord,"Address1");
+        address2= get(eachRecord,"Address2");
+    address3= get(eachRecord,"Address3");
+              }
+              
+
+result= result + _transaction_document_number + dlim + "headerLegalAddress_t" + dlim + address1 + dend;
+result= result + _transaction_document_number + dlim + "headerLegalAddress1_t" + dlim + address2 + dend;
+result= result + _transaction_document_number + dlim + "headerLegalAddress2_t" + dlim + address3 + dend;
+
+return result;

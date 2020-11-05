@@ -1,0 +1,138 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+
+<head>
+    <meta http-equiv="Content-Type"
+          content="text/html; charset=utf-8" />
+    <title></title>
+    <style type="text/css">
+        table.diff {font-family:Courier; border:medium;}
+        .diff_header {background-color:#e0e0e0}
+        td.diff_header {text-align:right}
+        .diff_next {background-color:#c0c0c0}
+        .diff_add {background-color:#aaffaa}
+        .diff_chg {background-color:#ffff77}
+        .diff_sub {background-color:#ffaaaa}
+    </style>
+</head>
+
+<body>
+    
+    <table class="diff" id="difflib_chg_to589__top"
+           cellspacing="0" cellpadding="0" rules="groups" >
+        <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
+        <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
+        <thead><tr><th class="diff_next"><br /></th><th colspan="2" class="diff_header">dev</th><th class="diff_next"><br /></th><th colspan="2" class="diff_header">prod</th></tr></thead>
+        <tbody>
+            <tr><td class="diff_next"><a href="#difflib_chg_to589__0">f</a></td><td class="diff_header" id="from589_1">1</td><td nowrap="nowrap">/************************************************</td><td class="diff_next"><a href="#difflib_chg_to589__0">f</a></td><td class="diff_header" id="to589_1">1</td><td nowrap="nowrap">/************************************************</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_2">2</td><td nowrap="nowrap">/Rule&nbsp;Name:&nbsp;Auto&nbsp;Call&nbsp;Sync&nbsp;To&nbsp;Opty</td><td class="diff_next"></td><td class="diff_header" id="to589_2">2</td><td nowrap="nowrap">/Rule&nbsp;Name:&nbsp;Auto&nbsp;Call&nbsp;Sync&nbsp;To&nbsp;Opty</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_3">3</td><td nowrap="nowrap">/*************************************************/</td><td class="diff_next"></td><td class="diff_header" id="to589_3">3</td><td nowrap="nowrap">/*************************************************/</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_4">4</td><td nowrap="nowrap">rret="";</td><td class="diff_next"></td><td class="diff_header" id="to589_4">4</td><td nowrap="nowrap">rret="";</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_5">5</td><td nowrap="nowrap">BatchNumber=0;</td><td class="diff_next"></td><td class="diff_header" id="to589_5">5</td><td nowrap="nowrap">BatchNumber=0;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_6">6</td><td nowrap="nowrap">batchCheck=0;</td><td class="diff_next"></td><td class="diff_header" id="to589_6">6</td><td nowrap="nowrap">batchCheck=0;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_7">7</td><td nowrap="nowrap">url="";</td><td class="diff_next"></td><td class="diff_header" id="to589_7">7</td><td nowrap="nowrap">url="";</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_8">8</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to589_8">8</td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_9">9</td><td nowrap="nowrap">Credentials="";</td><td class="diff_next"></td><td class="diff_header" id="to589_9">9</td><td nowrap="nowrap">Credentials="";</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_10">10</td><td nowrap="nowrap">result=bmql("Select&nbsp;Batch_Number&nbsp;from&nbsp;BRCM_Renewal_Batch");</td><td class="diff_next"></td><td class="diff_header" id="to589_10">10</td><td nowrap="nowrap">result=bmql("Select&nbsp;Batch_Number&nbsp;from&nbsp;BRCM_Renewal_Batch");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_11">11</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to589_11">11</td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_12">12</td><td nowrap="nowrap">for&nbsp;res&nbsp;in&nbsp;result</td><td class="diff_next"></td><td class="diff_header" id="to589_12">12</td><td nowrap="nowrap">for&nbsp;res&nbsp;in&nbsp;result</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_13">13</td><td nowrap="nowrap">{</td><td class="diff_next"></td><td class="diff_header" id="to589_13">13</td><td nowrap="nowrap">{</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_14">14</td><td nowrap="nowrap">&nbsp;&nbsp;BatchNumber&nbsp;=&nbsp;getint(res,"Batch_Number");</td><td class="diff_next"></td><td class="diff_header" id="to589_14">14</td><td nowrap="nowrap">&nbsp;&nbsp;BatchNumber&nbsp;=&nbsp;getint(res,"Batch_Number");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_15">15</td><td nowrap="nowrap">}</td><td class="diff_next"></td><td class="diff_header" id="to589_15">15</td><td nowrap="nowrap">}</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_16">16</td><td nowrap="nowrap">batchCheck=BatchNumber+1;</td><td class="diff_next"></td><td class="diff_header" id="to589_16">16</td><td nowrap="nowrap">batchCheck=BatchNumber+1;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_17">17</td><td nowrap="nowrap">print&nbsp;"===============Sync&nbsp;to&nbsp;opty";</td><td class="diff_next"></td><td class="diff_header" id="to589_17">17</td><td nowrap="nowrap">print&nbsp;"===============Sync&nbsp;to&nbsp;opty";</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_18">18</td><td nowrap="nowrap">print&nbsp;BatchNumber;</td><td class="diff_next"></td><td class="diff_header" id="to589_18">18</td><td nowrap="nowrap">print&nbsp;BatchNumber;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_19">19</td><td nowrap="nowrap">print&nbsp;batchCheck;</td><td class="diff_next"></td><td class="diff_header" id="to589_19">19</td><td nowrap="nowrap">print&nbsp;batchCheck;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_20">20</td><td nowrap="nowrap">results=bmql("select&nbsp;Username,Password,SoapEndpoint&nbsp;from&nbsp;INT_SYSTEM_DETAILS&nbsp;where&nbsp;System='Create_Renewal_Trans_REST'");</td><td class="diff_next"></td><td class="diff_header" id="to589_20">20</td><td nowrap="nowrap">results=bmql("select&nbsp;Username,Password,SoapEndpoint&nbsp;from&nbsp;INT_SYSTEM_DETAILS&nbsp;where&nbsp;System='Create_Renewal_Trans_REST'");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_21">21</td><td nowrap="nowrap">&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_21">21</td><td nowrap="nowrap">&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_22">22</td><td nowrap="nowrap">&nbsp;for&nbsp;res2&nbsp;in&nbsp;results</td><td class="diff_next"></td><td class="diff_header" id="to589_22">22</td><td nowrap="nowrap">&nbsp;for&nbsp;res2&nbsp;in&nbsp;results</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_23">23</td><td nowrap="nowrap">&nbsp;{</td><td class="diff_next"></td><td class="diff_header" id="to589_23">23</td><td nowrap="nowrap">&nbsp;{</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_24">24</td><td nowrap="nowrap">&nbsp;Credentials_sb=stringbuilder();</td><td class="diff_next"></td><td class="diff_header" id="to589_24">24</td><td nowrap="nowrap">&nbsp;Credentials_sb=stringbuilder();</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_25">25</td><td nowrap="nowrap">&nbsp;Credentials_sb&nbsp;=&nbsp;sbappend(Credentials_sb,&nbsp;get(res2,"Username"),&nbsp;":",&nbsp;get(res2,"Password"));</td><td class="diff_next"></td><td class="diff_header" id="to589_25">25</td><td nowrap="nowrap">&nbsp;Credentials_sb&nbsp;=&nbsp;sbappend(Credentials_sb,&nbsp;get(res2,"Username"),&nbsp;":",&nbsp;get(res2,"Password"));</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_26">26</td><td nowrap="nowrap">&nbsp;Credentials=sbtostring(Credentials_sb);</td><td class="diff_next"></td><td class="diff_header" id="to589_26">26</td><td nowrap="nowrap">&nbsp;Credentials=sbtostring(Credentials_sb);</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_27">27</td><td nowrap="nowrap">&nbsp;url=get(res2,"SoapEndpoint");</td><td class="diff_next"></td><td class="diff_header" id="to589_27">27</td><td nowrap="nowrap">&nbsp;url=get(res2,"SoapEndpoint");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_28">28</td><td nowrap="nowrap">&nbsp;print&nbsp;Credentials;</td><td class="diff_next"></td><td class="diff_header" id="to589_28">28</td><td nowrap="nowrap">&nbsp;print&nbsp;Credentials;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_29">29</td><td nowrap="nowrap">&nbsp;}</td><td class="diff_next"></td><td class="diff_header" id="to589_29">29</td><td nowrap="nowrap">&nbsp;}</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_30">30</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to589_30">30</td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_31">31</td><td nowrap="nowrap">&nbsp;http_Method="POST";</td><td class="diff_next"></td><td class="diff_header" id="to589_31">31</td><td nowrap="nowrap">&nbsp;http_Method="POST";</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_32">32</td><td nowrap="nowrap">&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_32">32</td><td nowrap="nowrap">&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_33">33</td><td nowrap="nowrap">//Rest&nbsp;API&nbsp;Header&nbsp;details</td><td class="diff_next"></td><td class="diff_header" id="to589_33">33</td><td nowrap="nowrap">//Rest&nbsp;API&nbsp;Header&nbsp;details</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_34">34</td><td nowrap="nowrap">&nbsp;headersDict&nbsp;=&nbsp;dict("string");&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_34">34</td><td nowrap="nowrap">&nbsp;headersDict&nbsp;=&nbsp;dict("string");&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_35">35</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to589_35">35</td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_36">36</td><td nowrap="nowrap">&nbsp;put(headersDict,"Content-Type","application/json");</td><td class="diff_next"></td><td class="diff_header" id="to589_36">36</td><td nowrap="nowrap">&nbsp;put(headersDict,"Content-Type","application/json");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_37">37</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to589_37">37</td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next" id="difflib_chg_to589__0"></td><td class="diff_header" id="from589_38">38</td><td nowrap="nowrap">&nbsp;encodecredential=encodebase64(Credentials);</td><td class="diff_next"></td><td class="diff_header" id="to589_38">38</td><td nowrap="nowrap">&nbsp;encodecredential=encodebase64(Credentials);</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_39">39</td><td nowrap="nowrap">&nbsp;authstring="Basic&nbsp;"&nbsp;+&nbsp;encodecredential;</td><td class="diff_next"></td><td class="diff_header" id="to589_39">39</td><td nowrap="nowrap">&nbsp;authstring="Basic&nbsp;"&nbsp;+&nbsp;encodecredential;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_40">40</td><td nowrap="nowrap">&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_40">40</td><td nowrap="nowrap">&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_41">41</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to589_41">41</td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_42">42</td><td nowrap="nowrap">&nbsp;put(headersDict,"Authorization",authstring);</td><td class="diff_next"></td><td class="diff_header" id="to589_42">42</td><td nowrap="nowrap">&nbsp;put(headersDict,"Authorization",authstring);</td></tr>
+            <tr><td class="diff_next"><a href="#difflib_chg_to589__top">t</a></td><td class="diff_header" id="from589_43">43</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;print&nbsp;"headersDict";</span></td><td class="diff_next"><a href="#difflib_chg_to589__top">t</a></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_44">44</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;print&nbsp;headersDict;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_45">45</td><td nowrap="nowrap">&nbsp;response=Dict("string");</td><td class="diff_next"></td><td class="diff_header" id="to589_43">43</td><td nowrap="nowrap">&nbsp;response=Dict("string");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_46">46</td><td nowrap="nowrap">counter=0;&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_44">44</td><td nowrap="nowrap">counter=0;&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_47">47</td><td nowrap="nowrap">result1=bmql("Select&nbsp;Transaction_ID,OPTY_ID&nbsp;from&nbsp;BRCM_Renewal_Job&nbsp;where&nbsp;Batch_Number=$batchCheck");</td><td class="diff_next"></td><td class="diff_header" id="to589_45">45</td><td nowrap="nowrap">result1=bmql("Select&nbsp;Transaction_ID,OPTY_ID&nbsp;from&nbsp;BRCM_Renewal_Job&nbsp;where&nbsp;Batch_Number=$batchCheck");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_48">48</td><td nowrap="nowrap">for&nbsp;res1&nbsp;in&nbsp;result1</td><td class="diff_next"></td><td class="diff_header" id="to589_46">46</td><td nowrap="nowrap">for&nbsp;res1&nbsp;in&nbsp;result1</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_49">49</td><td nowrap="nowrap">{</td><td class="diff_next"></td><td class="diff_header" id="to589_47">47</td><td nowrap="nowrap">{</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_50">50</td><td nowrap="nowrap">counter=1;</td><td class="diff_next"></td><td class="diff_header" id="to589_48">48</td><td nowrap="nowrap">counter=1;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_51">51</td><td nowrap="nowrap">}</td><td class="diff_next"></td><td class="diff_header" id="to589_49">49</td><td nowrap="nowrap">}</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_52">52</td><td nowrap="nowrap">print&nbsp;counter;</td><td class="diff_next"></td><td class="diff_header" id="to589_50">50</td><td nowrap="nowrap">print&nbsp;counter;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_53">53</td><td nowrap="nowrap">if(counter==0)</td><td class="diff_next"></td><td class="diff_header" id="to589_51">51</td><td nowrap="nowrap">if(counter==0)</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_54">54</td><td nowrap="nowrap">{&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_52">52</td><td nowrap="nowrap">{&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_55">55</td><td nowrap="nowrap">result=bmql("Select&nbsp;Transaction_ID,OPTY_ID&nbsp;from&nbsp;BRCM_Renewal_Job&nbsp;where&nbsp;Batch_Number=$BatchNumber&nbsp;and&nbsp;ACCOUNT_TYPE&lt;&gt;'Commercial'&nbsp;and&nbsp;User&nbsp;=&nbsp;$Program_ID");</td><td class="diff_next"></td><td class="diff_header" id="to589_53">53</td><td nowrap="nowrap">result=bmql("Select&nbsp;Transaction_ID,OPTY_ID&nbsp;from&nbsp;BRCM_Renewal_Job&nbsp;where&nbsp;Batch_Number=$BatchNumber&nbsp;and&nbsp;ACCOUNT_TYPE&lt;&gt;'Commercial'&nbsp;and&nbsp;User&nbsp;=&nbsp;$Program_ID");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_56">56</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to589_54">54</td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_57">57</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to589_55">55</td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_58">58</td><td nowrap="nowrap">for&nbsp;res&nbsp;in&nbsp;result</td><td class="diff_next"></td><td class="diff_header" id="to589_56">56</td><td nowrap="nowrap">for&nbsp;res&nbsp;in&nbsp;result</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_59">59</td><td nowrap="nowrap">{</td><td class="diff_next"></td><td class="diff_header" id="to589_57">57</td><td nowrap="nowrap">{</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_60">60</td><td nowrap="nowrap">print&nbsp;"===========&nbsp;inside&nbsp;sync&nbsp;to&nbsp;opty&nbsp;logic";</td><td class="diff_next"></td><td class="diff_header" id="to589_58">58</td><td nowrap="nowrap">print&nbsp;"===========&nbsp;inside&nbsp;sync&nbsp;to&nbsp;opty&nbsp;logic";</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_61">61</td><td nowrap="nowrap">&nbsp;&nbsp;TransactionID&nbsp;=&nbsp;get(res,"Transaction_ID");</td><td class="diff_next"></td><td class="diff_header" id="to589_59">59</td><td nowrap="nowrap">&nbsp;&nbsp;TransactionID&nbsp;=&nbsp;get(res,"Transaction_ID");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_62">62</td><td nowrap="nowrap">&nbsp;&nbsp;optyID=get(res,"OPTY_ID");</td><td class="diff_next"></td><td class="diff_header" id="to589_60">60</td><td nowrap="nowrap">&nbsp;&nbsp;optyID=get(res,"OPTY_ID");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_63">63</td><td nowrap="nowrap">&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_61">61</td><td nowrap="nowrap">&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_64">64</td><td nowrap="nowrap">&nbsp;if(optyID&lt;&gt;"")</td><td class="diff_next"></td><td class="diff_header" id="to589_62">62</td><td nowrap="nowrap">&nbsp;if(optyID&lt;&gt;"")</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_65">65</td><td nowrap="nowrap">&nbsp;{</td><td class="diff_next"></td><td class="diff_header" id="to589_63">63</td><td nowrap="nowrap">&nbsp;{</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_66">66</td><td nowrap="nowrap">&nbsp;OPENURL_sb&nbsp;=&nbsp;stringbuilder();</td><td class="diff_next"></td><td class="diff_header" id="to589_64">64</td><td nowrap="nowrap">&nbsp;OPENURL_sb&nbsp;=&nbsp;stringbuilder();</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_67">67</td><td nowrap="nowrap">&nbsp;OPENURL_sb&nbsp;=&nbsp;sbappend(OPENURL_sb,&nbsp;url,&nbsp;"/",&nbsp;TransactionID,"/actions/_open_transaction");</td><td class="diff_next"></td><td class="diff_header" id="to589_65">65</td><td nowrap="nowrap">&nbsp;OPENURL_sb&nbsp;=&nbsp;sbappend(OPENURL_sb,&nbsp;url,&nbsp;"/",&nbsp;TransactionID,"/actions/_open_transaction");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_68">68</td><td nowrap="nowrap">&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_66">66</td><td nowrap="nowrap">&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_69">69</td><td nowrap="nowrap">&nbsp;OPENURL=sbtostring(OPENURL_sb);</td><td class="diff_next"></td><td class="diff_header" id="to589_67">67</td><td nowrap="nowrap">&nbsp;OPENURL=sbtostring(OPENURL_sb);</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_70">70</td><td nowrap="nowrap">&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_68">68</td><td nowrap="nowrap">&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_71">71</td><td nowrap="nowrap">&nbsp;print&nbsp;OPENURL;</td><td class="diff_next"></td><td class="diff_header" id="to589_69">69</td><td nowrap="nowrap">&nbsp;print&nbsp;OPENURL;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_72">72</td><td nowrap="nowrap">&nbsp;GETURL_sb&nbsp;=&nbsp;stringbuilder();</td><td class="diff_next"></td><td class="diff_header" id="to589_70">70</td><td nowrap="nowrap">&nbsp;GETURL_sb&nbsp;=&nbsp;stringbuilder();</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_73">73</td><td nowrap="nowrap">&nbsp;GETURL_sb&nbsp;=&nbsp;sbappend(GETURL_sb,&nbsp;url,&nbsp;"/",&nbsp;TransactionID,"/actions/saveAndSyncItems");</td><td class="diff_next"></td><td class="diff_header" id="to589_71">71</td><td nowrap="nowrap">&nbsp;GETURL_sb&nbsp;=&nbsp;sbappend(GETURL_sb,&nbsp;url,&nbsp;"/",&nbsp;TransactionID,"/actions/saveAndSyncItems");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_74">74</td><td nowrap="nowrap">&nbsp;GETURL=sbtostring(GETURL_sb);</td><td class="diff_next"></td><td class="diff_header" id="to589_72">72</td><td nowrap="nowrap">&nbsp;GETURL=sbtostring(GETURL_sb);</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_75">75</td><td nowrap="nowrap">&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_73">73</td><td nowrap="nowrap">&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_76">76</td><td nowrap="nowrap">&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_74">74</td><td nowrap="nowrap">&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_77">77</td><td nowrap="nowrap">&nbsp;print&nbsp;GETURL;</td><td class="diff_next"></td><td class="diff_header" id="to589_75">75</td><td nowrap="nowrap">&nbsp;print&nbsp;GETURL;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_78">78</td><td nowrap="nowrap">&nbsp;response1&nbsp;=&nbsp;urldata(OPENURL,http_Method,headersDict,"");</td><td class="diff_next"></td><td class="diff_header" id="to589_76">76</td><td nowrap="nowrap">&nbsp;response1&nbsp;=&nbsp;urldata(OPENURL,http_Method,headersDict,"");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_79">79</td><td nowrap="nowrap">&nbsp;&nbsp;&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_77">77</td><td nowrap="nowrap">&nbsp;&nbsp;&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_80">80</td><td nowrap="nowrap">&nbsp;&nbsp;&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_78">78</td><td nowrap="nowrap">&nbsp;&nbsp;&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_81">81</td><td nowrap="nowrap">&nbsp;response&nbsp;=&nbsp;urldata(GETURL,http_Method,headersDict,"");</td><td class="diff_next"></td><td class="diff_header" id="to589_79">79</td><td nowrap="nowrap">&nbsp;response&nbsp;=&nbsp;urldata(GETURL,http_Method,headersDict,"");</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_82">82</td><td nowrap="nowrap">&nbsp;print&nbsp;"=============sync&nbsp;to&nbsp;opty&nbsp;response";</td><td class="diff_next"></td><td class="diff_header" id="to589_80">80</td><td nowrap="nowrap">&nbsp;print&nbsp;"=============sync&nbsp;to&nbsp;opty&nbsp;response";</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_83">83</td><td nowrap="nowrap">&nbsp;print&nbsp;response;</td><td class="diff_next"></td><td class="diff_header" id="to589_81">81</td><td nowrap="nowrap">&nbsp;print&nbsp;response;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_84">84</td><td nowrap="nowrap">&nbsp;</td><td class="diff_next"></td><td class="diff_header" id="to589_82">82</td><td nowrap="nowrap">&nbsp;</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_85">85</td><td nowrap="nowrap">&nbsp;&nbsp;}</td><td class="diff_next"></td><td class="diff_header" id="to589_83">83</td><td nowrap="nowrap">&nbsp;&nbsp;}</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_86">86</td><td nowrap="nowrap">&nbsp;&nbsp;}</td><td class="diff_next"></td><td class="diff_header" id="to589_84">84</td><td nowrap="nowrap">&nbsp;&nbsp;}</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_87">87</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to589_85">85</td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_88">88</td><td nowrap="nowrap">}</td><td class="diff_next"></td><td class="diff_header" id="to589_86">86</td><td nowrap="nowrap">}</td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from589_89">89</td><td nowrap="nowrap">return&nbsp;rret;</td><td class="diff_next"></td><td class="diff_header" id="to589_87">87</td><td nowrap="nowrap">return&nbsp;rret;</td></tr>
+        </tbody>
+    </table>
+    <table class="diff" summary="Legends">
+        <tr> <th colspan="2"> Legends </th> </tr>
+        <tr> <td> <table border="" summary="Colors">
+                      <tr><th> Colors </th> </tr>
+                      <tr><td class="diff_add">&nbsp;Added&nbsp;</td></tr>
+                      <tr><td class="diff_chg">Changed</td> </tr>
+                      <tr><td class="diff_sub">Deleted</td> </tr>
+                  </table></td>
+             <td> <table border="" summary="Links">
+                      <tr><th colspan="2"> Links </th> </tr>
+                      <tr><td>(f)irst change</td> </tr>
+                      <tr><td>(n)ext change</td> </tr>
+                      <tr><td>(t)op</td> </tr>
+                  </table></td> </tr>
+    </table>
+</body>
+
+</html>

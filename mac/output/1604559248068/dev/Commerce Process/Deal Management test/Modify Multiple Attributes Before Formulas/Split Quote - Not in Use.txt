@@ -1,0 +1,425 @@
+/*********************************************************************
+Function Name:Split Quote  
+Description:Action to Split Quote based on thh selected Lines items at
+Author: Ramesh Nellimarla
+User Story #:UID 212
+Date: 15th Feb 2019
+******************************Change Log*****************************
+             
+*********************************************************************/
+
+transID = " ";
+ret = " ";
+retstr=" ";
+response =" ";
+salArray   =string[];
+modelArray = string[];
+partArray  = String[];
+headerAtrrib = string[];
+lineSelected=FALSE;
+jsonObj1 = json();
+jsonObj2 = json();
+jsonObj3 = json();
+
+
+//Call save Quote to save line selection 
+RESP = util.saveTransaction_avg(bs_id);
+
+
+for line in transactionLine{
+ if(line.selectLineItem_l == true){
+ 
+  lineSelected = true;
+ }
+ }
+
+//==============================================================
+//Load selected model lines and stand alone lines into an arrays
+//==============================================================
+if (lineSelected == true)
+{
+    modelDocNum= "";
+    
+    for line in transactionLine
+    {  
+      if (line.selectLineItem_l == true AND line._model_variable_name <> "")
+      { 
+        jsonput(jsonobj1,"model",line._model_variable_name); 
+        jsonput(jsonobj1,"productLine",line._model_product_line_var_name); 
+        jsonput(jsonobj1,"segment",line._model_segment_var_name);  
+        jsonput(jsonobj1,"documentNum",line._document_number);     
+                     
+        jsonModelString = jsontostr(jsonobj1);
+        append(modelArray,jsonModelString); 
+         
+        modelDocNum  = line._document_number;
+      } 
+  
+     if(line._parent_doc_number <> "" AND line._parent_doc_number == modelDocNum)
+      {  
+        CStartDate = " ";
+        CEndDate = " ";                         
+        ltransactionType =" ";
+        lbusinessTransactionType =" ";
+        lspecialMetric =" "; 
+        lenterEnvironment=" ";
+        llicenseType =" ";     
+        lselectLicenseType =" ";      
+        lsupportType  =" ";           
+        lsupportPartsPicklist  =" ";  
+        llanguageRequired =" ";
+        lstandardQuantity =" ";       
+        lexistingQuantity =" "; 
+        lnonStandardLicenseMetric=" ";      
+        llicenseMetric  =" ";        
+        lspecialMetricLicense =" ";   
+        lUsageQuantity =" ";          
+        lUsageExistingQuantity =" ";  
+        lProductType =" ";
+                
+        if (line.contractStartDate_l <> "") {CStartDate = datetostr(strtojavadate(line.contractStartDate_l,"MM/dd/yyyy"),"MM/dd/yyyy HH:mm:ss");}
+        if (line.contractEndDate_l<>""){CEndDate = datetostr(strtojavadate(line.contractEndDate_l,"MM/dd/yyyy"),"MM/dd/yyyy HH:mm:ss");}
+      
+        if (not isnull(line.transactionType_l)){ltransactionType = line.transactionType_l;}
+        if (not isnull(line.businessTransactionType_l)){lbusinessTransactionType = line.businessTransactionType_l;}
+        if (not isnull(line.specialMetric_l)){lspecialMetric = line.specialMetric_l;}
+        if (not isnull(line.enterEnvironment_l)){lenterEnvironment = line.enterEnvironment_l;}
+        if (not isnull(line.licenseType_l)){llicenseType = line.licenseType_l;}
+        if (not isnull(line.supportType_l)){lsupportType = line.supportType_l;}
+        if (not isnull(line.supportPartsPicklist_l)){lsupportPartsPicklist = line.supportPartsPicklist_l;}
+        if (not isnull(line.languageRequired_l)){llanguageRequired= line.languageRequired_l;}
+      
+        if (not isnull(line.standardQuantity_l)){lstandardQuantity = line.standardQuantity_l;}
+        if (not isnull(line.existingQuantity_l)){lexistingQuantity = line.existingQuantity_l;}
+        if (not isnull(line.nonStandardLicenseMetric_l)){lnonStandardLicenseMetric = line.nonStandardLicenseMetric_l;}
+        if (not isnull(line.specialMetricLicense_l)){lspecialMetricLicense = line.specialMetricLicense_l;}
+        if (not isnull(line.usageQuantity_l)){lUsageQuantity = line.usageQuantity_l;}
+        if (not isnull(line.usageExistingQuantity_l)){lUsageExistingQuantity = line.usageExistingQuantity_l;}
+        if (not isnull(line.productType_l)){lProductType = line.productType_l;}
+                                            
+         jsonput(jsonObj2,"partNum",line._part_number);
+         jsonput(jsonObj2,"partName",line.productName_l);
+         jsonput(jsonObj2,"quantity",line._price_quantity );
+         jsonput(jsonObj2,"licenceType",line.licenseType_l);  
+                
+         jsonput(jsonObj2,"transactionType",ltransactionType);
+         jsonput(jsonObj2,"businessTransactionType",lbusinessTransactionType);
+         jsonput(jsonObj2,"specialMetric",lspecialMetric);
+         jsonput(jsonObj2,"enterEnvironment",lenterEnvironment);
+         jsonput(jsonObj2,"selectLicenseType",llicenseType);
+         jsonput(jsonObj2,"supportType",lsupportType);
+         jsonput(jsonObj2,"supportPartsPicklist",lsupportPartsPicklist);
+         jsonput(jsonObj2,"languageRequired",llanguageRequired);
+         jsonput(jsonObj2,"startDate",CStartDate);
+         jsonput(jsonObj2,"endDate",CEndDate);
+         jsonput(jsonObj2,"standardQuantity",lstandardQuantity);
+         jsonput(jsonObj2,"existingQuantity",lexistingQuantity);
+         jsonput(jsonObj2,"licenseMetric",lnonStandardLicenseMetric);
+         jsonput(jsonObj2,"specialMetricLicense",lspecialMetricLicense);
+         jsonput(jsonObj2,"UsageQuantity",lusageQuantity);
+         jsonput(jsonObj2,"UsageExistingQuantity",lusageExistingQuantity);
+         jsonput(jsonObj2,"ProductType",lproductType);                  
+         jsonput(jsonobj2,"documentNum",line._document_number); 
+         jsonput(jsonObj2,"parentDoc",line._parent_doc_number);
+           
+         jsonPartString = jsontostr(jsonobj2);
+         append(partArray,jsonPartString);                
+       }
+       
+       
+     if( line.selectLineItem_l == true AND line._parent_doc_number == "")
+       { 
+         jsonput(jsonObj3,"partNum",line._part_number);
+         jsonput(jsonObj3,"partName",line.productName_l);
+         jsonput(jsonObj3,"quantity",line._price_quantity );         
+         jsonput(jsonobj3,"documentNum",line._document_number); 
+         jsonput(jsonObj3,"parentDoc",line._parent_doc_number);   
+             
+         jsonSALineString = jsontostr(jsonobj3);
+         append(salArray,jsonSALineString); 
+        }
+     }     
+  }
+
+//========================================================================
+
+for each in modelArray
+{
+jsonObj1 = json(each);
+docNum   = jsonget(jsonObj1,"documentNum");
+model    = jsonget(jsonObj1,"model");
+Product  = jsonget(jsonObj1,"productLine");
+segment  = jsonget(jsonObj1,"segment");
+
+
+}
+
+
+
+
+for each1 in partArray
+{
+jsonObj2      = json(each1);
+docNum        = jsonget(jsonObj2,"documentNum");
+partNo        = jsonget(jsonObj2,"partNum");
+qty           = jsonget(jsonObj2,"quantity");
+licenceType   = jsonget(jsonObj2,"licenceType");
+parentDoc     = jsonget(jsonObj2,"parentDoc");
+
+}
+
+
+
+for each2 in salArray
+{
+jsonObj2      = json(each2);
+docNum        = jsonget(jsonObj2,"documentNum");
+partNo        = jsonget(jsonObj2,"partNum");
+qty           = jsonget(jsonObj2,"quantity");
+licenceType   = jsonget(jsonObj2,"licenceType");
+parentDoc     = jsonget(jsonObj2,"parentDoc");
+
+}
+//====================================================================
+
+
+if (lineSelected == true)
+{
+//===============================================
+//Call Create Transaction with standalone lines
+
+//===============================================
+
+    
+    if ( NOT isempty(salArray) ){
+     TLines = TRUE;
+     response = util.createTransction3(salArray,TLines);    
+      
+    }else{
+      TLines = FALSE;
+     response = util.createTransction3(salArray,TLines);
+       
+     }
+    pos = find(response,"bs_id=");
+    startPos = (pos+7);
+    endPos= startPos+8;
+    
+    transId = substring (response,startPos,endPos);
+    
+    
+    
+//===================================================
+//Update Transaction with standalone lines
+
+//===================================================
+salArray  = string[];  
+jsonObj3  = json();
+newdocNum = 2;
+ 
+for line in transactionLine
+{
+ if (line.selectLineItem_l == true)
+ {
+   if( line._model_variable_name == "" AND line._parent_doc_number == "" )
+     {
+      CStartDate = " ";
+      EStartDate = " ";
+      EEndtDate = " ";
+      CEndDate = " ";
+      ShipDate = " ";
+      eosDate = " ";
+      migrationType= "";
+      
+      if (line.contractStartDate_l <> "") {
+      CStartDate = datetostr(strtojavadate(line.contractStartDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+     
+      if (line.serviceStartDate_l <>"") {
+        EStartDate = datetostr(strtojavadate(line.serviceStartDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+      
+      if (line.serviceEndDate_l <>""){
+        EEndtDate = datetostr(strtojavadate(line.serviceEndDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }  
+          
+      if (line.contractEndDate_l<>""){
+        CEndDate = datetostr(strtojavadate(line.contractEndDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+      if (line.dateShipped_l<>""){
+         ShipDate = datetostr(strtojavadate(line.dateShipped_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+      if (line.eOSDate_l <>""){
+        eosDate = datetostr(strtojavadate(line.eOSDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+      
+      if (line.migrationType_l <>""){
+        migrationType = datetostr(strtojavadate(line.eOSDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+           
+      
+      jsonput (jsonObj3, "partNum",line._part_number);
+      jsonput (jsonObj3, "quantity",line._price_quantity );
+      jsonput (jsonObj3, "contractStartDate",CStartDate);
+      jsonput (jsonObj3, "entitlementStartDate",EStartDate);
+      jsonput (jsonObj3, "entitlementEndDate",EEndtDate);
+      jsonput (jsonObj3, "contractEndDate",CEndDate);
+      jsonput (jsonObj3, "contractNumber",line.contractNumber_l);
+      jsonput (jsonObj3, "mpn",line.mPN_l);      
+      jsonput (jsonObj3, "cpn",line.cPN_l);
+      jsonput (jsonObj3, "productName",line.productName_l);
+      jsonput (jsonObj2, "migrationType", migrationType);
+      
+      jsonput (jsonObj3, "replacementProduct",line.productReplacementCode1_l);
+      jsonput (jsonObj3, "coveredProduct",line.coveredProduct_l);
+      jsonput (jsonObj3, "productFamily",line.cPProductFamily_l);
+      jsonput (jsonObj3, "replacementPdtVal",line.productReplacementCode2_l);
+      jsonput (jsonObj3, "qtyRatioConversion",line.quantityRatioConversion_l);
+      jsonput (jsonObj3, "upgradeMaterial",line.upgradeMaterial_l);
+      jsonput (jsonObj3, "endOfSupportDate",ShipDate);
+      jsonput (jsonObj3, "sNo",line.serial_l);
+      jsonput (jsonObj3, "dateShipped",eosDate);
+      jsonput (jsonObj3, "fullAddress",line.siteIDStreetAddress_l);
+      jsonput (jsonObj3, "installedAtCustomerNumber",line.contractNumber_l);
+      jsonput (jsonObj3, "siteId",line.siteID_l);
+      jsonput (jsonObj3, "siteIdCity",line.siteIDCityStateZip_l);
+      jsonput (jsonObj3, "siteIdZip",line.siteIDZip_l);
+      jsonput (jsonObj3, "siteIdCountry",line.siteIDCountry_l);
+      jsonput (jsonObj3, "existingSupportType",line.existingSupportType_l);
+      jsonput (jsonObj3, "previousprice",line.previousPrice_l);
+      
+      jsonput(jsonObj3,"licenceType",line.licenseType_l);
+      jsonput(jsonObj3,"transactionType",line.transactionType_l);
+      jsonput(jsonObj3,"businessTransactionType",line.businessTransactionType_l);
+      jsonput(jsonObj3,"specialMetric",line.specialMetric_l);
+      jsonput(jsonObj3,"enterEnvironment",line.enterEnvironment_l);
+      jsonput(jsonObj3,"selectLicenseType",line.licenseType_l);
+      jsonput(jsonObj3,"supportType",line.supportType_l);
+      jsonput(jsonObj3,"supportPartsPicklist",line.supportPartsPicklist_l);
+      jsonput(jsonObj3,"languageRequired",line.languageRequired_l);      
+      jsonput(jsonObj3,"standardQuantity",line.standardQuantity_l);
+      jsonput(jsonObj3,"existingQuantity",line.existingQuantity_l);
+      jsonput(jsonObj3,"licenseMetric",line.nonStandardLicenseMetric_l);
+      jsonput(jsonObj3,"specialMetricLicense",line.specialMetricLicense_l);
+      jsonput(jsonObj3,"UsageQuantity",line.usageQuantity_l);
+      jsonput(jsonObj3,"UsageExistingQuantity",line.usageExistingQuantity_l);
+      jsonput(jsonObj3,"ProductType",line.productType_l); 
+      jsonput(jsonObj3,"documentNum",newdocNum);
+      ret = jsontostr(jsonObj3); 
+      append(salArray,ret);
+      newdocNum = newdocNum + 1;
+    }
+  }
+}
+ 
+
+//===============================================================
+jsonObj4 = json();
+ConStartDate="";
+ConEndDate="";
+QuoteEffDate="";
+
+//Transaction Level Attributes
+
+  if (contractStartDate_t <> ""){
+   ConStartDate = datetostr(strtojavadate(contractStartDate_t,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+  }
+
+  if (contractEndDate_t <> "") {
+   ConEndDate = datetostr(strtojavadate(contractEndDate_t,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+  }
+
+  if (quoteEffectiveDate_t <> "") {
+  QuoteEffDate= datetostr(strtojavadate(quoteEffectiveDate_t,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+  }
+
+   strcomment = "Split From " + transactionID_t ;
+
+   jsonput(jsonObj4,  "BillCustNumber",billToCustomer_t);
+   jsonput(jsonObj4,  "SoldCustNumber",soldToCustomer_t);
+   jsonput(jsonObj4,  "ContractStartDate",ConStartDate);
+   jsonput(jsonObj4,  "ContractEndDate",ConEndDate);
+   jsonput(jsonObj4,  "QuoteEffectiveDate",QuoteEffDate);
+   jsonput(jsonObj4,  "DealType",dealType_t);
+   jsonput(jsonObj4,  "QuoteStatus",status_t);
+   jsonput(jsonObj4,  "OutputType",quoteOutputType_t);
+   jsonput(jsonobj4,  "billFrequency",billingFrequency_t);
+   jsonput(jsonobj4,  "AutoRenewalNotification",autoRenewalNotification_t);
+   jsonput(jsonobj4,  "RouteToMarket",routeToMarket_t);
+   jsonput(jsonobj4,  "MultiSiteQuote",multiSiteQuote_t );
+   jsonput(jsonobj4,  "AutoRenewal",autoRenewal_t );
+   jsonput(jsonobj4,  "DealLinkageAttestationField",dealLinkageAttestationField_t );
+   jsonput(jsonobj4,  "internalComments",strcomment );
+
+    ret2 = jsontostr(jsonObj4);   
+    append(headerAtrrib,ret2);
+
+ 
+//===================================================
+//Call to Config API
+//===================================================
+if (NOT isempty(modelArray)){
+
+response2 = util.createModel2(modelArray, partArray, transId, _system_user_session_id);
+}   
+  
+
+//======================================================
+//Call to Updatransaction
+
+//===================================================
+
+response3 = util.updateTransaction4(salArray,headerAtrrib,transId);
+
+
+response5 = gettransaction(atoi(transId));
+ePos = find(response5,"]]></transactionID_t>");
+sPOs = ePos - 8;
+
+NewtransId = substring( response5,sPos,(sPos+8));
+
+
+
+//===Caling Update Transaction Post Deletion of rows===============
+DummyArray = String[];
+headerAtrrib2 =string[];
+
+retstr = "New Quote ID : " + NewtransId ;
+
+jsonput(jsonObj4,  "BillCustNumber",billToCustomer_t);
+jsonput(jsonObj4,  "SoldCustNumber",soldToCustomer_t);
+jsonput(jsonObj4,  "ContractStartDate",ConStartDate);
+jsonput(jsonObj4,  "ContractEndDate",ConEndDate);
+jsonput(jsonObj4,  "QuoteEffectiveDate",QuoteEffDate);
+jsonput(jsonObj4,  "DealType",dealType_t);
+jsonput(jsonObj4,  "QuoteStatus",status_t);
+jsonput(jsonObj4,  "OutputType",quoteOutputType_t);
+jsonput(jsonobj4,  "billFrequency",billingFrequency_t);
+jsonput(jsonobj4,  "AutoRenewalNotification",autoRenewalNotification_t);
+jsonput(jsonobj4,  "RouteToMarket",routeToMarket_t);
+jsonput(jsonobj4,  "MultiSiteQuote",multiSiteQuote_t );
+jsonput(jsonobj4,  "AutoRenewal",autoRenewal_t );
+jsonput(jsonobj4,  "DealLinkageAttestationField",dealLinkageAttestationField_t );
+jsonput(jsonobj4,  "internalComments",retstr);
+ret3 = jsontostr(jsonObj4);   
+append(headerAtrrib2,ret3);
+
+response4 = util.updateTransaction4(DummyArray,headerAtrrib2,bs_id);
+
+//=======================================================
+//Delete from Transaction
+
+
+resut = commerce.deleteTransactionForSplitQuote();
+//========================================================
+
+
+//==== Closing brace of Main If Condition=====
+}
+//=============================================
+result = "";
+dlim="~";
+dend="|";
+docNum =_transaction_document_number ;
+
+result= result + docNum + dlim + "internal_Comments_t" + dlim + retstr  + dend ;
+return result;

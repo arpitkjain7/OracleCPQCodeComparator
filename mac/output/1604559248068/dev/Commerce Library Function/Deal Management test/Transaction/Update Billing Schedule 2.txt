@@ -1,0 +1,463 @@
+/********************************************************************
+Function Name: Update Billing Schedule
+Description: To update the billing schedule based on billing frequency.
+Author: Adithya Suresh
+Date: 27-02-2019
+********************************************************************/
+/************************************************************************************************************
+Description: This library function is used to populate all the pricing related attributes of line items in a quote.
+Return type: string
+History:     Date          Author            Comment 
+    01/02/2019    Satyabrata Acharya       Modified the library as per best practices
+    02/18/2019    Raghavendra Kumar Setting some more pricing related attributes
+    09/05/2019 Mrinal Kumar  Adding stringbuilder to improve performance
+    08/05/2019     Rohit Ranjan            Added line on 52,53,95,96,244,245,371,372 for jira id:298 to fetch due date value in CA proposal document
+    08/23/2019 Arjun Singh  Removed Payment Plan Contract End Date Validation so that user can select date in billing schedule which can be greater than contract end date for  Jira ID:- Viper-130
+************************************************************************************************************/
+result="";
+dlim="~";
+dend="|";
+dateFormat = "yyyy-MM-dd HH:mm:ss";
+billingSchedule=jsonarray();
+sb = stringbuilder(); 
+ 
+precision = 0;
+res = bmql("SELECT Precision from Func_Curr_Prec_Map WHERE Functional_Currency=$_system_current_document_currency_pref");
+
+for line in res{
+ precision=atoi(get(line,"Precision"));
+ 
+}
+/*Paid in Full Logic
+  Creates one line for the billing schedule
+*/
+if(paymentPlan_t == "paidInFull"){
+
+ totalFees = 0;
+ payment = json();
+ row = json();
+ committedPayments = 0.0;
+ //Prevents indexing error when transactional array is empty
+ if((previousPaymentPlan_t == "paidInFull")  and (jsonarraytostr(newBillingSchedule_t) <>  "[]")){
+  row = jsonarrayget(newBillingSchedule_t, 0, "json");
+  committedPayments = jsonget(row,"committedPayments", "integer");
+  jsonput(payment,"committedPayments",committedPayments);
+ }
+ else{
+  jsonput(payment,"committedPayments",committedPayments);
+ }
+ jsonput(payment,"scheduleID",1);
+ jsonput(payment,"billingDate",contractStartDate_t);
+ jsonput(payment,"licenseFee",totalLicenseFee);
+ jsonput(payment,"maintenanceFee",totalMaintenanceFee);
+//Added on 5th Aug 2019 for Jira Id:298 by rohit ranjan to fetch billingDate value in CA Proposal Document because Due Date was showing incorrect value in Document. It was taking user currency format.so created a text string , set the value and hide it.
+ date1=datetostr(strtojavadate(contractStartDate_t, "yyyy-MM-dd"),"MMM dd, yyyy");
+ jsonput(payment,"dateString_tran",date1);
+        //comment ends for VIPER-298
+        
+ jsonput(payment,"orderID",oRCL_ERP_OrderID_t);
+ totalFees = totalLicenseFee + totalMaintenanceFee;
+ jsonput(payment,"totalFee",totalFees);
+ jsonarrayappend(billingSchedule, payment);
+ sbappend(sb,_transaction_document_number,dlim,"newBillingSchedule_t",dlim,jsonarraytostr(billingSchedule),dend);
+ sbappend(sb,_transaction_document_number,dlim,"billingScheduleFlag_t",dlim,string(False),dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousPaymentPlan_t",dlim,"paidInFull",dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousNoOfBillings_t",dlim, "0" ,dend);
+ sbappend(sb,_transaction_document_number,dlim,"billingScheduleCheck_t",dlim,"Nope",dend);
+ 
+
+} 
+/* Yearly Logic
+Create billing schedule lines based on number of the years between contract start and end date
+
+*/
+if(paymentPlan_t == "yearly"){
+ 
+ addStartDate = strtodate(contractEndDate_t, dateFormat );
+ endDateObj = strtodate(contractEndDate_t, dateFormat );
+ startDateObj = strtodate(contractStartDate_t, dateFormat );
+ duration = getdiffindays(endDateObj,startDateObj);
+
+ noOfYears = integer(duration/365.5) + 1;
+ 
+ loop = range(noOfYears);
+ oneLicenseFee = round(totalLicenseFee/noOfYears,precision);
+ oneMaintenanceFee = round(totalMaintenanceFee/noOfYears,precision);
+ startDate = contractStartDate_t;
+ payment = json();
+ counter = 1;
+ grandTotal = 0;
+ totalCommittedPayments = 0;
+ for line in loop{
+  
+  totalFees = 0;
+  jsonput(payment,"scheduleID",counter);
+  counter = counter + 1;
+  jsonput(payment,"billingDate",startDate);
+//Added on 5th Aug 2019 for Jira Id:298 by rohit ranjan to fetch billingDate value in CA Proposal Document because Due Date was showing incorrect value in Document. It was taking user currency format.so created a text string , set the value and hide it.
+  date1=datetostr(strtojavadate(startDate, "yyyy-MM-dd"),"MMM dd, yyyy");
+  jsonput(payment,"dateString_tran",date1);
+//comment ends for VIPER-298
+
+  startAry = split(startDate,"-");
+  startY = atoi(startAry[0]);
+  leapDate = startAry[0] + "-02-29 00:00:00";
+  leapDate1 = strtodate(leapDate,dateFormat);
+  EndFebDate = startAry[0] + "-02-28 00:00:00";
+  EndFebDate1 = strtodate(EndFebDate,dateFormat);
+  nextLeapDate1 = strtodate(startDate,dateFormat);
+  startY2 = startY + 1;
+  if(isleap(startY2)){
+   nextYear = string(startY2);
+   nextLeapDate = nextYear + "-02-29 00:00:00";
+   nextLeapDate1 = strtodate(nextLeapDate,dateFormat);
+   
+   
+  }
+  
+  newStartDate = strtodate(startDate,dateFormat );
+  
+  if(isleap(startY) and (comparedates(newStartDate, leapDate1) == -1)){
+   
+   addStartDate = adddays(newStartDate, 366);
+   
+   
+  }
+  elif(isleap(startY2) and (comparedates(newStartDate, EndFebDate1) == -1)){
+   
+   addStartDate = adddays(newStartDate, 365);
+   
+   
+  }
+  elif(isleap(startY2) and (comparedates(newStartDate, nextLeapDate1) == -1)){
+   
+   addStartDate = adddays(newStartDate, 366);
+   
+   
+  }
+   
+  else{
+   
+   addStartDate = adddays(newStartDate, 365);
+  } 
+  
+  
+  
+  startDate = datetostr(addStartDate,dateFormat );
+  row = json();
+  committedPayments = 0;
+  //Prevents indexing error when transactional array is empty
+  if((previousPaymentPlan_t == "yearly") and (contractEndDate_t == previousContractEndDate_t) and (jsonarraytostr(newBillingSchedule_t) <>  "[]")){
+   row = jsonarrayget(newBillingSchedule_t, line, "json");
+   committedPayments = atof(jsonget(row,"committedPayments", "string",string(0)));
+   
+   jsonput(payment,"committedPayments",committedPayments);
+  }
+  else{
+   jsonput(payment,"committedPayments",committedPayments);
+  }
+  jsonput(payment,"licenseFee",oneLicenseFee);
+  jsonput(payment,"maintenanceFee",oneMaintenanceFee);
+  
+  
+   
+  totalCommittedPayments = totalCommittedPayments + committedPayments;
+  jsonput(payment,"orderID",oRCL_ERP_OrderID_t);
+  totalFees = oneLicenseFee + oneMaintenanceFee;
+  
+  if(line==(noOfYears-1)){
+   jsonput(payment,"licenseFee",(totalLicenseFee-oneLicenseFee*(noOfYears-1)));
+   jsonput(payment,"maintenanceFee",(totalMaintenanceFee-oneMaintenanceFee*(noOfYears-1)));
+   totalFees = (totalLicenseFee-oneLicenseFee*(noOfYears-1)) + (totalMaintenanceFee-oneMaintenanceFee*(noOfYears-1));
+  }
+  
+  grandTotal = grandTotal + totalFees;
+  jsonput(payment,"totalFee",totalFees);
+  jsonarrayappend(billingSchedule, payment);
+ }
+ totalRow = json();
+ jsonput(totalRow,"scheduleID","GRAND TOTAL");
+ jsonput(totalRow,"licenseFee",totalLicenseFee);
+ jsonput(totalRow,"maintenanceFee",totalMaintenanceFee);
+ jsonput(totalRow,"committedPayments",totalCommittedPayments);
+ jsonput(totalRow,"totalFee",grandTotal);
+ jsonarrayappend(billingSchedule, totalRow);
+ sbappend(sb,_transaction_document_number,dlim,"newBillingSchedule_t",dlim,jsonarraytostr(billingSchedule),dend);
+ sbappend(sb,_transaction_document_number,dlim,"billingScheduleFlag_t",dlim,string(False),dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousPaymentPlan_t",dlim,"yearly",dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousContractEndDate_t",dlim, contractEndDate_t ,dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousNoOfBillings_t",dlim, "0" ,dend);
+ sbappend(sb,_transaction_document_number,dlim,"billingScheduleCheck_t",dlim,"Nope",dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousGrandTotal_t",dlim, "0.0" ,dend);
+
+
+}
+
+/* Quarterly Logic
+Create billing schedule lines based on number of the quarters between contract start and end date
+
+*/
+
+if(paymentPlan_t == "quarterly"){
+ days = dict("integer");
+ put(days,1,31);
+ put(days,2,28);
+ put(days,3,31);
+ put(days,4,30);
+ put(days,5,31);
+ put(days,6,30);
+ put(days,7,31);
+ put(days,8,31);
+ put(days,9,30);
+ put(days,10,31);
+ put(days,11,30);
+ put(days,12,31);
+ 
+ startDate = contractStartDate_t;
+ endDateObj = strtodate(contractEndDate_t, dateFormat );
+ startDateObj = strtodate(contractStartDate_t, dateFormat );
+ duration = getdiffindays(endDateObj,startDateObj);
+
+ noOfQuarters = integer(duration/91.4) + 1;
+ if(noOfQuarters == 0){
+  noOfQuarters = 1;
+ } 
+ loop = range(noOfQuarters);
+ oneLicenseFee = round(totalLicenseFee/noOfQuarters,precision);
+ oneMaintenanceFee = round(totalMaintenanceFee/noOfQuarters,precision);
+ 
+ addStartDate = strtodate(startDate, dateFormat );
+ startStr = datetostr(addStartDate,"MM/dd/yyyy");
+ startAry = split(startStr,"/");
+
+ 
+ startD = atoi(startAry[1]);
+ 
+ payment = json();
+ counter = 1;
+ grandTotal = 0;
+ totalCommittedPayments = 0;
+ for line in loop{
+  
+  totalFees = 0;
+  jsonput(payment,"scheduleID",counter);
+  counter = counter + 1;
+  jsonput(payment,"billingDate",startDate);
+//Added on 5th Aug 2019 for Jira Id:298 by rohit ranjan to fetch billingDate value in CA Proposal Document because Due Date was showing incorrect value in Document. It was taking user currency format.so created a text string , set the value and hide it.
+  date1=datetostr(strtojavadate(startDate, "yyyy-MM-dd"),"MMM dd, yyyy");
+  jsonput(payment,"dateString_tran",date1);
+  //comment ends for VIPER-298
+    
+  addStartDate = strtodate(startDate, dateFormat );
+  startStr = datetostr(addStartDate,"MM/dd/yyyy");
+  startAry = split(startStr,"/");
+ 
+  startY = atoi(startAry[2]);
+  startM = atoi(startAry[0]);
+ 
+  nextDay = startD;
+  nextMonth = startM + 3;
+ 
+  if((startM + 3) > 12){
+   startM = (startM + 3) % 12;
+   startY = startY + 1;
+  }
+  else{
+   startM = startM + 3;
+  }
+  lastDayOfMonth = get(days, startM);
+ 
+  if(startD > lastDayOfMonth){
+  
+   nextDay = lastDayOfMonth;
+  }
+ 
+ 
+ 
+  startDate = string(startY) + "-" + string(startM) + "-" + string(nextDay) + " 00:00:00";
+   
+  
+  row = json();
+  committedPayments = 0;
+  //Prevents indexing error when transactional array is empty
+  if((previousPaymentPlan_t == "quarterly") and (contractEndDate_t == previousContractEndDate_t) and (jsonarraytostr(newBillingSchedule_t) <>  "[]")){
+   row = jsonarrayget(newBillingSchedule_t, line, "json");
+   committedPayments = atof(jsonget(row,"committedPayments", "string",string(0)));
+   jsonput(payment,"committedPayments",committedPayments);
+  }
+  else{
+   jsonput(payment,"committedPayments",committedPayments);
+  }
+  jsonput(payment,"licenseFee",oneLicenseFee);
+  jsonput(payment,"maintenanceFee",oneMaintenanceFee);
+  
+  jsonput(payment,"orderID",oRCL_ERP_OrderID_t);
+  totalCommittedPayments = totalCommittedPayments + committedPayments;
+  totalFees = oneLicenseFee + oneMaintenanceFee;
+  
+  if(line==(noOfQuarters-1)){
+   jsonput(payment,"licenseFee",(totalLicenseFee-oneLicenseFee*(noOfQuarters-1)));
+   jsonput(payment,"maintenanceFee",(totalMaintenanceFee-oneMaintenanceFee*(noOfQuarters-1)));
+   totalFees = (totalLicenseFee-oneLicenseFee*(noOfQuarters-1)) + (totalMaintenanceFee-oneMaintenanceFee*(noOfQuarters-1));
+   
+  }
+  
+  grandTotal = grandTotal + totalFees;
+  jsonput(payment,"totalFee",totalFees);
+  jsonarrayappend(billingSchedule, payment);
+ }
+ totalRow = json();
+ jsonput(totalRow,"scheduleID","GRAND TOTAL");
+ jsonput(totalRow,"licenseFee",totalLicenseFee);
+ jsonput(totalRow,"maintenanceFee",totalMaintenanceFee);
+ jsonput(totalRow,"committedPayments",totalCommittedPayments);
+ jsonput(totalRow,"totalFee",grandTotal);
+ jsonarrayappend(billingSchedule, totalRow);
+ sbappend(sb,_transaction_document_number,dlim,"newBillingSchedule_t",dlim,jsonarraytostr(billingSchedule),dend);
+ sbappend(sb,_transaction_document_number,dlim,"billingScheduleFlag_t",dlim,string(False),dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousPaymentPlan_t",dlim,"quarterly",dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousContractEndDate_t",dlim, contractEndDate_t ,dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousNoOfBillings_t",dlim, "0" ,dend);
+ sbappend(sb,_transaction_document_number,dlim,"billingScheduleCheck_t",dlim,"Nope",dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousGrandTotal_t",dlim, "0.0" ,dend);
+ 
+
+ 
+ 
+
+}
+
+/* Custom Logic
+Create billing schedule lines based on the number of lines the user wants
+the user enters the values for the line and the sums are calculated
+Validations fire based on incorrect dates or sums
+
+*/
+if(paymentPlan_t == "custom"){
+
+ customBillingSchedule=jsonarray();
+ totalBillingAmount = 0;
+ counter = 1;
+ dateFlag = False;
+ payment = json();
+ 
+ indices = range(billingScheduleController_t);
+ 
+ grandTotal = 0;
+ totalCommittedPayments = 0;
+ totalRowLicenseFee = 0;
+ totalRowMaintenanceFee = 0;
+ 
+ for index in indices {
+    totalFees = 0;
+    row = json();
+    
+    
+    if((index < previousNoOfBillings_t)  and (jsonarraytostr(newBillingSchedule_t) <>  "[]")){
+     row = jsonarrayget(newBillingSchedule_t, index, "json");
+    }
+    if((previousPaymentPlan_t <> "custom") and (previousNoOfBillings_t <> 0)  and (jsonarraytostr(newBillingSchedule_t) <>  "[]")){
+     row = jsonarrayget(newBillingSchedule_t, index, "json");
+    }
+    rowDate = jsonget(row,"billingDate", "string","");
+    
+    rowLicenseFee = jsonget(row,"licenseFee", "float",0.0);
+    rowMaintenanceFee = jsonget(row,"maintenanceFee", "float",0.0);
+    rowCommittedPayments = jsonget(row,"committedPayments", "integer",0);
+    if(rowDate <> ""){
+    // Removed the contract end date check for VIPER-130 by Arjun on 23-Aug-2019
+     if(comparedates(strtodate(rowDate,dateFormat ),strtodate(contractStartDate_t,dateFormat )) == -1){
+      dateFlag = True;
+      jsonput(payment,"billingDate","");
+     }
+     // end of change for Viper-130
+    }
+    
+    jsonput(payment,"billingDate",rowDate);
+//Added on 5th Aug 2019 for Jira Id:298 by rohit ranjan to fetch billingDate value in CA Proposal Document because Due Date was showing incorrect value in Document. It was taking user currency format.so created a text string , set the value and hide it.
+    if(rowDate<>""){
+     date1=datetostr(strtojavadate(rowDate, "yyyy-MM-dd"),"MMM dd, yyyy");
+  jsonput(payment,"dateString_tran",date1);
+           } 
+    //comment ends for VIPER-298
+    
+    jsonput(payment,"scheduleID",counter);
+    counter = counter + 1;
+    jsonput(payment,"orderID",oRCL_ERP_OrderID_t);
+    jsonput(payment,"licenseFee",rowLicenseFee);
+    jsonput(payment,"maintenanceFee",rowMaintenanceFee);
+    jsonput(payment,"committedPayments",rowCommittedPayments);
+    
+    if(previousNoOfBillings_t <> 0){
+    if(previousNoOfBillings_t <> billingScheduleController_t){
+    if(index == previousNoOfBillings_t){ 
+     jsonput(payment,"billingDate","");
+     jsonput(payment,"dateString_tran","");
+  jsonput(payment,"licenseFee",0);
+  jsonput(payment,"maintenanceFee",0);
+  jsonput(payment,"committedPayments",0);
+  jsonput(payment, "totalFee", 0 );
+  rowLicenseFee = 0.0;
+  rowMaintenanceFee = 0.0;
+  rowCommittedPayments = 0;
+    }
+    }
+    }
+    if(billingScheduleFlag_t == false){
+     jsonput(payment,"billingDate","");
+     jsonput(payment,"dateString_tran","");
+  jsonput(payment,"licenseFee",0);
+  jsonput(payment,"maintenanceFee",0);
+  jsonput(payment,"committedPayments",0);
+  jsonput(payment, "totalFee", 0 );
+  rowLicenseFee = 0.0;
+  rowMaintenanceFee = 0.0;
+  rowCommittedPayments = 0;
+    }
+    
+    totalRowLicenseFee = totalRowLicenseFee + rowLicenseFee;
+    totalRowMaintenanceFee = totalRowMaintenanceFee + rowMaintenanceFee;
+    totalCommittedPayments = totalCommittedPayments + rowCommittedPayments;
+    totalFees = rowLicenseFee + rowMaintenanceFee;
+    grandTotal = grandTotal + totalFees;
+    jsonput(payment, "totalFee", totalFees);
+    
+    jsonarrayappend(customBillingSchedule, payment);
+    totalBillingAmount = totalBillingAmount + totalFees;
+ }
+ 
+ totalRow = json();
+ jsonput(totalRow,"scheduleID","GRAND TOTAL");
+ jsonput(totalRow,"licenseFee",totalRowLicenseFee);
+ jsonput(totalRow,"maintenanceFee",totalRowMaintenanceFee);
+ jsonput(totalRow,"committedPayments",totalCommittedPayments);
+ jsonput(totalRow,"totalFee",grandTotal);
+ jsonarrayappend(custombillingSchedule, totalRow);
+ 
+ //Sets the date and pricing validation
+ if(dateFlag == true){
+ sbappend(sb,_transaction_document_number,dlim,"billingScheduleCheck_t",dlim,"Date",dend);
+ }
+ elif((totalBillingAmount <> round(totalLicenseFee + totalMaintenanceFee,4)) and (previousPaymentPlan_t == "custom") and (previousNoOfBillings_t == billingScheduleController_t)){
+  sbappend(sb,_transaction_document_number,dlim,"billingScheduleCheck_t",dlim,"Fee",dend);
+  
+ }
+ else{
+  sbappend(sb,_transaction_document_number,dlim,"billingScheduleCheck_t",dlim,"Nope",dend);
+  
+ } 
+ 
+ sbappend(sb,_transaction_document_number,dlim,"newBillingSchedule_t",dlim,jsonarraytostr(custombillingSchedule),dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousPaymentPlan_t",dlim,"custom",dend);
+ sbappend(sb,_transaction_document_number,dlim,"previousNoOfBillings_t",dlim, string(billingScheduleController_t)  ,dend);
+ sbappend(sb,_transaction_document_number,dlim,"billingScheduleFlag_t",dlim,string(True),dend);
+ 
+
+ 
+}
+
+if(paymentPlan_t == ""){ 
+ sbappend(sb,_transaction_document_number,dlim,"newBillingSchedule_t",dlim,jsonarraytostr(billingSchedule),dend);
+} 
+result = sbtostring(sb);
+return result;

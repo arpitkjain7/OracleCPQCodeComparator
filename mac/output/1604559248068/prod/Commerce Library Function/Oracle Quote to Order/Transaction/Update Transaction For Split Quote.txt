@@ -1,0 +1,180 @@
+/*********************************************************************
+Function Name:Update Transaction For Split Quote 
+Description: To Update Transaction For Split Quote
+Author: Ramesh Nellimarla          
+*********************************************************************/
+
+result       = "";
+response     = " ";
+ret          = " ";
+NewDocNum    = 2;
+salArray     = string[];
+headerAtrrib = string[];
+lineSelected = FALSE;
+jsonObj1     = json();
+jsonObj2     = json();
+
+
+for line in transactionLine
+ {
+ if(line.selectLineItem_l == true)
+ {
+ lineSelected = true;
+ }
+ }
+  
+
+//Update Transaction Line Level Attributes 
+//===================================================
+
+
+
+if (lineSelected == true)
+ {
+ 
+  for line in transactionLine
+  {
+   if (line.selectLineItem_l == true)
+    {
+      if( line._model_variable_name == "" AND line._parent_doc_number == "" )
+       {
+         CStartDate = " ";
+         EStartDate = " ";
+         EEndtDate = " ";
+         CEndDate = " ";
+         ShipDate = " ";
+         eosDate = " ";
+         migrationType= "";
+              
+           
+      if (line.contractStartDate_l <> "") {
+      CStartDate = datetostr(strtojavadate(line.contractStartDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+     
+      if (line.serviceStartDate_l <>"") {
+        EStartDate = datetostr(strtojavadate(line.serviceStartDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+      
+      if (line.serviceEndDate_l <>""){
+        EEndtDate = datetostr(strtojavadate(line.serviceEndDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }  
+          
+      if (line.contractEndDate_l<>""){
+        CEndDate = datetostr(strtojavadate(line.contractEndDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+      if (line.dateShipped_l<>""){
+         ShipDate = datetostr(strtojavadate(line.dateShipped_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+      if (line.eOSDate_l <>""){
+        eosDate = datetostr(strtojavadate(line.eOSDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+      
+      if (line.migrationType_l <>""){
+        migrationType = datetostr(strtojavadate(line.eOSDate_l,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+      }
+           
+      
+      jsonput (jsonObj1, "partNum",line._part_number);
+      jsonput (jsonObj1, "quantity",line._price_quantity );
+      jsonput (jsonObj1, "contractStartDate",CStartDate);
+      jsonput (jsonObj1, "entitlementStartDate",EStartDate);
+      jsonput (jsonObj1, "entitlementEndDate",EEndtDate);
+      jsonput (jsonObj1, "contractEndDate",CEndDate);
+      jsonput (jsonObj1, "contractNumber",line.contractNumber_l);
+      jsonput (jsonObj1, "mpn",line.mPN_l);      
+      jsonput (jsonObj1, "cpn",line.cPN_l);
+      jsonput (jsonObj1, "productName",line.productName_l);
+      jsonput (jsonObj1, "migrationType", migrationType);
+      
+      jsonput (jsonObj1, "replacementProduct",line.productReplacementCode1_l);
+      jsonput (jsonObj1, "coveredProduct",line.coveredProduct_l);
+      jsonput (jsonObj1, "productFamily",line.cPProductFamily_l);
+      jsonput (jsonObj1, "replacementPdtVal",line.productReplacementCode2_l);
+      jsonput (jsonObj1, "qtyRatioConversion",line.quantityRatioConversion_l);
+      jsonput (jsonObj1, "upgradeMaterial",line.upgradeMaterial_l);
+      jsonput (jsonObj1, "endOfSupportDate",ShipDate);
+      jsonput (jsonObj1, "sNo",line.serial_l);
+      jsonput (jsonObj1, "dateShipped",eosDate);
+      jsonput (jsonObj1, "fullAddress",line.siteIDStreetAddress_l);
+      jsonput (jsonObj1, "installedAtCustomerNumber",line.contractNumber_l);
+      jsonput (jsonObj1, "siteId",line.siteID_l);
+      jsonput (jsonObj1, "siteIdCity",line.siteIDCityStateZip_l);
+      jsonput (jsonObj1, "siteIdZip",line.siteIDZip_l);
+      jsonput (jsonObj1, "siteIdCountry",line.siteIDCountry_l);
+      jsonput (jsonObj1, "existingSupportType",line.existingSupportType_l);
+      jsonput (jsonObj1, "previousprice",line.previousPrice_l);
+      
+      jsonput(jsonObj1,"licenceType",line.licenseType_l);
+      jsonput(jsonObj1,"transactionType",line.transactionType_l);
+      jsonput(jsonObj1,"businessTransactionType",line.businessTransactionType_l);
+      jsonput(jsonObj1,"specialMetric",line.specialMetric_l);
+      jsonput(jsonObj1,"enterEnvironment",line.enterEnvironment_l);
+      jsonput(jsonObj1,"selectLicenseType",line.licenseType_l);
+      jsonput(jsonObj1,"supportType",line.supportType_l);
+      jsonput(jsonObj1,"supportPartsPicklist",line.supportPartsPicklist_l);
+      jsonput(jsonObj1,"languageRequired",line.languageRequired_l);      
+      jsonput(jsonObj1,"standardQuantity",line.standardQuantity_l);
+      jsonput(jsonObj1,"existingQuantity",line.existingQuantity_l);
+      jsonput(jsonObj1,"licenseMetric",line.nonStandardLicenseMetric_l);
+      jsonput(jsonObj1,"specialMetricLicense",line.specialMetricLicense_l);
+      jsonput(jsonObj1,"UsageQuantity",line.usageQuantity_l);
+      jsonput(jsonObj1,"UsageExistingQuantity",line.usageExistingQuantity_l);
+      jsonput(jsonObj1,"ProductType",line.productType_l); 
+      jsonput(jsonObj1,"documentNum",NewDocNum);
+      
+      ret = jsontostr(jsonObj1); 
+      append(salArray,ret);
+      
+      NewDocNum = NewDocNum +1;
+    }
+  }
+ }
+ 
+//Update Header Level Attributes  
+//===============================================================
+    ConStartDate = "";
+    ConEndDate   = "";
+    QuoteEffDate = "";
+
+
+   if (contractStartDate_t <> ""){
+      ConStartDate = datetostr(strtojavadate(contractStartDate_t,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+   }
+
+   if (contractEndDate_t <> "") {
+      ConEndDate = datetostr(strtojavadate(contractEndDate_t,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+   }
+
+   if (quoteEffectiveDate_t <> "") {
+      QuoteEffDate= datetostr(strtojavadate(quoteEffectiveDate_t,"MM/dd/yyyy"),"yyyy-MM-dd HH:mm:ss");
+   }
+
+
+     jsonput(jsonObj2,  "BillCustNumber",billToCustomer_t);
+     jsonput(jsonObj2,  "SoldCustNumber",soldToCustomer_t);
+     jsonput(jsonObj2,  "ContractStartDate",ConStartDate);
+     jsonput(jsonObj2,  "ContractEndDate",ConEndDate);
+     jsonput(jsonObj2,  "QuoteEffectiveDate",QuoteEffDate);
+     jsonput(jsonObj2,  "DealType",dealType_t);
+     jsonput(jsonObj2,  "QuoteStatus",status_t);
+     jsonput(jsonObj2,  "OutputType",quoteOutputType_t);
+     jsonput(jsonObj2,  "billFrequency",billingFrequency_t);
+     jsonput(jsonObj2,  "AutoRenewalNotification",autoRenewalNotification_t);
+     jsonput(jsonObj2,  "RouteToMarket",routeToMarket_t);
+     jsonput(jsonObj2,  "MultiSiteQuote",multiSiteQuote_t );
+     jsonput(jsonObj2,  "AutoRenewal",autoRenewal_t );
+     jsonput(jsonObj2,  "DealLinkageAttestationField",dealLinkageAttestationField_t );
+     jsonput(jsonObj2,  "internalComments",Commentstring );
+
+     ret = jsontostr(jsonObj2);   
+     append(headerAtrrib,ret);
+
+
+response = util.updateTransaction4(salArray,headerAtrrib,TransactionID);
+
+docnum = "1";
+dlim   = "~";
+dend   = "|";
+
+}
+return result;

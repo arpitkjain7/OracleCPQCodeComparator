@@ -1,0 +1,38 @@
+/***************************************************************************************
+Function name : Populate Quote Details
+Author : Nandhini Vurimella.
+Description : This is the function to update the attributes in Quote Details .
+History:     Date          Author            Comment 
+     07/04/2019    M Vamsi          Fix for BROCAD2-5444, update the logic to pick first 500 quotes after sorting
+***************************************************************************************/
+
+retString = "";
+size = 0;
+inputString = "{$and:[{_customer_id:'" + _transaction_customer_id + "'},{$or:[{status_t:'DRAFT'},{status_t:'IN_PROGRESS'}]}]}";
+
+itemsDict = dict("string");
+
+itemsDict = util.getAllTransaction(inputString);
+
+if(containskey(itemsDict,"Error")){
+ retString = "1~getTransactionError_t~" + get(itemsDict, "Error");
+}elif(containskey(itemsDict,"Success")){
+ items = get(itemsDict, "Success");
+ quoteJsonObj = json();
+ quoteJsonObj = util.fetchQuoteInfoFromAllTransaction(json(items));
+ retString = retString + "1~quotationList_t~" + jsontostr(quoteJsonObj) + "|";
+ quoteArray = jsonkeys(quoteJsonObj);
+ if(sizeofarray(quoteArray) > 0){
+  size = sizeofarray(quoteArray);
+ }
+ // changes made for BROCAD2-5444 fix
+ if(size > 500)
+ {
+ size = 500;
+ }
+ retString = retString + "1~selectedQuotesArrayController_t~" + string(size) + "|";
+ 
+
+}
+
+return retString;

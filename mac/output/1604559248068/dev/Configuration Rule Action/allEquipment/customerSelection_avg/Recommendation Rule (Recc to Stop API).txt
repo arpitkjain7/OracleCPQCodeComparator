@@ -1,0 +1,8 @@
+/*****************************************************************
+Function Name : Recc to Stop API
+Name :Satyabrata Acharya
+Description : This Rule to set null value
+*****************************************************************/
+result= " ";
+
+return result;

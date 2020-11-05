@@ -1,0 +1,17 @@
+/********************************************************************
+Function Name : Line Approval Hiding AC
+Name : Nandhini Vurimella
+Description : For Line Approval hiding
+********************************************************************/
+flag = true;
+//Line approval status should be hidden for created and In progress status quotes.
+if((status_t <> "DRAFT" and status_t <> "IN_PROGRESS"))
+{
+ flag = false;
+ //Line approval status should be hidden for Renewal quotes.
+ if(quoteType_t == "renewalQuote"  and (upper(transactionTypeM_l) == "RENEW"))
+ {
+  flag = true;
+ }
+}
+return flag;

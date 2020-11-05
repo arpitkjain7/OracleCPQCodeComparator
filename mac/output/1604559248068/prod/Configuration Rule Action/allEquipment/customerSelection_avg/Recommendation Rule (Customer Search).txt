@@ -1,0 +1,757 @@
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer name from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+values1=String[];
+
+Filelocation="";
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/OrganizationDEO_BRCM_SalesArea_New_c";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false){
+result[i]=values1[i];
+}else{
+result[i]="";
+
+}
+}
+}
+
+if(response == "Not Found"){
+ result[0] = "Not Found";
+}
+
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer name from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+values1=String[];
+
+Filelocation="";
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/OrganizationDEO_BRCM_ParentName_c";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false){
+result[i]=values1[i];
+}else{
+result[i]="";
+
+}
+}
+}
+
+if(response == "Not Found"){
+ result[0] = "Not Found";
+}
+
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer name from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+values1=String[];
+
+Filelocation="";
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/OrganizationDEO_BRCM_ACC_OPERATING_UNIT_c";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false){
+result[i]=values1[i];
+}else{
+result[i]="";
+
+}
+}
+}
+
+if(response == "Not Found"){
+ result[0] = "Not Found";
+}
+
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer name from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+values1=String[];
+
+Filelocation="";
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/OrganizationDEO_BRCM_AccountUse_c";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false){
+result[i]=values1[i];
+}else{
+result[i]="";
+
+}
+}
+}
+
+if(response == "Not Found"){
+ result[0] = "Not Found";
+}
+
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch global parent name from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+Filelocation="";
+values1=String[];
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/OrganizationDEO_BRCM_GlobalParentName_c";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false)
+{
+result[i]=values1[i];
+}
+else{
+result[i]="";
+}
+}
+}
+
+if(response == "Not Found"){
+ result[0] = "Not Found";
+}
+
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch restricted customer flag
+****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+Filelocation="";
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/OrganizationDEO_BRCM_PricingDealDeskRequired_c";
+output = readxmlmultiple(final, xpaths);
+
+values1 = string[];
+
+for xpath in xpaths{
+
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false)
+{
+result[i]=values1[i];
+}
+else{
+result[i]="";
+}
+}
+
+}
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to set customer Id
+*****************************************************************/ 
+
+
+res = "";
+result=String[];
+values1=String[];
+Filelocation="";
+sessionId = "";//Session Id of the Current User
+currentDate= getdate(false);
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+/*xmlResponse1 = replace(response, "env:", "");
+xmlResponse2 = replace(xmlResponse1, "ns0:", "");
+xmlResponse3 = replace(xmlResponse2, "ns1:", "");
+xmlResponse4 = replace(xmlResponse3, "ns4:", "");
+xmlResponse5 = replace(xmlResponse4, "wsa:", "");
+xmlResponse6 = trim(xmlResponse5); */
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/PartyId";
+output = readxmlmultiple(final, xpaths);
+
+values1 = string[];
+
+for xpath in xpaths{
+
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+result[i]=values1[i];
+}
+}
+
+return values1;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch core detail from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+Filelocation="";
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/OrganizationDEO_BRCM_Classification_c";
+output = readxmlmultiple(final, xpaths);
+
+values1 = string[];
+
+for xpath in xpaths{
+
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false)
+{
+result[i]=values1[i];
+}
+else{
+result[i]="";
+}
+}
+
+}
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to set customer array control
+*****************************************************************/ 
+counter=1;
+response = customerResponse_avg;
+if(response<>"Not Found")
+{
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/PartyId";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=0;
+for each in values1{
+counter=counter+1;
+}
+}
+
+return counter;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer grand parwent from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+Filelocation="";
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/OrganizationDEO_BRCM_GlobalParentId_c";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false)
+{
+result[i]=values1[i];
+}
+else{
+result[i]="";
+}
+}
+
+}
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch payment term detail from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+Filelocation="";
+values1=String[];
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/OrganizationDEO_BRCM_PaymentTerms_c";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false)
+{
+result[i]=values1[i];
+}
+else{
+result[i]="";
+}
+}
+}
+
+if(response == "Not Found"){
+ result[0] = "Not Found";
+}
+
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer level from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+Filelocation="";
+values1=String[];
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/OrganizationDEO_BRCM_CustomerLevel_c";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false)
+{
+result[i]=values1[i];
+if(result[i]=="ZCA_PARENT"){
+result[i]="Global Parent";
+}
+elif(result[i]=="ZCA_GRANDCHILD"){
+result[i]="Child";
+}else{
+result[i]="Parent";
+}
+}
+else{
+result[i]="Not Available";
+}
+}
+}
+
+if(response == "Not Found"){
+ result[0] = "Not Found";
+}
+
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer parent from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+Filelocation="";
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/ParentAccountPartyId";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false)
+{
+result[i]=values1[i];
+}
+else{
+result[i]="";
+}
+}
+
+}
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer detail from OEC
+Modified by Rohit Ranjan for customer search enhancment for jira id:3273 on 24th june 2019..added dynamic xml
+MOdified by Rohit Ranjan on 8th july 2019 to fecth customer detail for contract quote ...added line 38 to 43 for jira id:5449
+*****************************************************************/ 
+
+res = "";
+sessionId = "";
+currentDate= getdate(false);
+Filelocation="";
+Username="";
+Password="";
+SOA_ENDPOINTURL="";
+userpasscode="";
+countryCode="";
+quoteType="";
+quoteTypeSet=bmql("select quoteType_t from commerce.transaction");
+for each in quoteTypeSet{
+  quoteType=get(each,"quoteType_t");
+  }
+countDetails=bmql("select Country_Code from BRCM_Country_SArea where Country_Name=$country_avg_cs");
+for result in countDetails{
+  countryCode=get(result,"Country_Code");
+  
+} 
+dynXML="";        //Creating dynamic XML based on different search combinations
+ if(customerName_avg<>""){
+ dynXML=dynXML+"<typ1:item><typ1:conjunction>And</typ1:conjunction><typ1:upperCaseCompare>true</typ1:upperCaseCompare><typ1:attribute>PartyUniqueName</typ1:attribute><typ1:operator>CONTAINS</typ1:operator><typ1:value>"+customerName_avg+"</typ1:value></typ1:item>";
+ }
+ if(customerNumber_avg<>""){
+ dynXML=dynXML+"<typ1:item><typ1:conjunction>And</typ1:conjunction><typ1:upperCaseCompare>true</typ1:upperCaseCompare><typ1:attribute>OrganizationDEO_BRCM_ERPAccount_c</typ1:attribute><typ1:operator>CONTAINS</typ1:operator><typ1:value>"+customerNumber_avg+"</typ1:value></typ1:item>";
+ }
+ if(parentName_avg<>""){
+ dynXML=dynXML+"<typ1:item><typ1:conjunction>And</typ1:conjunction><typ1:upperCaseCompare>true</typ1:upperCaseCompare><typ1:attribute>OrganizationDEO_BRCM_ParentName_c</typ1:attribute><typ1:operator>CONTAINS</typ1:operator><typ1:value>"+parentName_avg+"</typ1:value></typ1:item>";
+ }
+ if(country_avg_cs<>""){
+ dynXML=dynXML+"<typ1:item><typ1:conjunction>And</typ1:conjunction><typ1:upperCaseCompare>true</typ1:upperCaseCompare><typ1:attribute>Country</typ1:attribute><typ1:operator>CONTAINS</typ1:operator><typ1:value>"+countryCode+"</typ1:value></typ1:item>";
+ }
+ if(salesArea_avg<>""){
+ dynXML=dynXML+"<typ1:item><typ1:conjunction>And</typ1:conjunction><typ1:upperCaseCompare>true</typ1:upperCaseCompare><typ1:attribute>OrganizationDEO_BRCM_SalesArea_New_c</typ1:attribute><typ1:operator>CONTAINS</typ1:operator><typ1:value>"+salesArea_avg+"</typ1:value></typ1:item>";
+ }
+ //added code to fetch customer detail for contract quote independent of OU on 8th july by Rohit Ranjan for jira id:5449 
+ 
+ if(quoteType<>"contractQuote"){
+ dynXML=dynXML+"<typ1:item><typ1:conjunction>And</typ1:conjunction><typ1:upperCaseCompare>true</typ1:upperCaseCompare><typ1:attribute>OrganizationDEO_BRCM_ACC_OPERATING_UNIT_c</typ1:attribute><typ1:operator>CONTAINS</typ1:operator><typ1:value>"+operatingUnit_avg+"</typ1:value></typ1:item>";
+ }
+ 
+Details=bmql("SELECT Username, Password, File_Location,SoapEndpoint FROM INT_SYSTEM_DETAILS WHERE System='Customer_Search_NameNumber'");
+
+for detail in Details{
+Username=get(detail,"Username");
+Password=get(detail,"Password");
+Filelocation=get(detail,"File_Location");
+SOA_ENDPOINTURL=get(detail,"SoapEndpoint");
+userpasscode=Username+":"+Password;
+}
+quoteRequest= "";
+payload = dict("string");
+put(payload,"dynXML",dynXML);
+str1=encodebase64(userpasscode);
+
+auth="Basic" + " " + str1;
+
+defaultErrorMessage="";
+quoteRequest=applytemplate(Filelocation,payload,defaultErrorMessage);
+quoteRequest= replace(quoteRequest, "&lt;", "<");
+quoteRequest= replace(quoteRequest, "&gt;", ">");
+print quoteRequest;
+headersDict = dict("string"); 
+put(headersDict,"Content-Type","text/xml;charset=UTF-8"); 
+put(headersDict,"Authorization",auth);
+response="";
+response = urldatabypost(SOA_ENDPOINTURL,quoteRequest, "error",headersDict);
+xmlResponse1 = replace(response, "env:", "");
+xmlResponse2 = replace(xmlResponse1, "ns0:", "");
+xmlResponse3 = replace(xmlResponse2, "ns1:", "");
+xmlResponse4 = replace(xmlResponse3, "ns4:", "");
+xmlResponse5 = replace(xmlResponse4, "wsa:", "");
+xmlResponse6 = trim(xmlResponse5); 
+
+if(response=="error")
+{
+ return "error";
+}
+
+
+if(find(xmlResponse6, "<PartyId>")  == -1 ){
+ xmlResponse6 = "Not Found";
+}
+
+return xmlResponse6;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch party number from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+values1=String[];
+sessionId = "";
+currentDate= getdate(false);
+Filelocation="";
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/PartyNumber";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false)
+{
+result[i]=values1[i];
+}
+else{
+result[i]="";
+}
+}
+
+}
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer ERP ID from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+Filelocation="";
+values1=String[];
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/OrganizationDEO_BRCM_ERPAccount_c";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false){
+result[i]=values1[i];
+}else{
+result[i]="";
+}}
+}
+
+if(response == "Not Found"){
+ result[0] = "Not Found";
+}
+
+return result;
+/*****************************************************************
+Function Name :Customer Search
+Name :Satyabrata Acharya
+Description : This function is used to fetch customer name from OEC
+*****************************************************************/ 
+res = "";
+result=String[];
+sessionId = "";
+currentDate= getdate(false);
+values1=String[];
+
+Filelocation="";
+response=customerResponse_avg;
+if(response<>"Not Found")
+{
+
+startIndex=find (response, "<findAccountResponse");
+endIndex=find (response, "</findAccountResponse>");
+
+final = substring(response, startIndex, endIndex+22);
+xpaths = string[1];
+xpaths[0] = "/findAccountResponse/result/Value/PartyUniqueName";
+output = readxmlmultiple(final, xpaths);
+values1 = string[];
+for xpath in xpaths{
+values1 = get(output, xpath);
+}
+counter=sizeofarray(values1);
+size=range(customersArrayControl_avg);
+for i in size{
+if(isnull(values1[i])==false){
+result[i]=values1[i];
+}else{
+result[i]="";
+
+}
+}
+}
+
+if(response == "Not Found"){
+ result[0] = "No customer record is found with addresses in selected Operating Unit. Please select another customer or change Operating unit on the Quote. If a new customer or address is required, send a request to the Customer Master Data (CMD) Team via link to Google form in OEC.";
+}
+
+return result;

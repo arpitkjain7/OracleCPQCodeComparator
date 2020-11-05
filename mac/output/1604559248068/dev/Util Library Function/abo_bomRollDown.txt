@@ -1,0 +1,119 @@
+// Function Name : abo_bomRollDown
+// input  : baseBom (json)
+// output : baseBom(json) which has been rolled down
+// Description:
+//     This util library is invoked from abo_loadAsset to derive information based on BOM hierarchy 
+//      which is not present in asset, such as exploded-qty.
+//
+abocontext = util.abo_getContext();
+bDiagnosisOff=jsonget(abocontext, "AboDiagnosticDisabled", "boolean", true);  
+
+childBomJsonArr = jsonget(baseBom, "children", "jsonarray", jsonarray());
+sizeofChildren =  jsonarraysize(childBomJsonArr);
+mapProcessedId =  dict("integer"); 
+mapUnprocessedId =  json(); // Using json as dictionary doesn't support remove.
+  
+//Step 1: Loop through the BOM, rolling down to the first level child, and also capture 
+//info on the lower level children not yet processed. Add processed nodes to dictionary mapProcessedId.
+//Add unprocessed nodes to json mapUnprocessedId.
+dummyArray = string[sizeofChildren + 1]; // adding 1 to process root
+index = -1; 
+for item in dummyArray{  
+        curNode = json();
+        parentItem = json(); 
+        
+        if(index == -1){    
+          curNode = baseBom ;          
+        }else{
+          curNode = jsonarrayget(childBomJsonArr, index, "json"); 
+        } 
+                 
+        id =  jsonget(curNode, "id", "string"); 
+        quantityStr = jsonget(curNode, "quantity", "string"); 
+        quantityInt = atof(quantityStr);
+        parId =  jsonget(curNode, "parentId", "string", ""); 
+               
+        if(index == -1){ // process root node
+            put(mapProcessedId, id, index);
+            explodedQuantity = quantityInt;
+            jsonput(curNode,"explodedQuantity",explodedQuantity); 
+            index = index +1 ;           
+            continue;
+        }
+        
+        //If parent not yet processed, add to mapUnprocessed map. Subsequent iteration will process same
+        if(containsKey(mapProcessedId, parId) <> true){
+           jsonput(mapUnprocessedId, id, index);
+           index = index +1 ; 
+           continue;
+        }
+        //now we found parent, we will retrieve info from parent and use that to caculate                
+        parentIndex = get(mapProcessedId,parId); 
+        if(parentIndex == -1){
+           parentItem = baseBom; 
+        }else{
+           parentItem = jsonarrayget(childBomJsonArr,parentIndex,"json");
+        }             
+        parentExplodedQuantityStr = jsonget(parentItem, "explodedQuantity", "string");
+        parentExplodedQuantityInt = atof(parentExplodedQuantityStr);                     
+        explodedQuantity = quantityInt  * parentExplodedQuantityInt;
+        jsonput(curNode,"explodedQuantity",explodedQuantity);
+        put(mapProcessedId, id, index); 
+        index = index +1 ;                                         
+}//end of Step 1: Loop through the BOM, rolling down to the first level child, and also capture info on the lower level children not yet processed 
+    
+//Step 2: Processing grandchild items which have not been processed in the first step. We will loop through the
+//unprocessed items 20 times, assuming the hierarchy depth is less than 20. We will loop from the last to the first, 
+//as the original structure is an array, so deletion won't be affected.
+unprocessedKeyArr = jsonkeys(mapUnprocessedId);
+size = sizeofarray(unprocessedKeyArr);
+unProcessKeyArrIndex = size;
+dummyarray = string[20 * size];
+for key in dummyarray{       
+       if(unProcessKeyArrIndex==0){ //we done with one loop, now we want to reset index
+          unprocessedKeyArr = jsonkeys(mapUnprocessedId);
+          size=sizeofarray(unProcessedKeyArr);
+          if(size==0){
+              break;  //No more items to process
+          }
+          unProcessKeyArrIndex = size;
+       }  
+       unProcessKeyArrIndex = unProcessKeyArrIndex -1;     
+       
+       //retrieve the current row
+       curIndex = jsonget(mapUnprocessedId, unProcessedKeyArr[unProcessKeyArrIndex],"integer");        
+       curItem = jsonarrayget(childBomJsonArr, curIndex, "json");
+       curParId = jsonget(curItem, "parentId", "string"); 
+       if(containsKey(mapProcessedId, curParId)<>true){
+           continue;//parent still not procssed, skip and wait for next loop
+       }
+       //now let's retrieve parent and rolldown
+       curId = jsonget(curItem, "id", "string", "");
+       parIndex = get(mapProcessedId,curParId);
+       parent = jsonarrayget(childBomJsonArr, parIndex, "json");
+       
+       //caculate the exploded-qty
+       curQty = jsonget(curItem, "quantity", "string", "");
+       parentExplodedQuantity = jsonget(parent, "explodedQuantity", "string");
+       explodedQuantity = atof(curQty) * atof(parentExplodedQuantity);
+       jsonput(curItem,"explodedQuantity",explodedQuantity);
+       
+       //PLACEHOLDER, add additional rolldown logic here.
+
+       //Processed node should be moved to mapProcessedId and removed from mapUnprocessedId       
+       put(mapProcessedId,curId,curIndex);       
+       jsonremove(mapUnprocessedId,curId);               
+}
+
+if(sizeofarray(jsonkeys(mapUnprocessedId))<>0){
+   errMsg="Failed to roll down the BOM structure. Either the BOM hierarchy is more than 20 levels deep, or it contains a dangling reference.";
+   if(not bDiagnosisOff){
+      dummy=util.abo_addDiagnosticInfo(errMsg+"baseBom",baseBom,"");
+      errMsg=errMsg+"mapUnprocessedId=";
+      dummy=util.abo_addDiagnosticInfo(errMsg,mapUnprocessedId,"");
+      errMsg=errMsg+jsontostr(mapUnprocessedId)+"baseBom="+jsontostr(baseBom);
+   }   
+   throwerror(errMsg);
+}
+  
+return baseBom;

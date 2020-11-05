@@ -1,0 +1,47 @@
+/********************************************************************
+Jira Number : VIPER-803
+Description : Updating the part numbers in the array
+Author  : Adithya Suresh
+********************************************************************/
+partList = split(partNumberListUpdating_avg, "*");
+return partList;
+/********************************************************************
+Jira Number : VIPER-803
+Description : Updating the part array size
+Author  : Adithya Suresh
+********************************************************************/
+partList = split(partNumberListUpdating_avg, "*");
+
+
+
+return sizeofarray(partList);
+/********************************************************************
+Jira Number : VIPER-803
+Description : Updating the quantity in the array
+Author  : Adithya Suresh
+********************************************************************/
+result = quantity_avg;
+index = sizeofarray(quantity_avg);
+line = range(index);
+
+for each in line {
+ result[each] = quantity_MU;
+}
+
+return result;
+/********************************************************************
+Jira Number : VIPER-803
+Description : Updating the end date for Mass update field
+Author  : Adithya Suresh
+********************************************************************/
+endDate = strtojavadate(effectiveEndDateMU, "MM-dd-yyyy");
+
+return endDate;
+/********************************************************************
+Jira Number : VIPER-803
+Description : Updating the start date for Mass update field
+Author  : Adithya Suresh
+********************************************************************/
+startDate = strtojavadate(effectiveStartDateMU, "MM-dd-yyyy");
+
+return startDate;

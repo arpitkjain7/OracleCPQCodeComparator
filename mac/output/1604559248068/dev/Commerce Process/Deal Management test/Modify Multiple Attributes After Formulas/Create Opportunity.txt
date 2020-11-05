@@ -1,0 +1,106 @@
+/***********************************************************
+Function Name : Create Oppurtunity
+Name : Nandhini Vurimella
+Description : To Create New Oppurtunity
+**********************************************************/
+
+jsonResponse="";
+result="";
+Value = true;
+
+dealType=dealType_t;
+if(dealType=="cADStandard" or dealType=="cADEducation" or dealType=="cADProfessionalServices" or dealType=="cADRenewal")
+{
+ dealType="CA";
+}
+elif(dealType=="bSN" or dealType=="bSNRenewal")
+{
+ dealType="BSN";
+}
+elif(dealType=="classicBroadcomOnly")
+{
+ dealType="Broadcom";
+}
+else
+{
+ dealType="";
+}
+
+
+if(opportunityNumber_t=="" AND opportunityID_t =="" AND dealType<>"")
+{
+Credentials="";
+url="";
+//Rest API URL for creating a new opportunity
+ results=bmql("select Username,Password,SoapEndpoint from INT_SYSTEM_DETAILS where System='Create_Opportunity'");
+ for res in results
+ {
+ Credentials=get(res,"Username")+":"+get(res,"Password");
+ url=get(res,"SoapEndpoint");
+ }
+ GETURL=url+"crmRestApi/resources/11.13.18.05/resources?q=EmailAddress='"+QuoteownerEmail_t+"'";
+ url_CreateOpportunity=url+"crmRestApi/resources/11.13.17.11/opportunities";
+ 
+ 
+ 
+ 
+ 
+//Rest API http method
+ http_Method="POST";
+
+//Rest API Header details
+ headersDict = dict("string"); 
+
+ put(headersDict,"Content-Type","application/json");
+
+ encodecredential=encodebase64(Credentials);
+ authstring="Basic " + encodecredential;
+ 
+
+ put(headersDict,"Authorization",authstring);
+ response=Dict("string");
+ response = urldata(GETURL,"GET",headersDict, "5000");
+ str= get(response,"Message-Body");
+
+jsonObj1=json(str);
+
+Party_ID=jsonpathgetsingle(jsonObj1,"$..PartyId");
+
+ id=transactionID_t;
+ jsonBodyString="";
+//Rest API body details
+ if(isnull(Party_ID)==false){
+ jsonBodyString="{\"Name\":\"Opportunity for " + id +  " of version " + string(version_t)  + "\",\"TargetPartyId\":\"" + _transaction_customer_id  +"\",\"OwnerResourcePartyId\":" +Party_ID+",\"BRCM_OpportunityType_New_c\":\""+dealType+"\",\"CurrencyCode\":\""+_system_current_document_currency_pref+"\"}";
+ 
+ }
+ else{
+ jsonBodyString="{\"Name\":\"Opportunity for " + id  +  " of version " + string(version_t)  + "\",\"TargetPartyId\":\"" + _transaction_customer_id  + "\",\"BRCM_OpportunityType_New_c\":\""+dealType+"\",\"CurrencyCode\":\""+_system_current_document_currency_pref+"\"}";
+ 
+ }
+
+//Function to post Rest API
+ response_CreateOpportunity=Dict("string");
+ response_CreateOpportunity = urldata(url_CreateOpportunity,http_Method,headersDict,jsonBodyString);
+ jsonResponse=get(response_CreateOpportunity,"Message-Body");
+ 
+
+//Fetch required details opportunityID/opportunityNumber from response post creating opportunity
+ if(isnull(jsonResponse)<>true)
+ {
+  jsonObj = json(jsonResponse);
+  
+  opportunityID = jsonget(jsonObj,"OptyId");
+  
+  result= result +  "1~opportunityID_t~" + opportunityID + "|";
+  
+  opportunityNumber = jsonget(jsonObj,"OptyNumber");
+  
+  result= result +  "1~opportunityNumber_t~" + opportunityNumber + "|";
+ }
+ 
+}
+
+//VIPER-64-- assigning primary quote as true for create oppty
+result= result +  "1~primaryQuote_t~" + String(Value) + "|";
+result= result +  "1~sOAPResponse_ct~" + jsonResponse;
+return result;

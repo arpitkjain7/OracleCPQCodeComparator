@@ -75,7 +75,8 @@ def CompareTxtFiles(
         )
         if os.path.exists(target_file_location):
             target_file_location = os.path.join(
-                diff_path, os.path.splitext(target_file_name)[0] + doc_count + ".html"
+                diff_path,
+                os.path.splitext(target_file_name)[0] + str(doc_count) + ".html",
             )
             doc_count += 1
         if type(source_path) != type(None):

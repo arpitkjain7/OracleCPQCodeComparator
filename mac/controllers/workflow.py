@@ -75,7 +75,8 @@ def CompareTxtFiles(
         )
         if os.path.exists(target_file_location):
             target_file_location = os.path.join(
-                diff_path, os.path.splitext(target_file_name)[0] + doc_count + ".html"
+                diff_path,
+                os.path.splitext(target_file_name)[0] + str(doc_count) + ".html",
             )
             doc_count += 1
         if type(source_path) != type(None):
@@ -733,4 +734,13 @@ def CompareWrapper(source_env: str, target_env: str, headless: bool):
 
     except Exception as Error:
         update_batch(batch_id=str(batch_id), status="Error", error=str(Error))
+
+
+CompareFolders(
+    source_path="/Users/arpitkjain/Desktop/Data/POC/OracleCPQCodeComparator/mac/output/1604559248068/dev",
+    target_path="/Users/arpitkjain/Desktop/Data/POC/OracleCPQCodeComparator/mac/output/1604559248068/prod",
+    source_env="dev",
+    target_env="prod",
+    root_dir="/Users/arpitkjain/Desktop/Data/POC/OracleCPQCodeComparator/mac/output/1604559248068",
+)
 

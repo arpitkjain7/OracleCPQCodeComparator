@@ -1,0 +1,1666 @@
+/********************************************************************
+Function Name: Pricing Library
+Description: To update the Pricing on parts/attributes
+Author: Adithya Suresh
+Date: 27-02-2019
+********************************************************************/
+/************************************************************************************************************
+Description: This library function is used to populate all the pricing related attributes of line items in a quote.
+Return type: string
+History:     Date          Author                                    Comment 
+                   01/02/2019    Satyabrata Acharya         Modified the library as per best practices
+                   02/18/2019    Raghavendra Kumar          Setting some more pricing related attributes
+                   09/05/2019    Mrinal Kumar               Adding stringbuilder to improve performance
+                   23/05/2019    Kavita Lolla          
+                   23/05/2019    Shruti Sawla               merge each1 for loop with each2 forloop and join the tables
+                   19/06/2019    Nandhini Vurimella         Wrote code to populate CP Product Family for manually added renewal lines
+                   19/06/2019    Thushaara                  Populating productgroup from BRCM_Part_Master 
+                   24/06/2019.   Shruti                     Populate PLA_Eligible from BRCM_Part_Master
+                   06/24/2019  M Vamsi           Fix for BROCAD2-1617, updating Product Line attribute value for support part based on covered product.
+                   01/07/2019  Kavita Lolla      BROCAD2-3504 - Capacity deviation based on Contracted or Prior deal value.
+                   07/18/2019  Ravi Kumar      BROCAD2-5516 - Set “Contracted/ Prior Per Unit Fee” this is a free text filed, Please make it required field, only for Capacity line items
+
+     10/07/2019    Keerthivasan A             BROCAD2-5164 - Apply Prior Price Button and Prior Price Attribute
+     23/07/2019    shruti                     BROCAD2-4539/BROCAD2-2012 - add pla and product group for support parts
+     26/07/2019    Rohit Ranjan      BROCAD2-5531 Added code to fetch value for support product
+     16/08/2019  Keerthivasan A      VIPER-288  Validations for PS & EDU Deal Types
+     21/08/2019  Ravi Kumar      VIPER-220  Re assigning the EAR atrribute as a fix for Bug 29856387 when Quote is created thorugh SOAP service Display sum Grid Line total is not calculating Correctly
+     27/09/2019    Ravi Kumar      VIPER-447  Symantec - Serial Number validation & Revert Serial Numbers for Auto generated Renewal Lines if they are changed
+     07/10/2019    Adithya Suresh             VIPER-493  Added code to calculate the total fee for each support and covered product
+     11/19/2019  Ravi Kumar      VIPER-618  The Installed at Location does not cascade from header to line item in Renewal Quote 
+     12/19/2019  Arjun Singh      SYMINT-3206 Added code of validation- Trial Quote should not allow non-POC-enabled SKUs
+     01/08/2020  Satyabrata Acharya     SYMINT-3758 Added code to resolve Blank/Duplicate Fulfillment Set issue
+     01/10/2020    Keerthivasan A         SYMINT-3776 Added Validation Logic for Billing Date when When Payment Plan is Custom
+     01/20/2020    Keerthivasan A         SYMINT-4214 Added Validation Logic for Symmantec Hardware SKUs
+     01/20/2020    Keerthivasan A         SYMINT-4214 Added Validation Logic for Serial Number in the Line Item
+     01/21/2020    Keerthivasan A         SYMINT-4214 Added Constraining Logic for constraining Deal Type to ENT-Standard when Transaction type is Upgrade
+/***********************************************************************************************************************************************/
+result="";
+dlim="~";
+dend="|";
+if(avoidPricingCalculations_t == false){
+fulfillment = stringbuilder();
+sb = stringbuilder();
+currentParent = "-1";
+listofParts = string[];
+childDoc = -1;
+jsonObj = json();
+jsonObjPrice = json();
+jsonObjEach = json();
+jsonCoverProduct = json();
+sum=0.0;
+extProposedNetPriceRequested = 0.0;
+expiringAnnualRenewalRenew =0.0;
+expiringAnnualRenewalNew =0.0;
+expiringAnnualRenewalCapacity =0.0;
+renewalRateHeader=0.0;
+aRRPercent =0.0;
+mmsFlagY="YES";
+mmsFlagN="NO";
+activeExpired = "expired";
+activeOpen = "open";
+lineEffectiveStartDate  = quoteEffectiveDate_t;
+lineExpirationDate = quoteExpirationDate_t;
+lineContractStartDate = contractStartDate_t;
+lineContractEndDate = contractEndDate_t;
+lineEffectiveStartDate_UpdationFlag = true;
+sumContractListPriceCapacity = 0.0;
+
+dateFormat = "yyyy-MM-dd HH:mm:ss";
+quoteExpDateObj = strtodate(_system_date, dateFormat);
+if(lineExpirationDate <> ""){
+    quoteExpDateObj = strtodate(lineExpirationDate,dateFormat);
+}
+
+capacityAllowedErrorLines = "";
+isCapacityAllowedError = false;
+isNewSaleAllowedError = false;
+isRenewalAllowedError = false;
+subresult = "";
+
+newSalesAllowedErrorLines = "";
+renewalAllowedErrorLines = "";
+
+skuValidation="";
+skuValidationSb=stringbuilder();
+
+
+capacityAllowed = "";
+newSalesAllowed = "";
+document_no = 0;
+businessType ="";
+unitCost = 0.0;
+extCost = 0.0;
+nonStandardLicenseMetric="no";
+exceedingMaximumRoyaltyDiscount = "no";
+capacityDeviation =false;
+proposedPrice = 0.0;
+discPerContractListPrice =0.0;
+sumExtCost =0.0;
+partArray = string[];
+partNumberDocNumDict = dict("string");
+parentPartNumberDocNumDict = dict("string");
+partLineItemCommentDict = dict("string");
+partCoveredProductDict = dict("string");
+transactionTypeDict = dict("string");
+partQuantityDict = dict("string");
+partTotalValueUSDDict = dict("string");
+lineExpirationDict = dict("string");
+lineEffectiveStartDateDict = dict("string");
+lineExtProposedNetPriceRequestedDict = dict("string");
+lineContractEndDateDict = dict("string");
+lineContractStartDateDict = dict("string");
+coveredProductlinematrixDict = dict("string");
+lineCreatedByDict = dict("string");
+lineProposedPriceDict = dict("float");
+licenseTypeDict = dict("string");
+ChildDocDict=dict("string");
+cpProductValue = "";
+fulfillmentSet = "";
+pastFulfillmentSet = "";
+totalFee = 0.0;
+
+multiRecDelim = "@@@";
+keysOfPart = integer[];
+
+//Submit for approval validation attributes
+
+counterCoveredPartArray = string[];
+coveredProduct1Dictionary = Dict("string");
+linePartDict=Dict("string");
+errorSupportPartsDictionary = Dict("string"); 
+custString = "Cust";
+parentPartDictionary = Dict("integer");
+supportPartDictionary = Dict("integer");
+supportPartParentPartMap = Dict("integer");
+coveredProductDictionary = Dict("integer");
+validatedates=false;
+validation=false;
+datevalidation=false;
+countLine = 0;
+
+//attributes used for BROCAD2-1046
+errorLines1_a= "";
+errorLines2= "";
+errorLines3= "";
+errorLines4= "";
+errorLines6= "";
+
+//attributes used for VIPER-288
+errorLineCostCtr = "";
+errorLineChrgCode = "";
+errorLineBU = "";
+errorLinePrjDesc = "";
+
+
+//attributes used for SYMINT-3776
+errorLineBillingDate = "";
+row = json();
+custom = "custom";
+
+//Attributes used for SYMINT-4214: Created By Keerthivasan on 21-Jan-2020 as part of SYMINT-4214
+prodGroup = "";
+busDivision = "";
+isSymHW = false;
+isSymNonHW = false;
+sequenceNumDict = dict("integer");
+serialDict = dict("string");
+errorLineSerial = "";
+isUpgradeTransactionType = false;
+
+//SYMINT-3776 :: Validation functionality for Billing Date in Bill plan to be made mandatory before submitting to order
+if(paymentPlan_t == "custom"){ 
+   loop = range(billingScheduleController_t);
+   print loop;
+   for line in loop{
+      row = jsonarrayget(newBillingSchedule_t, line, "json");
+      rowLicenseFee = jsonget(row,"licenseFee", "string","");
+      rowMaintFee = jsonget(row,"maintenanceFee", "string","");
+   rowBillingDate = jsonget(row,"billingDate", "string","");
+      if((rowLicenseFee <> "0" or rowMaintFee <> "0") and rowBillingDate ==""){
+            line_BillingDate= jsonget(row,"scheduleID", "string","");
+   errorBuilderBillingDate =stringbuilder(errorLineBillingDate,line_BillingDate," , ");
+   errorLineBillingDate = sbtostring(errorBuilderBillingDate);
+      }
+    }
+}
+// End of SYMINT-3776
+
+//
+
+//validation Contract Dates Validation; kacharya
+if(contractStartDate_t <> "" and contractEndDate_t <> "")
+{
+ contractStartDateStr = substring(contractStartDate_t,0,10);
+ contractStartDateStr = contractStartDateStr+" 12:00:00";
+ contractEndDateStr = substring(contractEndDate_t,0,10);
+ contractEndDateStr = contractEndDateStr +" 12:00:00";
+ contractStartDateObj = strtodate(contractStartDateStr,dateFormat);
+ contractEndDateObj = strtodate(contractEndDateStr ,dateFormat);
+ if(comparedates(contractEndDateObj,contractStartDateObj) == -1)
+ {
+  datevalidation=true;
+ } 
+}
+//end of code
+
+//end of submit for approval validation attributes*****************
+
+//if(avoidPricingCalculations_t == false){
+for line in transactionLine
+{
+  /*
+  if(line._part_number <> "" and line._part_number <> "Cust"){
+   
+   if(line.coveredProduct_l == ""){
+    sbappend(sb,line._document_number,"~totalFee_l~",string(line.proposedNetUnitPriceRequested_l),"|");
+    
+   }
+  
+   if(line.fulfillmentSet_l <> "" and line.fulfillmentSet_l == fulfillmentSet and line.coveredProduct_l <> ""){
+    totalFee = totalFee + line.proposedNetUnitPriceRequested_l;
+    
+    sbappend(sb,string((atoi(line._document_number)-1)),"~totalFee_l~",string(totalFee),"|");
+   }
+   else{
+    fulfillmentSet = line.fulfillmentSet_l;
+    totalFee = line.proposedNetUnitPriceRequested_l;
+   }
+  }
+  */
+  
+  //Submit for approval validations
+   //Validate project group - BROCAD2-1046
+  if(line._part_number <> "" and line._part_number <> "Cust" and line.projectGroup_l == "")
+  {
+                  line_no1=line._sequence_number;
+               
+    errorbuilder1=stringbuilder(errorLines1_a,string(line_no1)," , ");
+    errorLines1_a = sbtostring(errorbuilder1);
+  }
+  
+  //Validate Business Type - BROCAD2-1046
+  if(line._part_number <> "" and line._part_number <> "Cust" and line.businessType_l == "")
+  {
+                  line_no2=line._sequence_number;
+    errorbuilder2=stringbuilder(errorLines2,string(line_no2)," , ");
+    errorLines2 = sbtostring(errorbuilder2);
+  } 
+  
+  //Validate Transaction Type - BROCAD2-1046
+  if(line._part_number <> "" and line._part_number <> "Cust" and line.transactionTypeM_l == "")
+  {
+                  line_no3=line._sequence_number;
+    errorbuilder3=stringbuilder(errorLines3,string(line_no3)," , ");
+    errorLines3 = sbtostring(errorbuilder3);
+  }
+  
+  //Validate License Type - BROCAD2-1046
+  if(line._part_number <> "" and line._part_number <> "Cust" and line.licenseType_l == "")
+  {
+                  line_no4=line._sequence_number;
+    errorbuilder4=stringbuilder(errorLines4,string(line_no4)," , ");
+    errorLines4 = sbtostring(errorbuilder4);
+  }
+  
+  //Validate Cost Center - VIPER-288
+  if(line._part_number <> "" and line._part_number <> "Cust" and line.costCenter_l == "")
+  {
+          line_noCost=line._sequence_number;
+    errorBuilderCostCtr=stringbuilder(errorLineCostCtr,string(line_noCost)," , ");
+    errorLineCostCtr = sbtostring(errorbuilderCostCtr);
+  }
+  
+  //Validate Charge Code - VIPER-288
+  if(line._part_number <> "" and line._part_number <> "Cust" and line.chargeCode_l == "")
+  {
+          line_noCharge=line._sequence_number;
+    errorBuilderChargeCode=stringbuilder(errorLineChrgCode,string(line_noCharge)," , ");
+    errorLineChrgCode = sbtostring(errorbuilderChargeCode);
+  }
+  
+  //Validate Business Unit - VIPER-288
+  if(line._part_number <> "" and line._part_number <> "Cust" and line.businessUnit_l == "")
+  {
+          line_noBU=line._sequence_number;
+    errorBuilderBU=stringbuilder(errorLineBU,string(line_noBU)," , ");
+    errorLineBU = sbtostring(errorBuilderBU);
+  }
+  
+  //Validate Project Description - VIPER-288
+  if(line._part_number <> "" and line._part_number <> "Cust" and line.projectDescription_l == "")
+  {
+          line_nopd=line._sequence_number;
+    errorBuilderPD=stringbuilder(errorLinePrjDesc,string(line_nopd)," , ");
+    errorLinePrjDesc = sbtostring(errorBuilderPD);
+  }
+  
+  //SYMINT-4214 :: Setting flag to constrain Deal Type when Transaction Type is Upgrade created by Keerthivasan on 21-Jan-2020 as part of SYMINT-4214
+  if(line._part_number <> "" and line._part_number <> "Cust" and line.transactionTypeM_l == "Upgrade")
+  {
+          isUpgradeTransactionType = true;
+  }
+  
+  //print countLine;
+  //Validate availability of lines SYMINT-3201
+  if(line._part_number <> "" and line._part_number <> "Cust")
+  {
+          countLine = countLine+1;
+          
+  }  
+  
+  // VIPER-447  Symantec - Serial Number & validation            */
+
+  if(line.serialNumberTemporary_l <> "" AND line.serial_l == "" AND (line.transactionTypeM_l=="Renew"))
+  {
+  sb=stringbuilder(sb,line._document_number,"~serial_l~",line.serialNumberTemporary_l + dend);
+  }
+
+       
+     //Ravi:Validate “Contracted/ Prior Per Unit Fee” - BROCAD2-5516 
+  /*if(line.transactionTypeM_l == "Capacity" AND line.contractedOrPriorLicenseSubFee_l == 0.0)
+  {
+     line_no6=line._sequence_number;
+          errorbuilder6=stringbuilder(errorLines6,string(line_no6)," , ");
+    errorLines6 = sbtostring(errorbuilder6);
+  }*/
+    //Ravi:Validate “Contracted/ Prior Per Unit Fee” - BROCAD2-5516 
+    
+  //Begin  
+  //Ravi:The Installed at Location does not cascade from header to line item in Renewal Quote - VIPER-618 
+  if(quoteType_t == "renewalQuote" and (line.createdBy_l<>"Integration User" and line.renewalCreatedBy_l <> "Integration User"))
+  { 
+  if(line.siteIDStreetAddress_l==line.temporarysiteIDStreetAddress_avg or line.siteIDStreetAddress_l==""){
+  sb=sbappend(sb,line._document_number,"~siteIDStreetAddress_l~",_transaction_customer_t_address,"|");
+  sb=sbappend(sb,line._document_number,"~temporarysiteIDStreetAddress_avg~",_transaction_customer_t_address,"|");
+  }
+   if(line.siteIDCityStateZip_l==line.temporarysiteIDCityStateZip_avg or line.siteIDCityStateZip_l==""){
+   sb=sbappend(sb,line._document_number,"~siteIDCityStateZip_l~",_transaction_customer_t_city,"|");
+   sb=sbappend(sb,line._document_number,"~temporarysiteIDCityStateZip_avg~",_transaction_customer_t_city,"|");
+   }
+   if(line.siteIDZip_l==line.temporarysiteIDZip_avg or line.siteIDZip_l==""){
+   sb=sbappend(sb,line._document_number,"~siteIDZip_l~",_transaction_customer_t_zip,"|");
+   sb=sbappend(sb,line._document_number,"~temporarysiteIDZip_avg~",_transaction_customer_t_zip,"|");
+   }
+   if(line.siteID_l==line.temporarysiteID_avg or line.siteID_l==""){
+   sb=stringbuilder(sb,line._document_number,"~temporarysiteID_avg~",endCustomerSiteNumber_t,"|");
+   sb=sbappend(sb,line._document_number,"~siteID_l~",endCustomerSiteNumber_t,"|");
+   }
+  if(line.installedAtCustomerNumber_l==line.temporaryInstalledAtCustomerNumber_avg or line.installedAtCustomerNumber_l==""){
+  sb=sbappend(sb,line._document_number,"~installedAtCustomerNumber_l~",customerERPId_t,"|");
+  sb=sbappend(sb,line._document_number,"~temporaryInstalledAtCustomerNumber_avg~",customerERPId_t,"|");
+  }
+  }
+  //Ravi:The Installed at Location does not cascade from header to line item in Renewal Quote - VIPER-618
+  //End 
+  //validation rule: Validate covered products
+ if(line.coveredProduct_l <> "" and line._part_number <> "" and line._part_number <> "Cust")
+ { 
+  if(findInArray(counterCoveredPartArray,line.coveredProduct_l)==-1) 
+  {
+   append(counterCoveredPartArray,line.coveredProduct_l);
+  }
+  put(coveredProduct1Dictionary, line._document_number + "@@@" +line._part_number, line.coveredProduct_l);
+  put(linePartDict,line._document_number+ "@@@" + line._part_number, string(line._sequence_number));
+ }
+    
+ //end code
+ put(errorSupportPartsDictionary,line._document_number + "@@@" + line._part_number, string(line._sequence_number));
+
+ //validation rule: Validate Effective Start And Expiration Dates; kacharya
+ if(line._part_number <> "" and line.endOfSupportServiceDate_l <> "" and line.effectiveStartDate_l <> "" and line.lineExpirationDate_l <> "" and line.dropProduct_l <> true and line.supportOptOut_l <> true)
+ {
+  endOfSupportServiceDateObject = strtodate(line.endOfSupportServiceDate_l,dateFormat);
+  effectiveStartDateObject = strtodate(line.effectiveStartDate_l,dateFormat);
+  lineExpirationDateObject = strtodate(line.lineExpirationDate_l,dateFormat);
+  if(comparedates(endOfSupportServiceDateObject,effectiveStartDateObject) == -1)
+  {
+   validatedates= true;
+  }
+  if(comparedates(endOfSupportServiceDateObject,lineExpirationDateObject) == -1)
+  {
+   validatedates = true;
+  } 
+ }
+ 
+ //end of code
+ //validation Contract Dates Validation; kacharya
+ //adding condition to exclude SKU="Cust" lines from Contract dates validation BROCAD2-4566; Shivendra 
+ if(line._part_number <> "" AND line._part_number <> "Cust")
+ {
+ //VIPER-220: Re assigning the EAR atrribute as a fix for Bug 29856387 when Quote is created thorugh SOAP service Display sum Grid Line total is not calculating Correctly
+ sbappend(sb, line._document_number, "~", "expiringAnnualRenewal_l", "~", string(line.expiringAnnualRenewal_l), "|");
+ //VIPER-220:End
+ 
+  if(line.contractStartDate_l <> "" and line.contractEndDate_l <> "")
+  {
+   lineContractStartDateStr = substring(line.contractStartDate_l,0,10);
+   lineContractStartDateStr = lineContractStartDateStr + " 12:00:00";
+   linecontractEndDateStr = substring(line.contractEndDate_l,0,10);
+   linecontractEndDateStr = linecontractEndDateStr +" 12:00:00";
+   linecontractStartDateObj = strtodate(lineContractStartDateStr,dateFormat);
+   linecontractEndDateObj = strtodate(linecontractEndDateStr,dateFormat);
+   /*if(comparedates(linecontractEndDateObj,linecontractStartDateObj) == -1)
+   {
+    datevalidation=true;
+   }*/
+  }
+ }
+ //end of code
+
+ //validation Support Products Validation
+ if(quoteType_t <> "contractQuote" and (dealType_t == "bSN" or dealType_t == "bSNRenewal"))
+ {
+  if(line.coveredProduct_l == "" and line._part_number <> "" and line.supportOptOut_l == false and line._part_number <> custString)
+  {
+   if(not containsKey(parentPartDictionary,line._part_number))
+   {
+    put(parentPartDictionary, line._part_number, line._price_quantity);
+    
+   }
+   else
+   {
+    savedValue = get(parentPartDictionary,line._part_number);
+    quantity = savedValue + line._price_quantity;
+    put(parentPartDictionary, line._part_number, quantity);
+    
+   }
+  }
+  elif(line.coveredProduct_l <> "" and line._part_number <> "" and line._part_number <> custString)
+  {
+   if(not containsKey(supportPartDictionary,line._part_number))
+   {
+    put(supportPartDictionary, line._part_number, line._price_quantity);
+   }
+   else
+   {
+    savedValue = get(supportPartDictionary,line._part_number);
+    quantity = savedValue + line._price_quantity;
+    put(supportPartDictionary, line._part_number, quantity);
+    
+   }
+   keyValuePair = line._part_number+"~"+line.coveredProduct_l;
+   if(not containsKey(supportPartParentPartMap,keyValuePair))
+   {
+    put(supportPartParentPartMap, keyValuePair , line._price_quantity);
+    
+   }
+   else
+   {
+    savedValue = get(supportPartParentPartMap,keyValuePair);
+    quantity = savedValue + line._price_quantity;
+    put(supportPartParentPartMap, keyValuePair, quantity);
+    
+   }
+   if(not containsKey(coveredProductDictionary,line.coveredProduct_l))
+   {
+    put(coveredProductDictionary, line.coveredProduct_l , line._price_quantity);
+    
+   }
+   else
+   {
+    savedValue = get(coveredProductDictionary,line.coveredProduct_l);
+    quantity = savedValue + line._price_quantity;
+    put(coveredProductDictionary, line.coveredProduct_l, quantity);
+   }
+  }
+ }
+ //end of validation rule code
+  
+ //end of submit for approval validations*********************************************
+
+              if(line.coveredProduct_l<>""){
+              append(partArray,line.coveredProduct_l);
+              }
+              else{
+              append(partArray,line._part_number);
+              }
+              
+              append(keysOfPart,atoi(line._document_number));
+              put(partNumberDocNumDict,line._document_number, line._part_number);
+              put(parentPartNumberDocNumDict,line._document_number, line._parent_doc_number);
+              put(partLineItemCommentDict,line._document_number, line._line_item_comment);
+              put(partCoveredProductDict,line._document_number, line.coveredProduct_l);
+              put(transactionTypeDict,line._document_number, line.transactionTypeM_l);
+              put(partQuantityDict,line._document_number, string(line._price_quantity));
+              put(partTotalValueUSDDict,line._document_number, string(line.totalValueUSD));
+              put(lineExpirationDict,line._document_number, line.lineExpirationDate_l);
+              put(lineEffectiveStartDateDict,line._document_number, line.effectiveStartDate_l);
+              put(lineExtProposedNetPriceRequestedDict,line._document_number, string(line.extProposedNetPriceRequested_l));
+              put(lineContractEndDateDict,line._document_number, line.contractEndDate_l);
+              put(lineContractStartDateDict,line._document_number, line.contractStartDate_l);
+              put(lineCreatedByDict,line._document_number,line.createdBy_l);
+              put(lineProposedPriceDict,line._document_number, line.proposedNetUnitPriceRequested_l);
+              put(licenseTypeDict,line._document_number, line.licenseType_l);
+     
+     //SYMINT-4214 :: Including Serial Number and Sequence Number to track per Line Item, Created by Keerthivasan on 21-Jan-2020 as part of SYMINT-4214
+     put(serialDict,line._document_number, line.serial_l);
+     put(sequenceNumDict,line._document_number, line._sequence_number);
+              
+              
+              monthlyFeePerUnit = 0.0;
+                contractEndDatelineObj=getdate();
+                contractStartDatelineObj=getdate();
+                if(line.contractEndDate_l<>""){
+                contractEndDatelineObj = strtodate(line.contractEndDate_l, dateFormat);
+                }
+                if(line.contractStartDate_l<>""){
+                contractStartDatelineObj = strtodate(line.contractStartDate_l, dateFormat);
+                }
+              
+                totalSupportTermDays = getdiffindays(contractEndDatelineObj,contractStartDatelineObj);
+
+                //sum=sum+NewAnnualRenVal;
+                totalSupportTermDays = totalSupportTermDays + 1;
+
+                if ( NOT isnull(totalSupportTermDays) AND totalSupportTermDays <> 0 )
+                {            
+                             monthlyFeePerUnit = line.proposedNetUnitPriceRequested_l/totalSupportTermDays;
+                }
+                sbappend(sb, line._document_number, "~", "monthlyFeePerUnitUSD_l", "~", string(monthlyFeePerUnit), "|");
+    
+    // Adding changes as part of BROCAD2-5461 for calculating Total Contract/List Price based on Capacity based Transactions
+    if(line.transactionTypeM_l == "Capacity") {
+     sumContractListPriceCapacity = sumContractListPriceCapacity + line.perUnitPerListPrice_l;
+    }
+                
+              
+               if(line.effectiveStartDate_l == "" and lineEffectiveStartDate <> "")
+                {
+                                                                        
+                             sbappend(sb, line._document_number, "~", "effectiveStartDate_l", "~", lineEffectiveStartDate, "|");
+                             
+                }
+                if(line.lineExpirationDate_l == "" and lineExpirationDate <> "")
+                {
+                                                                        
+                             sbappend(sb, line._document_number, "~", "lineExpirationDate_l", "~", datetostr(quoteExpDateObj), "|");
+                             
+                }
+              
+                if(line.cPUModelSerial_l <> "")
+                {
+                                                                        
+                             sbappend(sb,line._document_number, "~", "mmsCompletionFlag_l", "~", mmsFlagY, "|");
+                             
+                }
+                if(line.cPUModelSerial_l == "")
+                {
+                                                                        
+                             sbappend(sb, line._document_number, "~", "mmsCompletionFlag_l", "~", mmsFlagN, "|");
+                             
+                }
+              
+              
+              if(line.nonStandardLicenseMetric_l == "yes" and nonStandardLicenseMetric <> "yes")
+              {
+                             nonStandardLicenseMetric = "yes";
+              }
+              if(line.royaltyYN_l =="yes" and exceedingMaximumRoyaltyDiscount <> "yes")
+              {
+                exceedingMaximumRoyaltyDiscount ="yes";
+              }
+              if(startswith(upper(line.transactionTypeM_l), "CAPACITY"))
+              {
+//BROCAD2-3504 - BEGIN
+              if(line.contractedOrPriorDealValue_l == "Contracted")
+              {
+                if((line.contractedOrPriorLicenseSubFee_l <> line.proposedNetUnitPriceRequested_l) and capacityDeviation <> true)
+                {
+                             capacityDeviation =true;
+                }
+              }
+    else
+    {
+     if(line.contractedOrPriorDealValue_l == "Prior Price")
+     {
+      if((line.contractedOrPriorLicenseSubFee_l > line.proposedNetUnitPriceRequested_l) and capacityDeviation <> true)
+      {
+       capacityDeviation =true;
+      }
+     }
+    }
+//BROCAD2-3504 - END
+              }
+     
+
+     
+}
+//}
+//QUERY 1
+partTableQuery1 = dict("string");
+//QUERY 2
+partTableQuery2 = dict("string");
+discountable = "";
+//QUERY 3
+partTableQuery3 = dict("string");
+
+/* commenting code by shruti on 30th may 2019
+// start of new code to join the table - changes done by Shruti on 23rd May 2019
+res = bmql("select BRCM_Part_Master.MPN,BRCM_Part_Master.Product_Type,BRCM_Part_Master.Service_Required,BRCM_Part_Master.Business_Div,BRCM_Part_Master.Base_Product,BRCM_Part_Master.Country_of_Origin,BRCM_Part_Master.Product_Name,BRCM_Part_Master.Description,BRCM_Part_Master.SPI,BRCM_Part_Master.Migration_Type,BRCM_Part_Master.Qty_Ratio_Conversion,BRCM_Part_Master.Renewal_Allowed,BRCM_Part_Master.Upgrade_Material,BRCM_Part_Master.Drop_Support_Date,BRCM_Part_Master.SRT_Weeks,BRCM_Part_Master.Capacity_Allowed,BRCM_Part_Master.New_Sales_Allowed,BRCM_Part_Master.Item_Type,BRCM_Part_Master.PRODUCT_LINE,BRCM_Part_Master_Ext.Non_Disc_Pdts,BRCM_Part_Master_Ext.Std_Lic_Metric,BRCM_Part_Master_Ext.Product_Status,BRCM_Part_Master_Ext.Stabilization_Date,BRCM_Part_Master_Ext.Royalty_Product,BRCM_Part_Master_Ext.Royalty_Discount,BRCM_Part_Master_Ext.Minimum,BRCM_Part_Master_Prc.Sales_Min1,BRCM_Part_Master_Prc.Sales_Min2,BRCM_Part_Master_Prc.Uplift_Factor,BRCM_Part_Master_Prc.Sales_Min3,BRCM_Part_Master_Prc.Mfg_Cost,BRCM_Part_Master_Prc.DealDesk_Enabled from BRCM_Part_Master inner join BRCM_Part_Master_Ext ON BRCM_Part_Master.MPN = BRCM_Part_Master_Ext.MPN  inner join BRCM_Part_Master_Prc ON BRCM_Part_Master_Prc.MPN = BRCM_Part_Master_Ext.MPN where BRCM_Part_Master.MPN in $partArray");
+for record in res{
+//1st res
+              tempArray = string[];
+              MPNPartNumber =  get(record,"MPN");
+              //productType 
+               append(tempArray, get(record,"Product_Type"));
+              //serviceReq 
+               append(tempArray, get(record,"Service_Required"));
+              //baseProd 
+               append(tempArray, get(record,"Base_Product"));
+              busDiv = get(record,"Business_Div");
+              if(busDiv == "" or isnull(busDiv))
+              {
+                             busDiv = "CAD";
+              }
+              append(tempArray, busDiv);
+              //country 
+               append(tempArray,get(record,"Country_of_Origin"));
+              //productName = get(record,"Product_Name");
+              append(tempArray,get(record,"Product_Name"));
+              //description = get(record,"Description");
+              append(tempArray,get(record,"Description"));
+              //spi = get(record,"SPI");
+              append(tempArray,get(record,"SPI"));
+              //migrationType = get(record,"Migration_Type");
+              append(tempArray,get(record,"Migration_Type"));
+              // qtyRatioConversion= get(record,"Qty_Ratio_Conversion");
+              append(tempArray,get(record,"Qty_Ratio_Conversion"));
+              //renewalAllowed = get(record,"Renewal_Allowed");
+              append(tempArray,get(record,"Renewal_Allowed"));
+              // upgradeMaterial = get(record,"Upgrade_Material");
+              append(tempArray,get(record,"Upgrade_Material"));
+              // dropSupportDate = get(record,"Drop_Support_Date");
+              append(tempArray,get(record,"Drop_Support_Date"));
+              // srt = get(record,"SRT_Weeks");
+              append(tempArray,get(record,"SRT_Weeks"));
+              // capacityAllowed=get(record,"Capacity_Allowed" );
+              append(tempArray,get(record,"Capacity_Allowed"));
+              // newSalesAllowed = get(record,"New_Sales_Allowed");
+              append(tempArray,get(record,"New_Sales_Allowed"));
+              // productLine = get(record,"PRODUCT_LINE");
+              append(tempArray,get(record,"PRODUCT_LINE"));
+              
+              //arrayStr = join(tempArray, multiRecDelim);
+              if(not containskey(partTableQuery1, MPNPartNumber))
+              {
+                             arrayStr = join(tempArray, multiRecDelim);
+                             put(partTableQuery1, MPNPartNumber, arrayStr);
+              }
+// 2nd res
+              tempArray1 = string[];
+              if((get(record,"Minimum")) <> "")
+              {
+                             MPNPartNumber=get(record,"MPN");
+                             //minimumQuantityInt=atoi(get(each,"Minimum"));
+                             append(tempArray1, get(record,"Minimum"));
+                             non_discountable = get(record,"Non_Disc_Pdts");
+                             append(tempArray1, get(record,"Non_Disc_Pdts"));
+                             if(non_discountable == "Y")
+                             {
+                                           discountable = "N";
+                             }
+                             else
+                             {
+                                           discountable = "Y";
+                             }
+                             //lineStabilizationDate = get(each,"Stabilization_Date");
+                             append(tempArray1, get(record,"Stabilization_Date"));
+                             // royaltyProduct=get(each,"Royalty_Product");
+                             append(tempArray1, get(record,"Royalty_Product"));
+                             // maximumRoyaltyDiscount=getfloat(each,"Royalty_Discount");
+                             append(tempArray1, get(record,"Royalty_Discount"));
+                             // productStatus=get(each,"Product_Status");
+                             append(tempArray1, get(record,"Product_Status"));
+                             
+                              append(tempArray1, discountable);
+                             
+                              append(tempArray1, get(record,"Std_Lic_Metric"));
+                              put(coveredProductlinematrixDict,MPNPartNumber,get(record,"Std_Lic_Metric"));
+                              
+                             
+                             if(not containskey(partTableQuery2, MPNPartNumber))
+                             {
+                                           tempArray1Str = join(tempArray1, multiRecDelim);
+                                           put(partTableQuery2, MPNPartNumber, tempArray1Str);
+                             }
+              }
+
+              tempArray2 = string[];
+              MPNPartNumber = get(record,"MPN");
+              //upliftFactor = getfloat(val,"Uplift_Factor");
+              append(tempArray2, string(getfloat(record,"Uplift_Factor")));
+              //unitCost = getfloat(val,"Mfg_Cost");
+              append(tempArray2, string(getfloat(record,"Mfg_Cost")));
+              is_discountable = get(record,"DealDesk_Enabled");
+              append(tempArray2, get(record,"DealDesk_Enabled"));
+              if(is_discountable == "Y")
+              {
+                             discountable = "Y";
+              }
+              else
+              {
+                             discountable = "N";
+              }
+              append(tempArray2, discountable);
+              if(not containskey(partTableQuery3, MPNPartNumber))
+              {
+                             tempArray2Str = join(tempArray2, multiRecDelim);
+                             put(partTableQuery3, MPNPartNumber, tempArray2Str);
+              }
+
+}
+
+
+
+*/
+
+
+// reverted back the code on 30th may 2019 by shruti
+//old quote
+
+res = bmql("select MPN, Product_Type,Service_Required,Business_Div,Base_Product,Country_of_Origin,Product_Name,Description,SPI,Migration_Type,Qty_Ratio_Conversion,Renewal_Allowed,Upgrade_Material,Drop_Support_Date,SRT_Weeks,Capacity_Allowed,New_Sales_Allowed,Item_Type,PRODUCT_LINE,PRODUCT_GROUP,PLA_Eligible from BRCM_Part_Master where MPN in $partArray");
+print res;
+for record in res
+{
+              tempArray = string[];
+              MPNPartNumber =  get(record,"MPN");
+              //productType 
+               append(tempArray, get(record,"Product_Type"));
+              //serviceReq 
+               append(tempArray, get(record,"Service_Required"));
+              //baseProd 
+              append(tempArray, get(record,"Base_Product"));
+              
+             
+              busDiv = get(record,"Business_Div");
+              if(busDiv == "" or isnull(busDiv))
+              {
+                             busDiv = "CAD";
+              }
+              append(tempArray, busDiv);
+              //country 
+               append(tempArray,get(record,"Country_of_Origin"));
+              //productName = get(record,"Product_Name");
+              append(tempArray,get(record,"Product_Name"));
+              //description = get(record,"Description");
+              append(tempArray,get(record,"Description"));
+              //spi = get(record,"SPI");
+              append(tempArray,get(record,"SPI"));
+              //migrationType = get(record,"Migration_Type");
+              append(tempArray,get(record,"Migration_Type"));
+              // qtyRatioConversion= get(record,"Qty_Ratio_Conversion");
+              append(tempArray,get(record,"Qty_Ratio_Conversion"));
+              //renewalAllowed = get(record,"Renewal_Allowed");
+              append(tempArray,get(record,"Renewal_Allowed"));
+              // upgradeMaterial = get(record,"Upgrade_Material");
+              append(tempArray,get(record,"Upgrade_Material"));
+              // dropSupportDate = get(record,"Drop_Support_Date");
+              append(tempArray,get(record,"Drop_Support_Date"));
+              // srt = get(record,"SRT_Weeks");
+              append(tempArray,get(record,"SRT_Weeks"));
+              // capacityAllowed=get(record,"Capacity_Allowed" );
+              append(tempArray,get(record,"Capacity_Allowed"));
+              // newSalesAllowed = get(record,"New_Sales_Allowed");
+              append(tempArray,get(record,"New_Sales_Allowed"));
+              // productLine = get(record,"PRODUCT_LINE");
+              append(tempArray,get(record,"PRODUCT_LINE"));
+              append(tempArray, get(record, "PRODUCT_GROUP"));
+              // added pla eligible on 24th june 2019 for BROCAD2-4539
+              append(tempArray,get(record,"PLA_Eligible"));
+    // print tempArray;
+              //arrayStr = join(tempArray, multiRecDelim);
+              if(not containskey(partTableQuery1, MPNPartNumber))
+              {
+                             arrayStr = join(tempArray, multiRecDelim);
+       // print arrayStr;
+                             put(partTableQuery1, MPNPartNumber, arrayStr);
+                           //  print "roooohit";
+       // print partTableQuery1;
+              }
+}
+//
+
+
+
+res1 = bmql("SELECT MPN,Trial_Allowed,Non_Disc_Pdts,Std_Lic_Metric,Product_Status,Stabilization_Date,Royalty_Product,Royalty_Discount,Minimum FROM BRCM_Part_Master_Ext WHERE MPN in $partArray");
+
+
+for each in res1
+{
+              tempArray1 = string[];
+              
+              //Added code of validation- Trial Quote should not allow non-POC-enabled SKUs. for SYMINT-3206 BY Arjun/Rohit on 19-Dec-2019
+            if(symantecTrialPOC_t==true and get(each,"Trial_Allowed")<>"Y")
+     {
+    skuValidationSb = sbappend(skuValidationSb,get(each,"MPN"),",");
+     }
+     
+     //end of changes for SYMINT-3206
+              if((get(each,"Minimum")) <> "")
+              {
+                             MPNPartNumber=get(each,"MPN");
+                             //minimumQuantityInt=atoi(get(each,"Minimum"));
+                             append(tempArray1, get(each,"Minimum"));
+                             non_discountable = get(each,"Non_Disc_Pdts");
+                             append(tempArray1, get(each,"Non_Disc_Pdts"));
+                             if(non_discountable == "Y")
+                             {
+                                           discountable = "N";
+                             }
+                             else
+                             {
+                                           discountable = "Y";
+                             }
+                             //lineStabilizationDate = get(each,"Stabilization_Date");
+                             append(tempArray1, get(each,"Stabilization_Date"));
+                             // royaltyProduct=get(each,"Royalty_Product");
+                             append(tempArray1, get(each,"Royalty_Product"));
+                             // maximumRoyaltyDiscount=getfloat(each,"Royalty_Discount");
+                             append(tempArray1, get(each,"Royalty_Discount"));
+                             // productStatus=get(each,"Product_Status");
+                             append(tempArray1, get(each,"Product_Status"));
+                             
+                              append(tempArray1, discountable);
+                             
+                              append(tempArray1, get(each,"Std_Lic_Metric"));
+                              put(coveredProductlinematrixDict,MPNPartNumber,get(each,"Std_Lic_Metric"));
+                             if(not containskey(partTableQuery2, MPNPartNumber))
+                             {
+                                           tempArray1Str = join(tempArray1, multiRecDelim);
+                                           put(partTableQuery2, MPNPartNumber, tempArray1Str);
+                             }
+              }
+}
+
+res2 = bmql("SELECT MPN, Sales_Min1,Sales_Min2,Uplift_Factor,Sales_Min3,Mfg_Cost,DealDesk_Enabled FROM BRCM_Part_Master_Prc WHERE MPN in $partArray");
+for val in res2
+{
+              tempArray2 = string[];
+              MPNPartNumber = get(val,"MPN");
+              //upliftFactor = getfloat(val,"Uplift_Factor");
+              append(tempArray2, string(getfloat(val,"Uplift_Factor")));
+              //unitCost = getfloat(val,"Mfg_Cost");
+              append(tempArray2, string(getfloat(val,"Mfg_Cost")));
+              is_discountable = get(val,"DealDesk_Enabled");
+              append(tempArray2, get(val,"DealDesk_Enabled"));
+              if(is_discountable == "Y")
+              {
+                             discountable = "Y";
+              }
+              else
+              {
+                             discountable = "N";
+              }
+              append(tempArray2, discountable);
+              if(not containskey(partTableQuery3, MPNPartNumber))
+              {
+                             tempArray2Str = join(tempArray2, multiRecDelim);
+                             put(partTableQuery3, MPNPartNumber, tempArray2Str);
+              }
+}
+
+
+//QUERY 4
+QtrDateStringArray = string[];
+QtrEnddate = "";
+QtrStartdate = "";
+searchYearStr = substring( _system_date ,0,4);
+searchYearInt = atoi(searchYearStr);
+res3 = bmql("SELECT QTR_Name,Qtr_Start_Date,Qtr_End_Date FROM BRCM_Fiscal_Calendar where Qtr_Start_Year = $searchYearInt or Qtr_End_Year = $searchYearInt");
+for value in res3
+{
+              dateFormat1 = "MM/dd/yyyy";
+              QtrEnddate = get(value,"Qtr_End_Date");
+              QtrStartdate = get(value,"Qtr_Start_Date");
+              append(QtrDateStringArray, QtrEnddate + multiRecDelim + QtrStartdate);
+}             
+//
+
+keysOfPart = sort(keysOfPart);
+for eachPart in keysOfPart
+{
+              each = string(eachPart);
+              obj=json();
+              PartNumber="";
+              srNo = "";
+              supportPartsPicklist="";
+     //HW stories
+     UpgSerialNumber = "";
+              //migration of Financial Summary from formulas to Library --end
+     //updateFulfillmentSet_avg -- start
+              if(get(partLineItemCommentDict, each) <> "" AND get(partNumberDocNumDict, each) <> "Cust")
+                {
+                             teststring=get(partLineItemCommentDict, each);
+                             obj=json(teststring);
+                             PartNumber=jsonget(obj,"PartNumber");
+                             srNo = jsonget(obj,"Sr_No");
+                             child=jsonget(obj,"child");
+                             childObj=json(child);
+                             supportPartsPicklist=jsonget(childObj,"supportPartsPicklist");
+        //HW stories
+        UpgSerialNumber = jsonget(childObj,"SerialNumber");
+        
+                }
+                fulfillmentSet = "";
+    
+    if(UpgSerialNumber <> "")
+    {
+     sbappend(sb, each, "~", "serial_l", "~", UpgSerialNumber, "|");
+    }
+                
+                //VIPER-493 Setting the total fee for all base products
+                if(get(partCoveredProductDict, each) == ""){
+                 sbappend(sb, each, "~", "totalFee_l", "~", get(lineExtProposedNetPriceRequestedDict, each), "|");
+                }
+                //VIPER-493/414 : Setting Total fee as ext proposed price for Support lines that have transaction Type as Renew and License Type is Perpetual
+                 if(get(transactionTypeDict, each) == "Renew" AND get(licenseTypeDict, each) == "Perpetual" AND get(partCoveredProductDict, each)<>"")
+                 {
+                                 totalFee = atof(get(lineExtProposedNetPriceRequestedDict, each));
+                                 sbappend(sb, each, "~", "totalFee_l", "~", string(totalFee), "|");
+                             
+                                 
+                 }
+                if(get(parentPartNumberDocNumDict, each) == currentParent)
+                {
+                             if(get(partNumberDocNumDict, each) == supportPartsPicklist or (get(partCoveredProductDict, each) <> "" and get(partCoveredProductDict, each) <> " "))//Abinash - ()
+                             {
+                                parentSetId = PartNumber + "-" + srNo + "-" +get(parentPartNumberDocNumDict, each);
+                                fulfillmentSet = jsonget(jsonObj,parentSetId);
+                                
+                                //VIPER-493 Setting the total fee for configured lines
+                                if(get(transactionTypeDict, each) <> "Renew"){
+                                 totalFee = atof(get(lineExtProposedNetPriceRequestedDict, each)) + atof(jsonget(jsonObjPrice,parentSetId));
+                                 sbappend(sb, jsonget(jsonObjEach,parentSetId), "~", "totalFee_l", "~", string(totalFee), "|");
+                                 
+                                }
+                                if(get(transactionTypeDict, each) == "Renew" and get(licenseTypeDict, each) == "Subscription"){
+                                 totalFee = atof(get(lineExtProposedNetPriceRequestedDict, each)) + atof(jsonget(jsonObjPrice,parentSetId));
+                                 sbappend(sb, jsonget(jsonObjEach,parentSetId), "~", "totalFee_l", "~", string(totalFee), "|");
+                                }
+                                if(isnull(fulfillmentSet) or fulfillmentSet == "")
+                                {
+                                                          childDoc = childDoc + 1;
+                                                          fulfillmentSet = transactionID_t + "_" + get(parentPartNumberDocNumDict, each) + "." + String(childDoc);
+                                }
+                               put(ChildDocDict,get(parentPartNumberDocNumDict, each),string(childDoc)); 
+                             }
+                             else
+                             {
+                                                          childDoc = childDoc + 1;
+                                                          fulfillmentSet = transactionID_t + "_" + get(parentPartNumberDocNumDict, each) + "." + String(childDoc);
+                                 put(ChildDocDict,get(parentPartNumberDocNumDict, each),string(childDoc));
+                             }
+                }
+                else
+                {
+                             childDoc = -1;
+                             if(get(parentPartNumberDocNumDict, each) == "")
+                             {
+                                fulfillmentSet = transactionID_t + "_" + each;
+                                currentParent = each;
+                                childDoc = 0;
+                             }
+                             else
+                             {
+                                childDoc = 0;
+                                if(get(partNumberDocNumDict, each) == supportPartsPicklist or (get(partCoveredProductDict, each) <> "" and get(partCoveredProductDict, each) <> " "))//Abinash - ()
+                                {
+                                             parentSetId = PartNumber + "-" + srNo + "-" + get(parentPartNumberDocNumDict, each);
+                                             //fulfillmentSet = jsonget(jsonObj,PartNumber);
+                                             fulfillmentSet = jsonget(jsonObj,parentSetId);
+                                             currentParent = get(parentPartNumberDocNumDict, each);
+                                     //SYMINT-3758; This code checks if the current parent is already sequenced. If yes, then it will update the fulfillment set instead of resequencing                              
+                                             if(isnull(fulfillmentSet) or fulfillmentSet == "")
+                                  {
+                                                          childDoc = childDoc + 1;
+                                                          fulfillmentSet = transactionID_t + "_" + get(parentPartNumberDocNumDict, each) + "." + String(childDoc);
+                                   
+                                  }
+                                             if(containskey(ChildDocDict,currentParent)==true){
+                                             childDoc=atoi(get(ChildDocDict,currentParent))+1;
+                                             fulfillmentSet = transactionID_t + "_" + get(parentPartNumberDocNumDict, each) + "." + String(childDoc);
+                                             
+                                             }
+                                             put(ChildDocDict,get(parentPartNumberDocNumDict, each),string(childDoc));
+                                             //end of SYMINT-3758      
+                                             
+                                }
+                                else
+                                {
+                                             childDoc = childDoc + 1;
+                                             fulfillmentSet = transactionID_t + "_" + get(parentPartNumberDocNumDict, each) + "." + String(childDoc);
+                                             currentParent = get(parentPartNumberDocNumDict, each);
+                        //SYMINT-3758; This code checks if the current parent is already sequenced. If yes, then it will update the fulfillment set instead of resequencing                              
+                                             if(containskey(ChildDocDict,currentParent)==true){
+                                             childDoc=atoi(get(ChildDocDict,currentParent))+1;
+                                             fulfillmentSet = transactionID_t + "_" + get(parentPartNumberDocNumDict, each) + "." + String(childDoc);
+                                             }
+                                             put(ChildDocDict,get(parentPartNumberDocNumDict, each),string(childDoc));
+                                             //end of SYMINT-3758
+                                }
+                             }
+                             }
+                             /*if ( get(partCoveredProductDict, each) <> "" and get(partCoveredProductDict, each) <> " ")
+                             {
+                                PartNumber = get(partNumberDocNumDict, each);
+                                saparent = get(partCoveredProductDict, each) + "-" + srNo + "-" + get(parentPartNumberDocNumDict, each);
+                                fulfillmentSetSupport = jsonget(jsonObj,saparent);
+                                if( isnull(fulfillmentSetSupport))
+                                {
+                                                                                        print fulfillmentSetSupport;
+                                }
+                                else
+                                {
+                                                                                        fulfillmentSet = fulfillmentSetSupport;
+                                }
+                             }
+                }
+                if(get(parentPartNumberDocNumDict, each) == "" and get(partLineItemCommentDict, each) == ""  and get(partCoveredProductDict, each) <> "" and get(partCoveredProductDict, each) <> " ")
+      {
+                             //Abinash
+                             /*
+        for each in listOfParts
+                             {
+                                           Obj = json(each);
+                                           coveredProduct = jsonget(Obj,"coveredProduct");
+                                           partNumber = jsonget(Obj,"partNumber");
+                                           
+                                           if (line._part_number == coveredProduct and line._part_number <> "")
+                                           {
+                                                          fulfillmentset = jsonget(jsonObj,partNumber);
+                                           }
+                             }
+                             coveredProduct = get(partCoveredProductDict, each);
+                             if (get(partNumberDocNumDict, each) == coveredProduct and get(partNumberDocNumDict, each) <> "")
+                             {
+                                           fulfillmentset = get(partNumberDocNumDict, each);
+                             }
+               }*/
+                sbappend(fulfillment, each, "~", "fulfillmentSet_l", "~", fulfillmentSet, "|");
+                
+               /*
+                if(get(partCoveredProductDict, each) == ""){
+                 sbappend(sb, each, "~", "totalFee_l", "~", string(get(lineProposedPriceDict, each)), "|");
+                }
+                if(fulfillmentSet == pastFulfillmentSet and get(partCoveredProductDict, each) <> ""){
+                 totalFee = totalFee + get(lineProposedPriceDict, each);
+                 print totalFee;
+                 sbappend(sb, string(atoi(each)-1), "~", "totalFee_l", "~", string(totalFee), "|");
+                }
+                else{
+   pastFulfillmentSet = fulfillmentSet;
+   totalFee = get(lineProposedPriceDict, each);
+  }
+               */
+                
+                //sb = stringbuilder(fulfillment,sbtostring(sb));
+                //fulfillment = sbtostring(sb);
+                jsonKey = get(partNumberDocNumDict, each) + "-" + srNo + "-" + get(parentPartNumberDocNumDict, each);
+                jsonput(jsonObj,jsonKey,fulfillmentSet);
+                
+                //VIPER-493 Storing the price and line number for all products
+                jsonput(jsonObjPrice,jsonKey,get(lineExtProposedNetPriceRequestedDict, each));
+                jsonput(jsonObjEach,jsonKey,each);
+                
+                jsonput(jsonCoverProduct,"coveredProduct",get(partCoveredProductDict, each));
+                jsonput(jsonCoverProduct,"partNumber",get(partNumberDocNumDict, each));
+                //append(listOfParts,jsontostr(jsonCoverProduct));//Abinash
+                expiringAnnualRenewalValue=0.000000;
+                transactionType =get(transactionTypeDict, each);
+                createdBy =get(lineCreatedByDict,each);
+          coveredProduct =get(partCoveredProductDict,each);
+    
+                quantity = atoi(get(partQuantityDict, each));
+                maximumRoyaltyDiscount=0.00000;
+                discountable = "";
+    productLine="";
+                activeStatus = ""; // creating this variable to check for the condition for updating the active line attribute value.
+    //code added by rohit ranjan for regression issue Id:5531 to fetch value for support products   added on 26th july 2019
+                splitQueryString1 = string[];
+    queryString1 = get(partTableQuery2, get(partNumberDocNumDict, each));
+                if(get(partCoveredProductDict, each)<>""){
+                queryString1 = get(partTableQuery2, get(partCoveredProductDict, each));
+                }
+              if(queryString1 <> "" and not isnull(queryString1))
+              {
+                               splitQueryString1 = split(queryString1, multiRecDelim);
+                               sbappend(sb, each, "~", "minqty_l", "~",splitQueryString1[0], "|");
+                               discountable = splitQueryString1[6];
+                }
+    // changes done for Id:5531
+                //changes added as part of BROCAD2 - 1617
+                //productLine = "";
+                //changes added as part of BROCAD2-4539/BROCAD2-2012 - add pla and product group for support parts done by shruti on 23rd july 2019
+              
+                splitQueryString = string[];
+    //code added by rohit ranjan for regression issue Id:5531 to fetch value for support products  added on 26th july 2019
+                queryString = get(partTableQuery1, get(partNumberDocNumDict, each));
+                if(get(partCoveredProductDict, each)<>""){
+                queryString = get(partTableQuery1, get(partCoveredProductDict, each));
+                }
+    //code added by rohit tanjan for regression issue Id:5531 to fetch value for support products             
+    
+               /* commented code for jira id :5531 because we are fetching the value for support products on 26th july 2019
+      if(trim(coveredProduct) <> "")
+  {
+   coveredProductLineResult = bmql("select PRODUCT_LINE,Description,PRODUCT_GROUP,PLA_Eligible,Product_Type from BRCM_Part_Master where MPN = $coveredProduct");
+   for coveredProductLine in coveredProductLineResult
+   {
+    productLine = get(coveredProductLine,"PRODUCT_LINE");
+    cpProductValue =get(coveredProductLine,"Description");
+
+   }
+   
+   
+  } comment ends for 5531
+  */
+               // elif(queryString <> "" and not isnull(queryString))
+       if(queryString <> "" and not isnull(queryString))
+               {
+                                splitQueryString = split(queryString, multiRecDelim);
+                                productLine = splitQueryString[16];                                              
+                  
+               }
+   
+  
+               /*commented code by rohit ranjan on 26th july 2019 for jira id:5531
+    if (NOT isnull(productLine))
+                {
+                             
+                             sbappend(sb, each, "~", "pL_l", "~", productLine, "|");
+                             
+                }
+                else
+                {
+                            
+                             sbappend(sb, each, "~", "pL_l", "~", " ", "|");
+    }
+    comment ends for jira id:5531
+    */
+                                              
+                    
+                // end of changes for pla and productgroup                                     
+                lineExpirationDateObj=getdate();
+                effectiveStartDateObj=getdate();
+                IF(get(lineExpirationDict, each)<>""){
+                             lineExpirationDateObj = strtodate(get(lineExpirationDict, each), dateFormat );
+                }
+                IF(get(lineEffectiveStartDateDict, each)<>""){
+                             effectiveStartDateObj = strtodate(get(lineEffectiveStartDateDict, each), dateFormat );
+                }
+                duration = getdiffindays(lineExpirationDateObj,effectiveStartDateObj);
+                 
+                NewAnnualRenVal = "";
+                //unitCost = 0.0;
+                queryString3 = get(partTableQuery3, get(partNumberDocNumDict, each));
+                splitQueryString3 = string[];
+    //Code added by rohit ranjan for jira id:5531
+                if(get(partCoveredProductDict, each)<>""){
+                queryString3 = get(partTableQuery3, get(partCoveredProductDict, each));
+                }
+    // code ends for jira id :5531
+                if(queryString3 <> "" and not isnull(queryString3))
+                {
+                               splitQueryString3 = split(queryString3, multiRecDelim);
+                               if(splitQueryString3[1] <> "" and not isnull(splitQueryString3[1]))
+                               {
+                                           unitCost = atof(splitQueryString3[1]);
+                               }
+                               discountable = splitQueryString3[3];
+                }
+                extCost = unitCost * quantity;
+                dateFormat1 = "MM/dd/yyyy";
+                daysBeforeQuarter = 0;
+                
+                /* merging each1 with each 2 - done by shruti on 23rd may 2019 for improving performance 
+                for each1 in QtrDateStringArray
+                {
+                               splitEachRec = split(each1, multiRecDelim);
+                             QtrEnddateobj = strtodate(splitEachRec[0], dateFormat1);
+                             QtrStartdateobj = strtodate(splitEachRec[1], dateFormat1);
+                             Sysdate = strtodate(_system_date, dateFormat);
+                             if(comparedates(QtrEnddateobj , Sysdate)==1 AND comparedates(Sysdate, QtrStartdateobj)==1)
+                             {
+                                           daysBeforeQuarter = getdiffindays(QtrEnddateobj , Sysdate);
+                             }
+                }*/
+      
+                Sysdate1 = strtodate(_system_date, dateFormat1);
+                daysInQuarter = 0;
+                QtrEnddate = "";
+                QtrStartdate = "";
+                dateFormat2 = "yyyy-MM-dd";
+                estQuarterlyRevenue =0.0;
+                datesDifference = 0.0;
+                lineExpirationDate1 =get(lineExpirationDict, each);
+                lineExpirationDateStr = "";
+                effectiveStartDate = get(lineEffectiveStartDateDict, each);
+                effectiveStartDatestr = substring(effectiveStartDate ,0,11);
+                if(effectiveStartDatestr<>"")
+                {
+                             effectiveStartDateObj = strtodate(effectiveStartDatestr,dateFormat2);
+                }
+                SysdateStr = strtodate(_system_date, dateFormat);
+                if(lineExpirationDate1 <> "")
+                {
+                             lineExpirationDateStr = substring(lineExpirationDate1,0,11);
+                }
+              
+                             for each2 in QtrDateStringArray
+                             {
+
+                                           splitEachRec = split(each2, multiRecDelim);
+
+                                           QtrEnddateobj = strtodate(splitEachRec[0], dateFormat1);
+                                           QtrStartdateobj = strtodate(splitEachRec[1], dateFormat1);
+                                           Sysdate = strtodate(_system_date, dateFormat);
+                                           if(comparedates(QtrEnddateobj , Sysdate)==1 AND comparedates(Sysdate, QtrStartdateobj)==1)
+                                           {
+                                                          daysBeforeQuarter = getdiffindays(QtrEnddateobj , Sysdate);
+                                           }
+                                           if(lineExpirationDateStr <> "")
+                                           {
+                                           lineExpirationDateObj = strtodate(lineExpirationDateStr,dateFormat2);
+                                              QtrEnddate = splitEachRec[0];
+                                              QtrStartdate = splitEachRec[1];
+                                              if(QtrEnddate <>"" and QtrStartdate<>"")
+                                              {
+                                                            QtrStartdateobj = strtodate(QtrStartdate, dateFormat1);//
+                                                            QtrEnddateobj = strtodate(QtrEnddate, dateFormat1);//
+                                                          if(comparedates(QtrEnddateobj,SysdateStr)==1 AND comparedates(SysdateStr, QtrStartdateobj)==1)
+                                                            {
+                                                                        daysInQuarter = getdiffindays(QtrEnddateobj , QtrStartdateobj);
+                                                                        if(comparedates(QtrEnddateobj,lineExpirationDateObj)== 1)
+                                                                        {
+                                                                                      estQuarterlyRevenue  = atof(get(lineExtProposedNetPriceRequestedDict, each)); 
+                                                                        }
+                                                                        else
+                                                                        {      
+                                                                          datesDifference = getdiffindays(lineExpirationDateObj ,effectiveStartDateObj);
+                                                                          if(datesDifference<>0)
+                                                                          {
+                                                                                      estQuarterlyRevenue =  (atof(get(lineExtProposedNetPriceRequestedDict, each)) / datesDifference) * daysInQuarter;
+                                                                          }
+                                                                        }
+                                                            }
+                                              }
+                                                         sbappend(sb, each, "~", "estQuarterlyRevenue_l", "~", string(estQuarterlyRevenue), "|");
+                                                          
+                                           }
+                             }
+
+                sbappend(sb, each, "~", "baseProduct_l", "~", splitQueryString[2], "|");
+                
+               
+                sbappend(sb, each, "~", "productName_l", "~", splitQueryString[5], "|");
+                
+                sbappend(sb, each, "~", "productGroup_l" ,"~" , splitQueryString[17], "|");
+               
+                 sbappend(sb, each, "~", "pLA_l" ,"~" , splitQueryString[18], "|"); 
+                   
+                sbappend(sb, each, "~", "productType_l", "~", splitQueryString[0], "|");
+                
+               
+                sbappend(sb, each, "~", "isDiscountable_l", "~", discountable, "|");
+                
+               
+                sbappend(sb, each, "~", "serviceRequired_l", "~", splitQueryString[1], "|");
+                
+               
+                sbappend(sb, each, "~", "businessDivision_l", "~", splitQueryString[3], "|");
+                
+               
+                sbappend(sb, each, "~", "countryOfOrigin_l", "~", splitQueryString[4], "|");
+                
+               
+                sbappend(sb, each, "~", "description_l", "~", splitQueryString[6], "|");
+    
+    //SYMINT-4214 :: Validating if Hardware SKUs are mixed with other SKUs created by Keerthivasan as part of SYMINT-4214 on 21-Jan-2020
+    if(get(partNumberDocNumDict, each) <> "" AND get(partNumberDocNumDict, each) <> "Cust"){
+     prodGroup = splitQueryString[17];
+     busDivision = splitQueryString[3];
+     // If Product Group is Hardware and Business Division is Symantec, Setting the flag as true
+     partnum=get(partNumberDocNumDict, each);
+     KeyGenType="";
+     resultset= bmql("SELECT KEY_GEN_TYPE FROM BRCM_Part_Master WHERE MPN=$partnum");
+     for result1 in resultset
+     {
+      KeyGenType=get(result1,"KEY_GEN_TYPE");
+     }
+     if(prodGroup == "Hardware" AND busDivision == "SED"){
+      isSymHW = true;
+     }
+     else {
+      isSymNonHW = true;
+     }
+     // If Product Group is Hardware or Virtual Appliance, Transaction type is either Renew, Capacity or Upgrade and if Serial # is blank, Validation rule will be triggered.
+     if(dealType_t=="cADStandard" OR dealType_t=="cADRenewal")
+     {
+     if(prodGroup == "Hardware" OR KeyGenType=="NP-VA" OR KeyGenType=="NP-NVA") {
+      if(busDivision == "SED") {
+       if(get(transactionTypeDict, each) == "Renew" OR get(transactionTypeDict, each) == "Capacity" OR get(transactionTypeDict, each) == "Upgrade") {
+        if(get(serialDict,each) ==""){
+         line_noSerial=get(sequenceNumDict,each);
+         errorBuilderSerial=stringbuilder(errorLineSerial,string(line_noSerial)," , ");
+         errorLineSerial = sbtostring(errorbuilderSerial);
+        }
+       }
+      }
+     }
+     }
+    
+    }
+    // End of SYMINT-4214 
+    /* commented the code for JIra ID:5531 to fetch values for support product -done by rohit ranjan
+    if(createdBy <> "Integration" AND transactionType == "Renew" AND quoteType_t == "renewalQuote")
+    {    
+     sbappend(sb, each, "~", "cPProductFamily_l", "~", cpProductValue, "|");
+                  }
+      comment ends for BROCAD2-5531
+      */
+      
+      sbappend(sb, each, "~", "pL_l", "~", splitQueryString[16], "|");
+      
+       if(createdBy <> "Integration" AND transactionType == "Renew" AND quoteType_t == "renewalQuote")
+    {    
+     sbappend(sb, each, "~", "cPProductFamily_l", "~", splitQueryString[6], "|");
+                  }
+    
+                sbappend(sb, each, "~", "sPI_l", "~", splitQueryString[7], "|");
+              
+                sbappend(sb, each, "~", "migrationType_l", "~", splitQueryString[8], "|");
+              
+                sbappend(sb, each, "~", "quantityRatioConversion_l", "~", splitQueryString[9], "|");
+              
+                sbappend(sb, each, "~", "renewalsAllowed_l", "~", splitQueryString[10], "|");
+              
+                sbappend(sb, each, "~", "upgradeMaterial_l", "~", splitQueryString[11], "|");
+              
+                sbappend(sb, each, "~", "dropSupportDate_l", "~", splitQueryString[12], "|");
+              
+                sbappend(sb, each, "~", "unitCost_l", "~", string(unitCost), "|");
+              
+                sbappend(sb, each, "~", "extCost_l", "~", string(extCost), "|");
+              
+                sbappend(sb, each, "~", "endOfSupportServiceDate_l", "~", splitQueryString[12], "|");
+              
+                sbappend(sb, each, "~", "sRT_l", "~", splitQueryString[13], "|");
+              
+      
+                sbappend(sb, each, "~", "stabilizationDate_l", "~", splitQueryString1[2], "|");
+              
+                sbappend(sb, each, "~", "royaltyYN_l", "~", splitQueryString1[3], "|");
+              
+               maximumRoyaltyDiscount = 0.00000;
+              if(splitQueryString1[4] <> "" and not isnull(splitQueryString1[4]))
+              {
+                             maximumRoyaltyDiscount = atof(splitQueryString1[4]);
+              }
+              
+                sbappend(sb, each, "~", "maximumRoyaltyDiscount_l", "~", string(maximumRoyaltyDiscount), "|");
+              
+               
+               sbappend(sb, each, "~", "mPNStatus_l", "~", splitQueryString1[5], "|");
+              
+               if(get(partCoveredProductDict,each)<>""){
+               sbappend(sb, each, "~", "licenseMetric_l", "~", get(coveredProductlinematrixDict,get(partCoveredProductDict,each)), "|");
+               }
+               else
+               {
+               sbappend(sb, each, "~", "licenseMetric_l", "~", splitQueryString1[7], "|");
+               }
+              
+              
+                sbappend(sb, each, "~", "OfDaysInTerm_l", "~", string(duration), "|");
+              
+                sbappend(sb, each, "~", "capacityAllowed_l", "~", splitQueryString[14], "|");
+              
+               
+                if(dealType_t == "cADEducation" or dealType_t == "cADRenewal" or dealType_t == "cADProfessionalServices" or dealType_t == "cADStandard"){
+                                                                        
+                             sbappend(sb, each, "~", "uplift_l", "~", splitQueryString3[0], "|");
+        
+                             
+                }
+              
+                if(dealType_t == "cADEducation" or dealType_t == "cADRenewal" or dealType_t == "cADProfessionalServices" or dealType_t == "cADStandard"){
+                                                                        
+                             sbappend(sb, each, "~", "daysBeforeQuarterEnd_l", "~", string(daysBeforeQuarter), "|");
+                             
+                }
+              
+                if(get(lineContractEndDateDict, each) <> "" and get(lineContractStartDateDict, each) <> "") //if condition added by raghav on April 1 2019 to avoid exceptions
+                {
+                             contractEndDate = strtodate(get(lineContractEndDateDict, each),dateFormat);
+                             contractStartDate =strtodate(get(lineContractStartDateDict, each),dateFormat);
+                             if(comparedates(SysdateStr, contractEndDate)==1){
+                                                          activeStatus = activeExpired;
+                             }
+                             if( getdiffindays (SysdateStr, contractStartDate) <= getdiffindays (contractEndDate, contractStartDate)){
+                                                                                                                                  
+                                           activeStatus= activeOpen;
+                             }
+                             sbappend(sb, each, "~", "active_l", "~", activeStatus, "|");
+                }
+                             
+
+                if(not isnull(splitQueryString[14]) and splitQueryString[14] <> "")
+                {
+                             if(transactionType == "capacity" and lower(splitQueryString[14]) == "n")
+                             {
+                                document_no = atoi(each)-1;
+                                capacityAllowedErrorLines = capacityAllowedErrorLines + string(document_no) + ",";
+                                isCapacityAllowedError = true;
+                             }
+                }
+              
+                if(not isnull(splitQueryString[15]) and splitQueryString[15] <> "")
+                {
+                             if(transactionType == "new" and lower(splitQueryString[15])=="n")
+                             {
+                                document_no = atoi(each)-1;
+                                newSalesAllowedErrorLines = newSalesAllowedErrorLines + string(document_no) + ",";
+                                isNewSaleAllowedError = true;
+                             }
+                }
+                if(not isnull(splitQueryString[10]) and splitQueryString[10] <> "")
+                {
+                             if(transactionType == "renewal" and lower(splitQueryString[10])=="n")
+                             {
+                                document_no = atoi(each)-1;
+                                renewalAllowedErrorLines = renewalAllowedErrorLines + string(document_no) + ",";
+                                isRenewalAllowedError = true;
+                             }
+                }
+             
+}
+if(isCapacityAllowedError)
+{
+    capacityAllowedErrorLines = "Capacity sales are not permitted for line item(s) numbered "+capacityAllowedErrorLines+"\n";        
+               sbappend(sb,capacityAllowedErrorLines);
+}
+if(isNewSaleAllowedError)
+{
+                newSalesAllowedErrorLines = "New Product sales are not permitted for line item(s) numbered "+newSalesAllowedErrorLines+"\n";
+                sbappend(sb,newSalesAllowedErrorLines);
+   
+}
+if(isRenewalAllowedError)
+{
+                renewalAllowedErrorLines = "Renewal is not permitted for line item(s) numbered "+renewalAllowedErrorLines+"\n";
+                sbappend(sb,renewalAllowedErrorLines);
+     
+ 
+}
+if(not (isCapacityAllowedError or isNewSaleAllowedError or isRenewalAllowedError))
+{
+  sbappend(sb, "1", "~", "lineItemsWarning_t", "~", "", "|");
+
+             
+}
+else
+{
+  sbappend(sb, "1", "~", "lineItemsWarning_t", "~", subresult, "|");
+              
+             
+}
+
+//Submit for approval validations
+
+//Abinash
+keysOfErrorSupportPartsDictionary = keys(errorSupportPartsDictionary);
+parentErrorLines = "";
+sbParentError = stringbuilder();
+errorLines = "";
+sbError = stringbuilder();
+//validation : Support Products Validation; kacharya
+if(quoteType_t <> "contractQuote" and (dealType_t == "bSN" or dealType_t == "bSNRenewal"))
+{
+ mapDictionaryKeys = keys(supportPartParentPartMap);
+ retrievedKey = "";
+ numberOfParentParts = 0;
+ numberOfSupportParts = 0;
+ parentPartKey = "";
+ supportPartKey = "";
+
+ parentPartArray = keys(parentPartDictionary);
+ yesLiteral = "Y";
+ resultSet = bmql("select MPN,Support_Required from BRCM_Part_Master_Ext where MPN IN $parentPartArray and Support_Required = $yesLiteral");
+ countOfRecords = 0;
+ for each_record in resultSet
+ {
+  partNumber = get(each_record,"MPN");
+  for each in keysOfErrorSupportPartsDictionary
+  {
+   if(find(each,partNumber) <> -1)
+   {
+    sbappend(sbParentError, get(errorSupportPartsDictionary,each),",");
+   }
+  }
+  countOfRecords = countOfRecords + 1;
+ }
+ if(countOfRecords == 0)
+ {
+  
+  validation=false;
+ }
+
+ for eachKey in mapDictionaryKeys
+ {
+  supportPartCount = 0;
+  parentPartCount = 0;
+  retrievedKey = eachKey;
+  splitResult = split(retrievedKey,"~");
+  supportPartKey = splitResult[0];
+  parentPartKey = splitResult[1];
+  
+  if(containsKey(supportPartDictionary,supportPartKey))
+  {
+   
+   supportPartCount = get(supportPartDictionary,supportPartKey);
+  }
+  if(containsKey(parentPartDictionary,parentPartKey))
+  {
+   
+   parentPartCount = get(parentPartDictionary,parentPartKey);
+  }
+  if(supportPartCount <> 0 and parentPartCount <> 0)
+  {
+   
+   supportPartCount = supportPartCount-parentPartCount;
+   if(supportPartCount < 0)
+   {
+    splitEachKey = split(eachKey,"~");
+    
+    for each in keysOfErrorSupportPartsDictionary
+    {
+     if(find(each,splitEachKey[0]) <> -1)
+     {
+      sbappend(sbError , get(errorSupportPartsDictionary,each),",");
+     }
+    }
+    validation=true;
+   }
+   put(supportPartDictionary,supportPartKey,supportPartCount);
+   
+  }
+  
+ }
+
+  if(countOfRecords <> 0 and sizeofarray(mapDictionaryKeys)==0)
+  {
+   
+   validation=true;
+  }
+  else
+  {
+   parentErrorLines = "";
+  }
+}
+
+ //Ravi:BROCAD2-5516
+ 
+ //end of validation code
+ //validate: validation rule to covered product
+ coveredPartArray = values(coveredProduct1Dictionary);
+ keysOfCoveredDict = keys(coveredProduct1Dictionary);
+ errorLines1="";
+ sbErrorLine1 = stringbuilder();
+ resultSet = bmql("select MPN from BRCM_Part_Master_Ext where MPN IN $coveredPartArray");
+ countOfRecords = 0;
+ for each_record in resultSet
+ {
+      countOfRecords = countOfRecords + 1;
+      part_number = get(each_record,"MPN");
+               for each in keysOfCoveredDict
+               {
+                              if(find(each, part_number) <> -1)
+                              {
+                                     splitEach = split(each, "@@@");
+                                     if(part_number <> get(coveredProduct1Dictionary,each))
+                                     {
+                                       sbappend( sbErrorLine1 , get(linePartDict,each),",");
+                                     }
+                                            
+                              }
+               }
+ }
+ //end of validation
+ 
+ noOfProducts = sizeofarray(counterCoveredPartArray);
+ if(countOfRecords <> noOfProducts)
+ {
+  sbappend(sb,"1~validateCoveredProductsOnLinesFlag_t~","true","|");
+ }
+ else
+ {
+  sbappend(sb,"1~validateCoveredProductsOnLinesFlag_t~","false","|");
+ }
+ 
+     parentErrorLines = sbtostring(sbParentError);
+ errorLines = sbtostring(sbError);
+ errorLines1 = sbtostring(sbErrorLine1);
+ skuValidation=sbtostring(skuValidationSb);
+ sbappend(sb,"1~validateEffectiveStartAndExpirationDates_t~",string(validatedates), "|", "1~validateSupportProductsValidation_t~",string(validation),"|","1~validateContractDates_t~",string(datevalidation),"|","1~errorLineValidation3_t~",errorLines + "###" + parentErrorLines,"|","1~errorLineValidation2_t~",errorLines1,"|","1~sKUvalidaton_t~",skuValidation,"|");
+ 
+//Assigning values for validation attribute SYMINT-3201
+ if(countLine == 0)
+ {
+  sbappend(sb,"1~validateAvailableLinesOnSubmitApproval_t~","true","|");
+ }
+ else
+ {
+  sbappend(sb,"1~validateAvailableLinesOnSubmitApproval_t~","false","|");
+ }
+ 
+//setting values for BROCAD2-1046
+sbappend(sb,"1~errorLine1_t~",errorLines1_a,"|");
+ sbappend(sb,"1~errorLine2_t~",errorLines2,"|");
+ sbappend(sb,"1~errorLine3_t~",errorLines3,"|");
+ sbappend(sb,"1~errorLine4_t~",errorLines4,"|");
+ sbappend(sb,"1~errorLines6_t~",errorLines6,"|");
+ 
+//setting values for VIPER-288
+sbappend(sb,"1~errorLineCostCenter_t~",errorLineCostCtr,"|");
+sbappend(sb,"1~errorLineBusinessUnit_t~",errorLineBU,"|");
+sbappend(sb,"1~errorLineChargeCode_t~",errorLineChrgCode,"|");
+sbappend(sb,"1~errorLineProjectDescription~",errorLinePrjDesc,"|");
+
+//setting values for SYMINT-3776
+sbappend(sb,"1~errorLineBillingDate_t~",errorLineBillingDate,"|");
+
+//setting values for SYMINT-4214 created by Keerthivasan as part of SYMINT-4214 on 21-Jan-2020
+if(isSymHW == true and isSymNonHW == true) {
+  sbappend(sb,"1~errorLineSymantecHardware_t~","true","|");
+}
+else {
+  sbappend(sb,"1~errorLineSymantecHardware_t~","false","|");
+}
+
+sbappend(sb,"1~errorLineSerial_t~",errorLineSerial,"|");
+sbappend(sb,"1~dealTypeConstrain_t~",string(isUpgradeTransactionType),"|");
+
+if(isSymHW == true and isSymNonHW == false) {
+  sbappend(sb,"1~symantecBillingScheduleFlag_t~","true","|");
+}
+else {
+  sbappend(sb,"1~symantecBillingScheduleFlag_t~","false","|");
+}
+// End of SYMINT-4214
+
+
+ 
+//end of submit for approval validations**********
+  
+sbappend(sb, "1", "~", "capacityDeviation_t", "~", string(capacityDeviation), "|");
+
+sbappend(sb, "1", "~", "nonStandardLicenseMetric_t", "~", nonStandardLicenseMetric, "|");
+sbappend(sb, "1", "~", "exceedingMaximumRoyaltyDiscount_t", "~", exceedingMaximumRoyaltyDiscount, "|");
+// Adding changes as part of BROCAD2-5461 for calculating Total Contract/List Price based on Capacity based Transactions
+sbappend(sb, "1", "~", "totalCapacityListPrice_t", "~", string(sumContractListPriceCapacity) , "|");
+//fulfillments = sbappend(sb,fulfillment);
+sbappend(sb,fulfillment);
+result = sbtostring(sb);
+}
+return result;

@@ -1,0 +1,24 @@
+/*****************************************************************
+Function Name : Enter Envoirnment Hiding
+Name : Nandhini Vurimella
+Description : For hiding Enter Environment
+*****************************************************************/
+mPN=selectedProductNumberInt_avg;
+Environment="";
+ret=false;
+ results = bmql("select Environment_Type from BRCM_Part_Master_Prc where  MPN= $mPN");
+    for result in results {
+        Environment=get(result,"Environment_Type");
+    }
+    
+    if(Environment=="" OR isnull(Environment)==true)
+    {
+    ret=true;
+    }
+    else
+    {
+    ret=false;
+    }
+    
+    
+    return ret;

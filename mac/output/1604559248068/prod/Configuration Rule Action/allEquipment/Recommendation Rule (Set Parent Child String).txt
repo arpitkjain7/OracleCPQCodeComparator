@@ -1,0 +1,491 @@
+/*********************************************************************
+              Function Name: Set parent child string
+              Description: This rule will set parent child string using json structure
+              Author: Shruti
+              User Story #:configuration story
+              Date: 2nd dec 2018
+              ******************************Change Log*****************************
+ Modified by Shivenda Sharma on 15th Jan 2020 for SYMINT-3144 to create parent child String for Hardware Upgrade SKU's   
+Modified by Kavita Lolla  - 27/01/2020 - SYMINT-4426 - Reconfigure wipes out the previously configured part attributes.  
+Modified by Nandhini V -30/-4/2020 VIPER -773 - Make Support Part Mandatory and Autopopulate  
+Modified by Adithya Suresh -15/4/2020 VIPER-803 - Updating parent child string for Mass Update and Guided Selling
+Modified by Adithya Suresh -27/5/2020 SYMINT-7850 - Added Prior Contract Number and Prior Contract Line Number to the Upgrade Parent Child String
+Modified by M Vamsi -14/7/2020 VIPER - 716 - Merge Quote - Update Line Discounts from Merged quotes to Parent quote for Configured lines
+*********************************************************************/
+//Creation of JSON object and intialization
+MainObj = json();
+childObj = json();
+jsonArrObj = jsonarray();
+//SYMINT-4426 - Begin
+identifiervar = 0;
+maxidentifier = 0; 
+
+//SYMINT-4426 - End
+//This loop will run only when user configures Upgrade SKU
+if(selectUpgradeProduct_avg == true)
+{
+MainObj = json();
+childObj = json();
+jsonArrObj = jsonarray();
+//Checking null values of Sting to create a JSON obj
+if(parentChildString_avg<>" " AND parentChildString_avg<>"" AND not isnull(parentChildString_avg)){
+ MainObj = json(parentChildString_avg);
+}
+indexUpg = findinarray(selectUpgdSKUarr_avg,true);
+loopUpg = range(upgradeSKUArrayController_avg);
+jsonUpgObjKeys = jsonkeys(MainObj);
+//SYMINT-4426 - Begin - Computes the max value of identifier assigned.
+if(parentChildString_avg<>" " AND parentChildString_avg<>"" AND not isnull(parentChildString_avg)){
+for each in loopUpg
+{
+  pcString = jsonget(MainObj,string(each));
+  if(pcString <> "" AND pcString <> " " AND NOT isnull(pcString))
+  {
+  pcJson = json(pcString);
+  currentIdentifierS = jsonget(pcJson,"Identifier");
+  if(currentIdentifierS <> "" AND currentIdentifierS <> " " AND NOT isnull(currentIdentifierS))
+  {
+   currentIdentifier = atoi(currentIdentifierS);
+   if(maxidentifier < currentIdentifier)
+   {
+    maxidentifier = currentIdentifier;
+   }
+  }
+ }
+}
+} 
+//SYMINT-4426 - End
+//Loop to create Parent CHild string for all the selected products
+for each in loopUpg
+{
+ parentObj = json();
+ if(findinarray(jsonUpgObjKeys,string(each))<> -1)
+ {
+  parentObj = jsonget(MainObj,string(each),"json");
+ }
+ // add parent - part array attributes
+ jsonput(parentObj,"Sr_No",each);
+ jsonput(parentObj,"PartNumber",upgradeSKU_avg_picker[each]);
+ partNum = currentSKU_avg_picker[each];
+ jsonput(parentObj,"Quantity",integer(quantityHWUpgd_avg[each]));
+
+ if( showHideButton_avg == "SHOW" and indexUpg==each)
+ {
+  //  add child attributes for the parent selected
+  jsonput(childObj,"Current_SKU",currentSKU_avg_picker[each]);
+  jsonput(childObj,"FinalUpgradeSKU",finalUpgradeSKU_avg[each]);
+  jsonput(childObj,"SerialNumber",serialNumber_avg[each]);
+  
+  //SYMINT-7850 Added Prior Contract Number and Prior Contract Line Number to the Upgrade Parent Child String
+  jsonput(childObj,"PriorContractNumber",priorContractNumberUpg_avg[each]);
+  jsonput(childObj,"PriorContractLineNumber",priorContractLineNumberUpg_avg[each]);
+  
+  jsonput(childObj,"transactionType",transactionsType_avg);
+  jsonput(childObj,"specialMetric",specialMetric_avg);
+  jsonput(childObj,"enterEnvironment",enterEnvironment_avg);
+  jsonput(childObj,"selectLicenseType",selectLicenseType_avg);
+  jsonput(childObj,"supportType",supportType_avg);
+  // [Nandhini V] -[VIPER-773]-using support part (text attribute ) instead of picklist attribute to update
+   // [Nandhini V] -[VIPER-773]-using support part (text attribute ) instead of picklist attribute to update
+  if( not isnull(supportType_avg) OR  supportType_avg <> "" OR supportType_avg <> " ")
+  {
+   result = bmql("select Support_Level from BRCM_Support_Rate where Support_Type_Code = $supportType_avg");
+
+
+for res in result
+{
+jsonput(childObj,"supportPartsPicklist",get(res,"Support_Level"));
+  //jsonput(childObj,"supportPartAutoPopulate",get(res,"Support_Level"));
+}
+  
+  }
+  else{
+   jsonput(childObj,"supportPartsPicklist","");
+  //jsonput(childObj,"supportPartAutoPopulate","");
+
+  }
+  jsonput(childObj,"languageRequired",languageRequired_avg);
+  jsonput(childObj,"startDate",datetostr(effectiveDateNa_avg));
+  jsonput(childObj,"endDate",datetostr(endDateNa));
+  jsonput(childObj,"standardQuantity",standardNewAdditionalNa_avg);
+  jsonput(childObj,"existingQuantity",standardExistingNa_avg);
+  jsonput(childObj,"licenseMetric",standardLicenseMetricNa_avg);
+  jsonput(childObj,"specialMetricLicense",specialMetricText_avg);
+  jsonput(childObj,"UsageQuantity",specialMetricUsageQTYNewAdditionalna_avg);
+  jsonput(childObj,"UsageExistingQuantity",specialMetricUsageQTYExistingna_avg);
+  jsonput(childObj,"Unlimited",unlimited_avg);
+  jsonput(childObj,"supportopt",supportOptOut_avg);
+  
+  if(not isnull(effectiveDateNa_avg) and not isnull(endDateNa))
+  {
+   newSupportTerm = getdiffindays(effectiveDateNa_avg,endDateNa);
+   newSupportTerm = newSupportTerm + 1;
+   jsonput(childObj,"totalNewSupportTerm",string(newSupportTerm));
+  }
+  resultSet = bmql("SELECT Product_Type FROM BRCM_Part_Master WHERE MPN=$partNum");
+  
+  for val in resultSet{
+   jsonput(childObj,"ProductType",get(val,"Product_Type"));
+  }
+  //VIPER - 716 - Begin - Updating Parent Child String with dummy requested discount key
+  jsonput(childObj,"requestedDisc","");
+  // Viper - 716 - END
+  jsonput(parentObj,"child",childObj);
+ }
+ //SYMINT-4426 - Begin - Return the already assigned value stored in parent child string else add 2 and store the same.
+  identifierStored = jsonget(parentObj,"Identifier");
+  if(identifierStored <> "" AND identifierStored <> " " AND NOT isnull(identifierStored))
+  {
+   identifiervar = atoi(identifierStored);
+  }
+  else
+  {
+   identifiervar = maxidentifier + 2;
+   maxidentifier = identifiervar;
+      }
+      jsonput(parentObj,"Identifier",string(identifiervar)); 
+    //SYMINT-4426 - End
+ jsonput(MainObj,string(each),parentObj);
+}
+}
+elif((productGroup_avg <> "" AND NOT ISNULL(productGroup_avg)) AND ((selectProductByNumberFlag_avg == true)OR(selectProductByNameFlag_avg == true))){
+MainObj1 = json();
+childObj = json();
+jsonArrObj = jsonarray();
+if(parentChildString_avg<>" " AND parentChildString_avg<>"" AND not isnull(parentChildString_avg)){
+ MainObj = json(parentChildString_avg);
+}
+index = findinarray(select_avg,true);
+loop = range(partSelectionArrayControl_avg);
+jsonObjKeys = jsonkeys(MainObj);
+//SYMINT-4426 - Begin - Computes the max value of assigned identifier
+if(parentChildString_avg<>" " AND parentChildString_avg<>"" AND not isnull(parentChildString_avg)){
+for each in loop
+{
+
+  pcString = jsonget(MainObj,string(each));
+  if(pcString <> "" AND pcString <> " " AND NOT isnull(pcString))
+  {
+  pcJson = json(pcString);
+  currentIdentifierS = jsonget(pcJson,"Identifier");
+  if(currentIdentifierS <> "" AND currentIdentifierS <> " " AND NOT isnull(currentIdentifierS))
+  {
+   currentIdentifier = atoi(currentIdentifierS);
+   if(maxidentifier < currentIdentifier)
+   {
+    maxidentifier = currentIdentifier;
+   }
+  }
+ }
+}
+} 
+//SYMINT-4426 - End
+for each in loop
+{
+ parentObj = json();
+ if(findinarray(jsonObjKeys,string(each))<> -1)
+ {
+  parentObj = jsonget(MainObj,string(each),"json");
+ }
+ // add parent - part array attributes
+ jsonput(parentObj,"Sr_No",each);
+ jsonput(parentObj,"PartNumber",PartNumber_avg[each]);
+ partNum = PartNumber_avg[each];
+ jsonput(parentObj,"Quantity",integer(quantity_avg[each]));
+
+ if( showHideButton_avg == "SHOW" and index==each)
+ {
+  //  add child attributes for the parent selected
+  jsonput(childObj,"transactionType",transactionsType_avg);
+  jsonput(childObj,"specialMetric",specialMetric_avg);
+  jsonput(childObj,"enterEnvironment",enterEnvironment_avg);
+  jsonput(childObj,"selectLicenseType",selectLicenseType_avg);
+  jsonput(childObj,"supportType",supportType_avg);
+  // [Nandhini V] -[VIPER-773]-using support part (text attribute ) instead of picklist attribute to update
+  if( not isnull(supportType_avg) OR  supportType_avg <> "" OR supportType_avg <> " ")
+  {
+   result = bmql("select Support_Level from BRCM_Support_Rate where Support_Type_Code = $supportType_avg");
+
+
+for res in result
+{
+jsonput(childObj,"supportPartsPicklist",get(res,"Support_Level"));
+  //jsonput(childObj,"supportPartAutoPopulate",get(res,"Support_Level"));
+}
+  
+  }
+  else{
+   jsonput(childObj,"supportPartsPicklist","");
+  //jsonput(childObj,"supportPartAutoPopulate","");
+
+  }
+  jsonput(childObj,"languageRequired",languageRequired_avg);
+  jsonput(childObj,"startDate",datetostr(effectiveDateNa_avg));
+  jsonput(childObj,"endDate",datetostr(endDateNa));
+  jsonput(childObj,"standardQuantity",standardNewAdditionalNa_avg);
+  jsonput(childObj,"existingQuantity",standardExistingNa_avg);
+  jsonput(childObj,"licenseMetric",standardLicenseMetricNa_avg);
+  jsonput(childObj,"specialMetricLicense",specialMetricText_avg);
+  jsonput(childObj,"UsageQuantity",specialMetricUsageQTYNewAdditionalna_avg);
+  jsonput(childObj,"UsageExistingQuantity",specialMetricUsageQTYExistingna_avg);
+  jsonput(childObj,"Unlimited",unlimited_avg);
+  jsonput(childObj,"supportopt",supportOptOut_avg);
+  
+  if(not isnull(effectiveDateNa_avg) and not isnull(endDateNa))
+  {
+   newSupportTerm = getdiffindays(effectiveDateNa_avg,endDateNa);
+   newSupportTerm = newSupportTerm + 1;
+   jsonput(childObj,"totalNewSupportTerm",string(newSupportTerm));
+  }
+  resultSet = bmql("SELECT Product_Type FROM BRCM_Part_Master WHERE MPN=$partNum");
+  
+  for val in resultSet{
+   jsonput(childObj,"ProductType",get(val,"Product_Type"));
+  }
+  //VIPER - 716 - Begin - Updating Parent Child String with dummy requested discount key
+  jsonput(childObj,"requestedDisc","");
+  //VIPER - 716 - END
+  jsonput(parentObj,"child",childObj);
+ }
+ //SYMINT-4426 - Begin - Return the already assigned value stored in parent child string else add 2 and store the same.
+  identifierStored = jsonget(parentObj,"Identifier");
+
+  if(identifierStored <> "" AND identifierStored <> " " AND NOT isnull(identifierStored))
+  {
+   identifiervar = atoi(identifierStored);
+  }
+  else
+  {
+   identifiervar = maxidentifier + 2;
+   maxidentifier = identifiervar;
+      }
+      jsonput(parentObj,"Identifier",string(identifiervar)); 
+    //SYMINT-4426 - End
+ jsonput(MainObj,string(each),parentObj);
+}
+}
+
+//VIPER-803 To set the parent child string through guided selling
+if(selectGuidedSelling_avg == true and massUpdateButton_avg == false){
+ MainObj1 = json();
+ childObj = json();
+ jsonArrObj = jsonarray();
+ if(parentChildString_avg<>" " AND parentChildString_avg<>"" AND not isnull(parentChildString_avg)){
+  MainObj = json(parentChildString_avg);
+ }
+ index = findinarray(select_avg,true);
+ loop = range(partSelectionArrayControl_avg);
+ jsonObjKeys = jsonkeys(MainObj);
+ startDate = strtojavadate(effectiveStartDateMU, "MM-dd-yyyy");
+ endDate = strtojavadate(effectiveEndDateMU, "MM-dd-yyyy");
+ //SYMINT-4426 - Begin - Computes the max value of assigned identifier
+ if(parentChildString_avg<>" " AND parentChildString_avg<>"" AND not isnull(parentChildString_avg)){
+ for each in loop
+ {
+ 
+   pcString = jsonget(MainObj,string(each));
+   if(pcString <> "" AND pcString <> " " AND NOT isnull(pcString))
+   {
+   pcJson = json(pcString);
+   currentIdentifierS = jsonget(pcJson,"Identifier");
+   if(currentIdentifierS <> "" AND currentIdentifierS <> " " AND NOT isnull(currentIdentifierS))
+   {
+    currentIdentifier = atoi(currentIdentifierS);
+    if(maxidentifier < currentIdentifier)
+    {
+     maxidentifier = currentIdentifier;
+    }
+   }
+  }
+ }
+ } 
+ //SYMINT-4426 - End
+ for each in loop
+ {
+  parentObj = json();
+  if(findinarray(jsonObjKeys,string(each))<> -1)
+  {
+   parentObj = jsonget(MainObj,string(each),"json");
+  }
+  // add parent - part array attributes
+  jsonput(parentObj,"Sr_No",each);
+  jsonput(parentObj,"PartNumber",PartNumber_avg[each]);
+  partNum = PartNumber_avg[each];
+  jsonput(parentObj,"Quantity",quantity_MU);
+ 
+  //if( showHideButton_avg == "SHOW" and index==each)
+  //{
+   //  add child attributes for the parent selected
+   jsonput(childObj,"transactionType",transactionType_MU);
+   jsonput(childObj,"specialMetric",specialMetric_MU);
+   jsonput(childObj,"enterEnvironment",enterEnvironment_MU);
+   jsonput(childObj,"selectLicenseType",selectLicenseType_MU);
+   jsonput(childObj,"supportType",supportType_MU);
+   // [Nandhini V] -[VIPER-773]-using support part (text attribute ) instead of picklist attribute to update
+   jsonput(childObj,"supportPartsPicklist",supportPart_MU);
+   //jsonput(childObj,"supportPartAutoPopulate",supportPart_MU);
+   jsonput(childObj,"languageRequired","No");
+   jsonput(childObj,"startDate",datetostr(startDate));
+   jsonput(childObj,"endDate",datetostr(endDate));
+   jsonput(childObj,"standardQuantity",quantity_MU);
+   jsonput(childObj,"existingQuantity",quantity_MU);
+   jsonput(childObj,"licenseMetric",specialMetric_MU);
+   jsonput(childObj,"specialMetricLicense","");
+   jsonput(childObj,"UsageQuantity",quantity_MU);
+   jsonput(childObj,"UsageExistingQuantity",quantity_MU);
+   jsonput(childObj,"Unlimited",unlimited_MU);
+   jsonput(childObj,"supportopt",supportOptOut_MU);
+   //jsonput(childObj,"requestedDisc","");
+   if(not isnull(startDate) and not isnull(endDate))
+   {
+    newSupportTerm = getdiffindays(startDate,endDate);
+    newSupportTerm = newSupportTerm + 1;
+    jsonput(childObj,"totalNewSupportTerm",string(newSupportTerm));
+   }
+   resultSet = bmql("SELECT Product_Type FROM BRCM_Part_Master WHERE MPN=$partNum");
+   
+   for val in resultSet{
+    jsonput(childObj,"ProductType",get(val,"Product_Type"));
+   }
+ 
+   jsonput(parentObj,"child",childObj);
+  //}
+  //SYMINT-4426 - Begin - Return the already assigned value stored in parent child string else add 2 and store the same.
+   identifierStored = jsonget(parentObj,"Identifier");
+ 
+   if(identifierStored <> "" AND identifierStored <> " " AND NOT isnull(identifierStored))
+   {
+    identifiervar = atoi(identifierStored);
+   }
+   else
+   {
+    identifiervar = maxidentifier + 2;
+    maxidentifier = identifiervar;
+       }
+       jsonput(parentObj,"Identifier",string(identifiervar)); 
+     //SYMINT-4426 - End
+  jsonput(MainObj,string(each),parentObj);
+ }
+}
+
+//VIPER-803 Setting parent child string through Mass update
+if(massUpdateButton_avg == true){
+//print "hello";
+ MainObj1 = json();
+ childObj = json();
+ jsonArrObj = jsonarray();
+ if(parentChildString_avg<>" " AND parentChildString_avg<>"" AND not isnull(parentChildString_avg)){
+  MainObj = json(parentChildString_avg);
+  //print MainObj;
+ }
+ index = findinarray(select_avg,true);
+ loop = range(partSelectionArrayControl_avg);
+ jsonObjKeys = jsonkeys(MainObj);
+ //startDate = strtojavadate(effectiveStartDateMU, "MM-dd-yyyy");
+ //endDate = strtojavadate(effectiveEndDateMU, "MM-dd-yyyy");
+ //SYMINT-4426 - Begin - Computes the max value of assigned identifier
+ if(parentChildString_avg<>" " AND parentChildString_avg<>"" AND not isnull(parentChildString_avg)){
+ for each in loop
+ {
+ 
+   pcString = jsonget(MainObj,string(each));
+   if(pcString <> "" AND pcString <> " " AND NOT isnull(pcString))
+   {
+   pcJson = json(pcString);
+   currentIdentifierS = jsonget(pcJson,"Identifier");
+   if(currentIdentifierS <> "" AND currentIdentifierS <> " " AND NOT isnull(currentIdentifierS))
+   {
+    currentIdentifier = atoi(currentIdentifierS);
+    if(maxidentifier < currentIdentifier)
+    {
+     maxidentifier = currentIdentifier;
+    }
+   }
+  }
+ }
+ } 
+ //SYMINT-4426 - End
+ for each in loop
+ {
+  parentObj = json();
+  if(findinarray(jsonObjKeys,string(each))<> -1)
+  {
+   parentObj = jsonget(MainObj,string(each),"json");
+   print parentObj;
+  }
+  // add parent - part array attributes
+  jsonput(parentObj,"Sr_No",each);
+  childObj = jsonget(parentObj,"child", "json");
+  //print childObj;
+  jsonput(parentObj,"PartNumber",PartNumber_avg[each]);
+  partNum = PartNumber_avg[each];
+  if(not isnull(quantity_MU)){
+   jsonput(parentObj,"Quantity",quantity_MU);
+  }
+  //if( showHideButton_avg == "SHOW" and index==each)
+  //{
+   //  add child attributes for the parent selected
+   //jsonput(childObj,"transactionType",transactionType_MU);
+   if(not isnull(specialMetric_MU)){
+    jsonput(childObj,"specialMetric",specialMetric_MU);
+   }
+   if(not isnull(enterEnvironment_MU)){
+    jsonput(childObj,"enterEnvironment",enterEnvironment_MU);
+   }
+   //jsonput(childObj,"selectLicenseType",selectLicenseType_MU);
+   //jsonput(childObj,"supportType",supportType_MU);
+   // [Nandhini V] -[VIPER-773]-using support part (text attribute ) instead of picklist attribute to update
+   //jsonput(childObj,"supportPartsPicklist",supportPart_MU);
+   //jsonput(childObj,"languageRequired",false);
+   if(not isnull(effectiveStartDate_MU)){
+    jsonput(childObj,"startDate",datetostr(effectiveStartDate_MU));
+   }
+   if(not isnull(effectiveEndDate_MU)){
+    jsonput(childObj,"endDate",datetostr(effectiveEndDate_MU));
+   }
+   //jsonput(childObj,"standardQuantity",quantity_MU);
+   //jsonput(childObj,"existingQuantity",quantity_MU);
+   //jsonput(childObj,"licenseMetric",specialMetric_MU);
+   //jsonput(childObj,"specialMetricLicense",specialMetric_MU);
+   //jsonput(childObj,"UsageQuantity",quantity_MU);
+   //jsonput(childObj,"UsageExistingQuantity",quantity_MU);
+   if(not isnull(unlimited_MU)){
+    jsonput(childObj,"Unlimited",unlimited_MU);
+   }
+   //jsonput(childObj,"supportopt",supportOptOut_MU);
+   //jsonput(childObj,"requestedDisc","");
+   if(not isnull(effectiveStartDate_MU) and not isnull(effectiveEndDate_MU))
+   {
+    newSupportTerm = getdiffindays(effectiveStartDate_MU,effectiveEndDate_MU);
+    newSupportTerm = newSupportTerm + 1;
+    jsonput(childObj,"totalNewSupportTerm",string(newSupportTerm));
+   }
+   /*resultSet = bmql("SELECT Product_Type FROM BRCM_Part_Master WHERE MPN=$partNum");
+   
+   for val in resultSet{
+    jsonput(childObj,"ProductType",get(val,"Product_Type"));
+   }*/
+ 
+   jsonput(parentObj,"child",childObj);
+  //}
+  //SYMINT-4426 - Begin - Return the already assigned value stored in parent child string else add 2 and store the same.
+   identifierStored = jsonget(parentObj,"Identifier");
+ 
+   if(identifierStored <> "" AND identifierStored <> " " AND NOT isnull(identifierStored))
+   {
+    identifiervar = atoi(identifierStored);
+   }
+   else
+   {
+    identifiervar = maxidentifier + 2;
+    maxidentifier = identifiervar;
+       }
+       jsonput(parentObj,"Identifier",string(identifiervar)); 
+     //SYMINT-4426 - End
+  jsonput(MainObj,string(each),parentObj);
+ }
+}
+
+
+result = jsontostr(MainObj);
+return result;

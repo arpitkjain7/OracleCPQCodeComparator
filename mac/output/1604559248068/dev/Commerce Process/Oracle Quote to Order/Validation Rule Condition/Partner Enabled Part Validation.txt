@@ -1,0 +1,35 @@
+/********************************************************************
+Function Name: Partner Enabled Part Validation Condition
+Description: TDMDST990 - can't be added to quote by Channel Partner
+Date: 25/7/2019
+User Story: BROCAD2-5410
+Author: Kavita Lolla
+********************************************************************/
+existingPartnerGroups = _system_user_groups; 
+searchString = "partner";
+if(find(existingPartnerGroups,searchString) >= 0)
+{
+if(_part_number <> "" )
+  {
+  part = "";
+  //If it is support product, consider Partner_Enabled of Covered Product.
+  if(coveredProduct_l <> "")
+  {
+    part = coveredProduct_l;
+  }
+  else
+  {
+    part = _part_number;
+  }
+  resultSet = bmql("select MPN,Partner_Enabled from BRCM_Part_Master_Ext where MPN = $part");
+  for each_record in resultSet
+  {
+   partnerEnabledValue = get(each_record,"Partner_Enabled");
+   if(partnerEnabledValue == "No")
+   {
+    return true;
+   }
+  }
+}
+}
+return false;

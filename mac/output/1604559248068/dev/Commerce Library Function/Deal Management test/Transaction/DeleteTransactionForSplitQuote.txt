@@ -1,0 +1,58 @@
+/*********************************************************************
+Function Name:Split Quote  
+Description:Delete model lines and stand alone lines from transaction
+Author: Ramesh Nellimarla
+User Story #:UID 212
+Date: 05th March 2019
+******************************Change Log*****************************
+             
+*********************************************************************/
+
+result       = "";
+response     = " ";
+docnumArray  = string[];
+jsonObj      = json();
+lineSelected = False;
+strDel       = " ";
+
+for line in transactionLine{
+      
+ if(line.selectLineItem_l == true){
+         lineSelected = true;
+ }
+ }
+
+
+if (lineSelected == true)
+{      
+    for line in transactionLine
+    {  
+      if ( line.selectLineItem_l == true AND line._model_variable_name <> "" )
+      { 
+        jsonput(jsonobj,"documentNum",line._document_number);
+        jsonModelString = jsontostr(jsonobj);
+        append(docnumArray,jsonModelString);   
+      } 
+              
+     if(line.selectLineItem_l == true AND line._parent_doc_number == "" AND line._model_variable_name == ""  )
+       {       
+        jsonput(jsonobj,"documentNum",line._document_number);
+        jsonModelString = jsontostr(jsonobj);
+        append(docnumArray,jsonModelString);   
+        }
+     }     
+  
+  
+  for each1 in docnumArray
+  {
+   jsonObj2      = json(each1);
+   docNum        = jsonget(jsonObj2,"documentNum");
+ 
+  }
+  
+  strDel = bs_id +  "|" + _system_user_session_id  + "|" + _system_company_name;
+  
+  response = util.removeTransaction(strDel ,docnumArray);
+}
+
+return response ;

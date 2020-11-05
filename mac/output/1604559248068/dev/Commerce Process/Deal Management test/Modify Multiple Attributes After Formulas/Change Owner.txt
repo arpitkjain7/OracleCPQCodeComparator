@@ -1,0 +1,9 @@
+/***********************************************************
+Function Name :Change Owner
+Name : Nandhini Vurimella 
+Description : To Change Owner
+**********************************************************/
+result = "";
+value = "YES";
+result = result + "1~isChangeOwner_t~" + value + "|";
+return result;

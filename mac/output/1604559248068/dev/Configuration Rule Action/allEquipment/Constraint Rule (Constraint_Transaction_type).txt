@@ -1,0 +1,51 @@
+/************************************************
+Rule Name: Constraint Transaction Type
+Description: This rule customizes the transaction type based on column New_sales_Allowed, Renewal Allowed, Capacity_Allowed from BRCM_Part_Master data table
+Author: Keerthivasan
+Creation Date: 19-Dec-2018
+*/
+/*************************************************
+31/07/2020 Kavita Lolla VIPER-960 - SW Upgrade: Add "Upgrade" Transaction Type
+*************************************************/
+part = selectedProductNumberInt_avg;
+//VIPER-960 - Begin - Retreiving Upgrade_Mtrl_Flg from Part_Master
+resultset = bmql("SELECT New_Sales_Allowed, Renewal_Allowed, Capacity_Allowed, Upgrade_Mtrl_Flg FROM BRCM_Part_Master WHERE MPN=$part");
+//VIPER-960 - End
+result = "";
+delim = "|^|";
+for res in resultset{
+ if(get(res,"New_Sales_Allowed") == "Y"){
+  result = result + "New" + delim;
+ }
+ if(get(res,"Renewal_Allowed") == "Y"){
+  result = result + "Renew" + delim;
+ }
+ if(get(res,"Capacity_Allowed") == "Y"){
+  result = result + "Capacity" + delim;
+ }
+//VIPER-960 - Begin - Adding Upgrade in the return string.
+ if(get(res,"Upgrade_Mtrl_Flg") == "Y"){
+  result = result + "Upgrade" + delim;
+ }
+//VIPER-960 - End
+}
+if(selectUpgradeProduct_avg==true)
+{
+result = "Upgrade" + delim;
+}
+
+return result;
+/************************************************
+*Rule Name: Constraint Transaction Type
+*Description: This rule customizes the transaction type based on column New_sales_Allowed, Renewal Allowed, Capacity_Allowed from BRCM_Part_Master data table
+*Author: Keerthivasan
+*Creation Date: 19-Dec-2018
+**************************************************/
+
+part = selectedProductNumberInt_avg;
+result = "Perpetual|^|Subscription|^|";
+delim = "|^|";
+if(transactionsType_avg == "Capacity" or transactionsType_avg == "Renew"){
+ result = result + "UMF" + delim;
+}
+return result;

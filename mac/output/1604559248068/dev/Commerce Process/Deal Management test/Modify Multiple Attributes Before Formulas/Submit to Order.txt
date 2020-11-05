@@ -1,0 +1,38 @@
+res="";
+edicheck="N";
+flag="Y";
+
+/*if((autoBookFlag_t == "N") AND (autoBook_t == true) AND (dealType_t == "cADStandard" OR dealType_t == "cADRenewal" ))
+{
+flag="N";
+
+}*/
+validation=false;
+if(((dealType_t=="cADRenewal" OR dealType_t=="cADStandard" OR dealType_t=="cADProfessionalServices" OR dealType_t=="cADEducation") AND ((eStoreEDI_t=="No" OR eStoreEDI_t=="") AND (core_t=="ZCA_CORE" OR core_t=="ZCA_NON_CORE")) AND purchaseOrderNumber_t=="") AND (core_t<>"Commercial"))
+{
+validation=true;
+}
+//VIPER-591 : added validation for estore/edi: quote should not go to EBS when estore is yes and core_t is not commercial or route to market is tier 2
+/*indexExpression1 = ((eStoreEDI_t=="Yes"));
+indexExpression2 = ((routeToMarket_t<>"tier2"));
+indexExpression3 = ((core_t<>"Commercial"));
+
+if(indexExpression1 AND indexExpression2)
+{
+
+ if(indexExpression1 AND indexExpression3)
+ {
+  edicheck="Y";
+ }
+}*/
+if(edicheck=="N" AND validation==false AND quoteContractValidationCompleted_t=="yes" OR (dealType_t=="bSN" OR dealType_t=="bSNRenewal" OR dealType_t=="classicBroadcomOnly" OR dealType_t=="salesAccounting")){
+if(licenseeERPAccount_t<>"" OR (dealType_t=="classicBroadcomOnly"OR dealType_t=="bSN" OR dealType_t=="bSNRenewal" OR dealType_t=="salesAccounting") ){
+if(flag=="Y" OR core_t == "Commercial")
+{
+
+res=commerce.invokingSOAService_brcm("B");
+res= res + commerce.invokingSOAService_brcm("O");
+}
+}
+}
+return res;

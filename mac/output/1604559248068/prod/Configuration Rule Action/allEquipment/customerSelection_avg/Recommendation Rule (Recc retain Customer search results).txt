@@ -1,0 +1,111 @@
+/*****************************************************************
+Function Name : Recc retain Customer search results
+Name :Kumar Satyabrata Acharya
+Description : Display Sales Area Value.
+*****************************************************************/ 
+size=range(customersArrayControl_avg);
+result=String[];
+for each in size{
+result[each]=salesAreaArr_avg[each];
+}
+return result;
+/*****************************************************************
+Function Name : Recc retain Customer search results
+Name :Kumar Satyabrata Acharya
+Description : Display Comma separated values of operating unit.
+*****************************************************************/ 
+size=range(customersArrayControl_avg);
+result=String[];
+for each in size{
+result[each]=parentNameArr_avg[each];
+}
+return result;
+/*****************************************************************
+Function Name : Recc retain Customer search results
+Name :Kavita Lolla
+Description : Display Comma separated values of operating unit.
+*****************************************************************/ 
+size=range(customersArrayControl_avg);
+result=String[];
+for each in size{
+result[each]=operatingUnit_cust[each];
+}
+return result;
+/*****************************************************************
+Function Name : Recc retain Customer search results
+Name :Satyabrata Acharya
+Description : This Rule to Force set payment term
+*****************************************************************/ 
+size=range(customersArrayControl_avg);
+result=String[];
+for each in size{
+result[each]=paymentTerm_avg[each];
+}
+return result;
+/*****************************************************************
+Function Name : Recc retain Customer search results
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer global parent name
+*****************************************************************/ 
+size=range(customersArrayControl_avg);
+result=String[];
+for each in size{
+result[each]=endCustomerGlobalParentName_avg[each];
+}
+return result;
+/*****************************************************************
+Function Name : Recc retain Customer search results
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer erp id
+*****************************************************************/ 
+size=range(customersArrayControl_avg);
+result=String[];
+for each in size{
+result[each]=customerNumberArr_avg[each];
+}
+return result;
+/*****************************************************************
+Function Name : Recc retain Customer search results
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer name
+*****************************************************************/ 
+size=range(customersArrayControl_avg);
+result=String[];
+for each in size{
+result[each]=customerNameArr_avg[each];
+}
+return result;
+/*****************************************************************
+Function Name : Recc retain Customer search results
+Name :Satyabrata Acharya
+Description : This Rule to Force set account use
+*****************************************************************/ 
+size=range(customersArrayControl_avg);
+result=String[];
+for each in size{
+result[each]=accountUseId_avg[each];
+}
+return result;
+/*****************************************************************
+Function Name : Recc retain Customer search results
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer response
+*****************************************************************/
+return "";
+/*****************************************************************
+Function Name : Recc retain Customer search results
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer level
+*****************************************************************/ 
+size=range(customersArrayControl_avg);
+result=String[];
+for each in size{
+result[each]=customerType_avg[each];
+}
+return result;
+/*****************************************************************
+Function Name : Recc retain Customer search results
+Name :Satyabrata Acharya
+Description : This Rule to Force set customer control array
+*****************************************************************/ 
+return customersArrayControl_avg;

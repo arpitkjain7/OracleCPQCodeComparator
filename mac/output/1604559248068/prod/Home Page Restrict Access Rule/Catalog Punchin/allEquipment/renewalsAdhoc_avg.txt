@@ -1,0 +1,11 @@
+/************************************************
+/Description: This program is responsible for restricting users from accessing Renewal Adhoc program
+/Author: Satyabrata Acharya
+/Creation Date: 26-May-2020 
+*/
+result=true;
+group =_user_groups;
+if(find(_user_groups,"renewalAdhocAccess")<>-1){
+result=false;
+}
+return result;

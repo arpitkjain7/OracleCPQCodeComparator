@@ -1,0 +1,19 @@
+/*****************************************************************
+Function Name : Support Type Dynamic Display
+Name : Nandhini Vurimella
+Description : The support type to be displayed based on the Support required part attribute fetched from the data table.
+*****************************************************************/
+if(partAttributesFetched_avg<>"")
+{
+partJson = json(partAttributesFetched_avg);
+str = jsonget(partJson,"Support Required");
+if(str == "Y")
+{
+ return false;
+}
+else
+{
+ return true;
+}
+}
+return false;

@@ -1,0 +1,63 @@
+usernameWrapperAction = "";
+passwordWrapperAction = "";
+fileLocationWrapperAction = "";
+soapendpointWrapperAction = "";
+/*url="";
+Credentials="";
+results=bmql("select Username,Password,SoapEndpoint from INT_SYSTEM_DETAILS where System='Create_Opportunity'");
+ for res in results
+ {
+ Credentials_sb=stringbuilder();
+ Credentials_sb = sbappend(Credentials_sb, get(res,"Username"), ":", get(res,"Password"));
+ Credentials=sbtostring(Credentials_sb);
+ url=get(res,"SoapEndpoint")+"crmRestApi/resources/";
+ 
+ }
+ 
+ //Rest API http method
+ http_Method="POST";
+
+//Rest API Header details
+ headersDict = dict("string"); 
+
+ put(headersDict,"Content-Type","application/vnd.oracle.adf.batch+json");
+ encodecredential=encodebase64(Credentials);
+ authstring="Basic " + encodecredential;
+
+
+ put(headersDict,"Authorization",authstring);
+ 
+ JsonString="{\"parts\": [{\"id\": \"part1\",\"path\": \"/latest/opportunities/"+opportunityNumber_t+"\",\"operation\": \"update\",\"payload\":          {             \"BRCM_CPQLicenseeId_c\":"+licenseeOECId_ct+",\"BRCM_BillToCustomerId_c\":"+billToCustomerId_t+"}}]}";
+
+response_CreateOpportunity = urldata(url,http_Method,headersDict,JsonString);
+ print response_CreateOpportunity;*/
+
+renewalWrapperActionPayload = dict("string");
+      renewalWrapperActionCreds = bmql("select Username,Password,File_Location,SoapEndpoint from INT_SYSTEM_DETAILS where System = 'Renewal_Wrapper_Action'");
+      for cred in renewalWrapperActionCreds
+      {
+       usernameWrapperAction = get(cred,"Username");
+       passwordWrapperAction = get(cred,"Password");
+       fileLocationWrapperAction = get(cred,"File_Location");
+       soapendpointWrapperAction = get(cred,"SoapEndpoint");
+      }
+      action="orderUpdateInterface_t";
+      
+       put(renewalWrapperActionPayload,"USERNAME", usernameWrapperAction);
+       put(renewalWrapperActionPayload,"PASSWORD", passwordWrapperAction);
+       put(renewalWrapperActionPayload,"Transaction_ID",bs_id);
+       //put(renewalWrapperActionPayload,"Session_ID",_system_user_session_id);
+       put(renewalWrapperActionPayload,"actionName",action);
+      
+       defaultErrorMessage="";
+      wrapperActionRequest=applytemplate(fileLocationWrapperAction,renewalWrapperActionPayload,defaultErrorMessage);
+      wrapperActionRequest = replace(wrapperActionRequest,"&lt;","<");
+      wrapperActionRequest= replace(wrapperActionRequest,"&gt;",">");
+      wrapperActionRequest = replace(wrapperActionRequest,"&quot;","\"");
+      headersDict = dict("string"); 
+      
+      response="";
+      //Trigger the web service to call the wrapper action
+      
+      response = urldatabypost(soapendpointWrapperAction,wrapperActionRequest, "",headersDict,true,45000);
+ return "";

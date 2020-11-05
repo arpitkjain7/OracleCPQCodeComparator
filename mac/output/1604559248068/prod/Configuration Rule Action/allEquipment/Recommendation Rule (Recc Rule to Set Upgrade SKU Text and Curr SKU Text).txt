@@ -1,0 +1,40 @@
+/*
+
+*/
+
+result=string[];
+size=range(upgradeSKUArrayController_avg);
+for each in size
+{
+if(selectUpgradeSKUBasedOnCurrentSKU_avg==true)
+{
+result[each]=upgradeSKUarray_avg[each];
+}
+if(selectCurrentSKUBasedOnUpgradeSKU_avg==true)
+
+{
+result[each]=upgradeSKU2_avg[each];
+}
+}
+
+return result;
+/*
+
+*/
+
+result=string[];
+size=range(upgradeSKUArrayController_avg);
+for each in size
+{
+if(selectUpgradeSKUBasedOnCurrentSKU_avg==true)
+{
+result[each]=currentSKUarray_avg[each];
+}
+if(selectCurrentSKUBasedOnUpgradeSKU_avg==true)
+
+{
+result[each]=currentSKU2_avg[each];
+}
+}
+
+return result;

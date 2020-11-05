@@ -1,0 +1,217 @@
+/********************************************************************
+Function Name: Fetch Config Attributes to Commerce
+Description: This BML function is used to fetch Config Details from Config after CA configurations are done.
+Date: 20th dec 2018
+User Story: 
+Author: Kumar Satyabrata Acharya
+**********************************************************************
+2020/08/03 Kavita Lolla VIPER-960 : Include Upgrade transaction type in the configuration drop down.
+********************************************************************/
+
+
+//Intializaing the variables that we are going to use in the code
+result="";
+result="";
+output1="";
+output2="";
+output3="";
+output4="";
+output5="";
+output6="";
+output7="";
+output8="";
+output9="";
+output10="";
+output11="";
+output12="";
+output13="";
+output14="";
+output15="";
+output16="";
+output17="";
+output18="";
+output19="";
+output20="";
+output21="";
+output22="";
+output23="";
+output24="";
+output25="";
+
+requestedDisc="";
+startDate=getDate(); //finding the start and end date date using getDate() function that returns the date in MM/dd/YYYY HH:mm:ss format
+endDate=getDate();
+finalSKU="";
+currentSKU="";
+currentSKUPrice="0.0";
+dlim="~";
+dend="|";
+
+//restricting customer search parts that get added after customer search and also restricting model lines in case of configured parts
+ 
+ if(part_number <> "Cust" AND model_name <> "Customer Search")
+ {
+ // fetching the value of effectivestart date and lineexpiration date after checking its null value
+ 
+ if(effectiveStartDate_l<>""){
+  startDate=strtojavadate(effectiveStartDate_l, "yyyy-MM-dd HH:mm:ss", "America/Chicago");
+ }
+ if(lineExpirationDate_l<>""){
+  endDate=strtojavadate(lineExpirationDate_l, "yyyy-MM-dd HH:mm:ss", "America/Chicago");
+ }
+ supportOptBool = false;
+ obj=json(); //creating a json object
+ print "inside line item comment";
+ print line_item_comment;
+ //checking if comment field is not null if not creating json object and fetching all the attributes that need to be sent to commerce using jsonget
+  if(line_item_comment<>"")
+  {
+  
+   teststring=line_item_comment;
+   obj=json(teststring);
+   PartNumber=jsonget(obj,"PartNumber");
+   child=jsonget(obj,"child");
+   childObj=json(child);
+   transactiontype=jsonget(childObj,"transactionType");
+   businessTransactionType=jsonget(childObj,"businessTransactionType");
+   specialMetric=jsonget(childObj,"specialMetric");
+   enterEnvironment=jsonget(childObj,"enterEnvironment");
+   selectLicenseType=jsonget(childObj,"selectLicenseType");
+   supportType=jsonget(childObj,"supportType");
+   languageRequired=jsonget(childObj,"languageRequired");
+   Supportopt=jsonget(childObj,"supportopt");
+   //fetch config attribute for Software and Hardware product by Arjun for SYMINT-4174
+   if (transactiontype=="Upgrade")
+   {
+   finalSKU=jsonget(childObj,"FinalUpgradeSKU");
+   currentSKU=jsonget(childObj,"Current_SKU");
+   
+   //VIPER-960 - Begin - Modifying currentSKU from blank to 0 to avoid runtime error on quotes for Upgrade transactions.
+   currentSKUPrice="0";
+  // currentSKUPrice="";
+   //VIPER-960 - End
+   resultset=bmql("select MPN,Base_Price from BRCM_Part_Master_Prc where MPN=$currentSKU");
+   for each in resultset
+   {
+    currentSKUPrice=get(each,"Base_Price");
+   }
+   }
+   //end of changes for SYMINT-4174
+//Null check for start and end date
+   
+   unlimited = jsonget(childObj,"Unlimited");
+   if(jsonget(childObj,"startDate")<>"" ){
+    startDate=strtojavadate(jsonget(childObj,"startDate"), "MM/dd/yyyy HH:mm:ss", "America/Chicago");
+   }
+
+   if(jsonget(childObj,"endDate")<>"" ){
+    endDate=strtojavadate(jsonget(childObj,"endDate"), "MM/dd/yyyy HH:mm:ss", "America/Chicago");
+   }
+   standardQuantity=jsonget(childObj,"standardQuantity");
+   existingQuantity=jsonget(childObj,"existingQuantity");
+   licenseMetric=jsonget(childObj,"licenseMetric");
+   specialMetricLicense=jsonget(childObj,"specialMetricLicense");
+   UsageQuantity=jsonget(childObj,"UsageQuantity");
+   UsageExistingQuantity=jsonget(childObj,"UsageExistingQuantity");
+   ProductType=jsonget(childObj,"ProductType");
+   supportPartsPicklist=jsonget(childObj,"supportPartsPicklist");//supportPartsPicklist
+   
+
+             // building return statement using strib builder to increase the performance  . Adding all the attributes in the return format         
+   
+            sb1=stringbuilder(output1,document_number,dlim,"transactionType_l",dlim,transactionType,dend);
+            sb2=stringbuilder(output2,document_number,dlim,"transactionTypeM_l",dlim,transactionType,dend);
+   sb3=stringbuilder(output3,document_number,dlim,"specialMetric_l",dlim,specialMetric,dend);
+            sb4=stringbuilder(output4,document_number,dlim,"enterEnvironment_l",dlim,enterEnvironment,dend);
+            sb5=stringbuilder(output5,document_number,dlim,"licenseType_l",dlim,selectLicenseType,dend);
+   sb6=stringbuilder(output6,document_number,dlim,"supportType_l",dlim,supportType,dend);
+   sb7=stringbuilder(output7,document_number,dlim,"languageRequired_l",dlim,languageRequired,dend);
+            sb8=stringbuilder(output8,document_number,dlim,"contractStartDate_l",dlim,datetostr(startDate),dend);
+   sb9=stringbuilder(output9,document_number,dlim,"contractEndDate_l",dlim,datetostr(endDate),dend);
+            sb10=stringbuilder(output10,document_number,dlim,"standardQuantity_l",dlim,standardQuantity,dend);
+            sb11=stringbuilder(output11,document_number,dlim,"existingQuantity_l",dlim,existingQuantity,dend);
+   sb12=stringbuilder(output12,document_number,dlim,"licenseMetric_l",dlim,licenseMetric,dend);
+   sb13=stringbuilder(output13,document_number,dlim,"specialMetricLicense_l",dlim,specialMetricLicense,dend);
+            sb14=stringbuilder(output14,document_number,dlim,"nonStandardLicenseMetric_l",dlim,specialMetricLicense,dend);
+   sb15=stringbuilder(output15,document_number,dlim,"usageQuantity_l",dlim,UsageQuantity,dend);
+            sb16=stringbuilder(output16,document_number,dlim,"usageExistingQuantity_l",dlim,UsageExistingQuantity,dend);
+            sb17=stringbuilder(output17,document_number,dlim,"nonStandardQty_l",dlim,UsageQuantity,dend);
+   sb18=stringbuilder(output18,document_number,dlim,"nonStandardExistingQty_l",dlim,UsageExistingQuantity,dend);
+   sb19=stringbuilder(output19,document_number,dlim,"productType_l",dlim,ProductType,dend);
+            sb20=stringbuilder(output20,document_number,dlim,"unlimited_l",dlim,unlimited,dend);
+   sb21=stringbuilder(output21,document_number,dlim,"supportPartsPicklist_l",dlim,supportPartsPicklist,dend);
+            sb22=stringbuilder(output22,document_number,dlim,"supportOptOut_l",dlim,Supportopt,dend);
+            
+            sb23=stringbuilder(output25,document_number,dlim,"currentSKUPrice_l",dlim,currentSKUPrice,dend,document_number,dlim,"currentSKU_l",dlim,currentSKU,dend,document_number,dlim,"upgradeSKU_l",dlim,PartNumber,dend,document_number,dlim,"finalUpgradeSKU_l",dlim,finalSKU,dend);
+            
+            // converting string builder object into string format 
+   output1=sbtostring(sb1);
+   output2=sbtostring(sb2);
+   output3=sbtostring(sb3);
+   output4=sbtostring(sb4);
+   output5=sbtostring(sb5);
+   output6=sbtostring(sb6);
+   output7=sbtostring(sb7);
+   output8=sbtostring(sb8);
+   output9=sbtostring(sb9);
+   output10=sbtostring(sb10);
+   output11=sbtostring(sb11);
+   output12=sbtostring(sb12);
+   output13=sbtostring(sb13);
+   output14=sbtostring(sb14);
+   output15=sbtostring(sb15);
+   output16=sbtostring(sb16);
+   output17=sbtostring(sb17);
+   output18=sbtostring(sb18);
+   output19=sbtostring(sb19);
+   output20=sbtostring(sb20);
+   output21=sbtostring(sb21);
+   output22=sbtostring(sb22);
+   output25=sbtostring(sb23);
+   
+   //adding this condition to add covered products
+   if (part_number == supportPartsPicklist)
+   {
+    sb24=stringbuilder(output24,document_number,dlim,"coveredProduct_l",dlim,PartNumber,dend);
+    
+    
+    //VIPER-960 - Added additional condition for Upgrade if finalSKU is missing.
+    if(transactiontype=="Upgrade" AND finalSKU<>"" AND NOT isnull(finalSKU))
+    {
+    sb24=stringbuilder(output24,document_number,dlim,"coveredProduct_l",dlim,finalSKU,dend);
+    }
+    
+    output24=sbtostring(sb24);
+    
+   }
+  }
+
+ }
+ // creating string builders for all the string builders used above and consoladating in one string builder
+
+sb1=stringbuilder();
+sb2=stringbuilder();
+sb3=stringbuilder();
+sb4=stringbuilder();
+sb5=stringbuilder();
+sb6=stringbuilder();
+sb7=stringbuilder();
+sb8=stringbuilder();
+sb9=stringbuilder();
+sb10=stringbuilder();
+sb11=stringbuilder();
+sb12=stringbuilder();
+sb13=stringbuilder();
+sb14=stringbuilder();
+sb15=stringbuilder();
+sb16=stringbuilder();
+sb17=stringbuilder();
+sb18=stringbuilder();
+sb19=stringbuilder();
+sb20=stringbuilder();
+sb21=stringbuilder();
+sb22=stringbuilder();
+sb25=stringbuilder(result,output1,output2,output3,output4,output5,output6,output7,output8,output9,output10,output11,output12,output13,output14,output15,output16,output17,output18,output19,output20,output21,output22,output23,output24,output25);
+result=sbtostring(sb25);
+
+return result;

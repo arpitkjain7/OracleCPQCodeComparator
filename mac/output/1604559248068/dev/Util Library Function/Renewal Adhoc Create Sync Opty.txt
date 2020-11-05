@@ -1,0 +1,68 @@
+/*********************************************************************
+              Function Name: Renewal Adhoc Create Sync Opty
+              Description: Renewals: Create Oppty Program
+              Author: M Vamsi Krishna
+              JIRA - VIPER-915
+              Date: 25th May 2020
+              ******************************Change Log*****************************
+
+*********************************************************************/
+
+value = "save";
+optyId = "";
+//code for calling update transaction for soap v2
+transactionResult = bmql("select Transaction_ID,OPTY_ID from RENEWAL_ADHOC_OPTY");
+
+for transResult in transactionResult
+{
+bs_id = get(transResult,"Transaction_ID");
+optyId = get(transResult,"OPTY_ID");
+
+ if(isnull(optyId) OR trim(optyId) == "")
+ {
+ dictUpdate= dict("string");
+ headersdict= dict("string");
+ userName = "";
+ pwd = "";
+ url = "";
+ data = "";
+ //fetching the username, password, template location and url to hit for webservice call
+ fileLocation ="";
+ put(dictUpdate,"bs_Id",bs_id);
+ put(dictUpdate,"companyName",_company_name);
+  resultSet = bmql("SELECT Username,Password,File_Location,SoapEndpoint FROM INT_SYSTEM_DETAILS WHERE System='RENEWAL_ADHOC_OPTY'");
+  for vals in resultSet{
+  userName = get(vals,"Username");
+   pwd = get(vals,"Password");
+   fileLocation = get(vals,"File_Location");
+   url = get(vals,"SoapEndpoint");
+  }
+ 
+ // pass values in dictionary 
+ put(dictUpdate,"companyName",_company_name);
+ put(dictUpdate,"userName",userName);
+ put(dictUpdate,"pwd",pwd);
+ put(dictUpdate,"forLoop",data);
+ 
+ //apply template
+ 
+ retVal = applytemplate(fileLocation,dictUpdate,"Not_Found");
+ retVal = replace(retVal,"&lt;","<");
+ retVal = replace(retVal,"&gt;",">");
+ retVal = replace(retVal,"&quot;","\"");
+ 
+ 
+ // post data in the webservice
+ retVal1 = urldatabypost(url,retVal,"",headersdict,true);
+ 
+ 
+ //UTIL to call SYNC to webservice
+ syncres = util.renewalAdHocSyncToOpty(bs_id);
+ }
+ elif(NOT isnull(optyId) AND trim(optyId) <> "")
+ {
+ //UTIL to call SYNC to webservice
+ syncres = util.renewalAdHocSyncToOpty(bs_id);
+ }
+}
+return "";

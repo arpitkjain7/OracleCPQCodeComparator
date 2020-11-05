@@ -1,0 +1,19 @@
+/*****************************************************************
+Function Name : Constrain Customer Selection
+Name :Satyabrata Acharya
+Description : This Rule returns boolean value when this constrain should fire
+*****************************************************************/ 
+arrayRange=range(customersArrayControl_avg);
+count=0;
+for each in arrayRange{
+ if(selectCustomer_t[each]==true){
+  count=count+1;
+ }
+}
+if(count>1)
+{
+return true;
+}
+else{
+return false;
+}

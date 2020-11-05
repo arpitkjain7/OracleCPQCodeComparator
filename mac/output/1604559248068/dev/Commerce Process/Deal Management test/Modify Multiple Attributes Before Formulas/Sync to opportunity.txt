@@ -1,0 +1,49 @@
+result=commerce.activeQuote();
+sb=stringbuilder(result,commerce.invokingSOAService_brcm("B"));
+result=sbtostring(sb);
+resourcePartyId = "";
+
+//SYMINT-3751 Commented the code to prevent syncing quote owner to OEC on Sync to Oppty
+/*
+if(quoteType_t=="renewalQuote")
+{
+ results=bmql("select Username,Password,SoapEndpoint from INT_SYSTEM_DETAILS where System='Create_Opportunity'");
+ url="";
+ Credentials="";
+ optyurl="";
+ for res in results
+ {
+  Credentials=get(res,"Username")+":"+get(res,"Password");
+  url=get(res,"SoapEndpoint");
+ }
+ 
+ ownerEmail = QuoteownerEmail_t;
+ results = bmql("select PartyResourceId from BRCM_Users where EMailID=$ownerEmail");
+ for res in results
+ {
+  resourcePartyId =get(res,"PartyResourceId");
+ }
+
+ //Rest API Header details
+ headersDict = dict("string"); 
+
+ put(headersDict,"Content-Type","application/json");
+
+ encodecredential=encodebase64(Credentials);
+ authstring="Basic " + encodecredential;
+
+ put(headersDict,"Authorization",authstring);
+ response = Dict("string");
+ sb1=stringbuilder(result,"1~partyResourceID_t~",resourcePartyId,"|");
+ result = sbtostring(sb1);
+ if(resourcePartyId <> "" and not isnull(resourcePartyId))
+ {
+  optyurl = url+"crmRestApi/resources/11.13.17.11/opportunities/"+opportunityNumber_t;
+  jsonBodyString="{\"OwnerResourcePartyId\":"+resourcePartyId+"}";
+  
+  respnose=urldata(optyurl,"PATCH",headersDict,jsonBodyString,5000);
+  jsonResponse=get(respnose,"Message-Body"); 
+ }
+}
+*/
+return result;

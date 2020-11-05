@@ -1,0 +1,46 @@
+/********************************************************************
+Function Name: Validate Covered Products
+Description: This validation rule checks that whether all the covered products are valid line items.
+Date: 27 March 2019
+User Story:
+Author: Raghav 
+/********************************************************************/
+/*coveredProductDictionary = Dict("string");
+coveredProductsFromTableDictionary=Dict("string");
+errorLines = "";
+for line in transactionline
+{
+ if(line.coveredProduct_l <> "" and line._part_number <> "" and line._part_number <> "Cust")
+ {
+  put(coveredProductDictionary, line.coveredProduct_l , line.coveredProduct_l);
+ }
+}
+coveredPartArray = keys(coveredProductDictionary);
+resultSet = bmql("select MPN,Support_Required from BRCM_Part_Master_Ext where MPN IN $coveredPartArray");
+countOfRecords = 0;
+for each_record in resultSet
+{
+ countOfRecords = countOfRecords + 1;
+ part_number = get(each_record,"MPN");
+ put(coveredProductsFromTableDictionary,part_number,part_number);
+}
+for line in transactionline
+{
+ if(line._part_number <> "" and line._part_number <> "Cust")
+ {
+  if(not containsKey(coveredProductsFromTableDictionary,line._part_number))
+  {
+   line_no=line._sequence_number;
+   errorLines = errorLines + string(line_no)+",";
+  }
+ }
+}*/
+returnmsg=dict("dict<string>");
+PartError=dict("string");
+error_Statment = "Cannot submit line(s) "+errorLineValidation2_t+". Given covered product on line item is not valid.";
+put(PartError, "message", error_Statment);
+put(PartError, "location", "Top");
+put(PartError, "operator", "=");
+put(PartError, "values", transactionID_t);
+put(returnmsg, "transactionID_t", PartError);
+return returnmsg;

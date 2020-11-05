@@ -1,0 +1,8 @@
+/***********************************************************
+Function Name : Apply Discount
+Name : Nandhini Vurimella
+Description : For applying discount
+**********************************************************/
+result = "";
+result = result + commerce.applyDiscount();
+return result;

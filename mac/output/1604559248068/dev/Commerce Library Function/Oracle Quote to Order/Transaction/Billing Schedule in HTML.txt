@@ -1,0 +1,140 @@
+/******************************************************************************************************************************************************
+Description: Funcation to populate contract numbers html attibute.
+Return type: string
+History:     Date          Author             Comment
+      01/02/2019    Kavita Lolla      Modified the library as per best practices
+      05/14/2019    Mrinal Kumar           Removed print, removed commented code and added stringbuilder
+             07/03/2019    Raghavendra K         Added function calls to format date string and currency string. Added function call to fetch currency symbol
+*********************************************************************************************************************************************************/
+
+
+
+result="";
+dlim="~";
+dend="|";
+dateFormat = "yyyy-MM-dd HH:mm:ss";
+
+billingSchedule = newBillingSchedule_t;
+defaultErrorMessage="";
+//Creating the table
+sb = stringbuilder(result,"<div><table  style=\"width:100%;border:1px solid black;border-collapse:collapse\">","<tbody><tr>","<th style=\"border:1px solid black;font-family:arial;font-size:9px;\"><b>Due Date</b></th>","<th style=\"border:1px solid black;font-family:arial;font-size:9px;\"><b>Due Amount</b></th>","</tr>");
+result = sbtostring(sb);
+//Initializing the attributes that are being used in billing transaction array
+grandTotal = 0.0;
+row = json();
+rowDate = "";
+rowLicenseFee = 0.0;
+rowMaintenanceFee = 0.0;
+rowCommittedPayments = 0.0;
+rowTotalFees = 0.0;
+quoteRequest = "";
+rowTotalFeesString = "";
+//getting currency symbol value using the below library function
+currencyPrefixString = commerce.getQuoteCurrencySymbol_brcm(currency_t);
+
+//Checking the different value of paymentPlan and fetching all the values of billing transaction array
+
+if(paymentPlan_t == "paidInFull")
+{
+ row = jsonarrayget(newBillingSchedule_t, 0, "json");
+ rowScheduleID = jsonget(row,"scheduleID", "string","");
+ rowDate = jsonget(row,"billingDate", "string","");
+ rowLicenseFee = jsonget(row,"licenseFee", "float",0.00);
+ rowMaintenanceFee = jsonget(row,"maintenanceFee", "float",0.00);
+ rowCommittedPayments = jsonget(row,"committedPayments", "float",0.00);
+ rowTotalFees = jsonget(row,"totalFee", "float",0.00);
+ rowTotalFeesString = string(round(rowTotalFees,2));
+ grandTotal = grandTotal + rowTotalFees;
+ sb = stringbuilder(result,"<tr>","<td style=\"border:1px solid black;font-family:arial;font-size:9px;\">",commerce.getFormattedDateString_brcm(substring(rowDate,0,10)),"</td>","<td style=\"border:1px solid black;font-family:arial;font-size:9px;\">",currencyPrefixString,commerce.getFormattedGrandTotal_brcm(rowTotalFeesString),"</td>","</tr>");
+ result = sbtostring(sb);
+}
+
+if(paymentPlan_t == "yearly")
+{
+ addStartDate = strtodate(contractEndDate_t, dateFormat );
+ endDateObj = strtodate(contractEndDate_t, dateFormat );
+ startDateObj = strtodate(contractStartDate_t, dateFormat );
+ duration = getdiffindays(endDateObj,startDateObj);
+ noOfYears = integer(duration/365.5) + 1;
+ loop = range(noOfYears);
+ for line in loop
+ {
+  row = jsonarrayget(newBillingSchedule_t, line, "json");
+  rowScheduleID = jsonget(row,"scheduleID", "string","");
+  rowDate = jsonget(row,"billingDate", "string","");
+  rowLicenseFee = jsonget(row,"licenseFee", "float",0.00);
+  rowMaintenanceFee = jsonget(row,"maintenanceFee", "float",0.00);
+  rowCommittedPayments = jsonget(row,"committedPayments", "float",0.00);
+  rowTotalFees = jsonget(row,"totalFee", "float",0.00);
+  rowTotalFeesString = String(round(rowTotalFees,2));
+  sb = stringbuilder(result,"<tr>","<td style=\"border:1px solid black;font-family:arial;font-size:9px;\">" , commerce.getFormattedDateString_brcm(substring(rowDate,0,10)) , "</td>","<td style=\"border:1px solid black;font-family:arial;font-size:9px;\">" ,currencyPrefixString, commerce.getFormattedGrandTotal_brcm(rowTotalFeesString) , "</td>","</tr>");
+  result = sbtostring(sb);
+  grandTotal = grandTotal + rowTotalFees;
+  
+ }
+}
+
+if(paymentPlan_t == "quarterly")
+{
+ days = dict("integer");
+ put(days,1,31);
+ put(days,2,28);
+ put(days,3,31);
+ put(days,4,30);
+ put(days,5,31);
+ put(days,6,30);
+ put(days,7,31);
+ put(days,8,31);
+ put(days,9,30);
+ put(days,10,31);
+ put(days,11,30);
+ put(days,12,31);
+ startDate = contractStartDate_t;
+ endDateObj = strtodate(contractEndDate_t, dateFormat );
+ startDateObj = strtodate(contractStartDate_t, dateFormat );
+ duration = getdiffindays(endDateObj,startDateObj);
+ noOfQuarters = integer(duration/91.4) + 1;
+ if(noOfQuarters == 0){
+  noOfQuarters = 1;
+ } 
+ loop = range(noOfQuarters);
+ for line in loop
+ {
+  row = jsonarrayget(newBillingSchedule_t, line, "json");
+  rowScheduleID = jsonget(row,"scheduleID", "string","");
+  rowDate = jsonget(row,"billingDate", "string","");
+  rowLicenseFee = jsonget(row,"licenseFee", "float",0.00);
+  rowMaintenanceFee = jsonget(row,"maintenanceFee", "float",0.00);
+  rowCommittedPayments = jsonget(row,"committedPayments", "float",0.00);
+  rowTotalFees = jsonget(row,"totalFee", "float",0.00);
+  rowTotalFeesString = String(round(rowTotalFees,2));
+  sb = stringbuilder(result,"<tr>","<td style=\"border:1px solid black;font-family:arial;font-size:9px;\">" , commerce.getFormattedDateString_brcm(substring(rowDate,0,10)) , "</td>","<td style=\"border:1px solid black;font-family:arial;font-size:9px;\">" ,currencyPrefixString, commerce.getFormattedGrandTotal_brcm(rowTotalFeesString) , "</td>","</tr>");
+  result = sbtostring(sb);
+  grandTotal = grandTotal + rowTotalFees;
+ }
+}
+
+if(paymentPlan_t == "custom")
+{
+ loop = range(billingScheduleController_t);
+ for line in loop
+ {
+  row = jsonarrayget(newBillingSchedule_t, line, "json");
+  rowScheduleID = jsonget(row,"scheduleID", "string","");
+  rowDate = jsonget(row,"billingDate", "string","");
+  rowLicenseFee = jsonget(row,"licenseFee", "float",0.00);
+  rowMaintenanceFee = jsonget(row,"maintenanceFee", "float",0.00);
+  rowCommittedPayments = jsonget(row,"committedPayments", "float",0.00);
+  rowTotalFees = jsonget(row,"totalFee", "float",0.00);
+  rowTotalFeesString = String(round(rowTotalFees,2));
+  sb = stringbuilder(result,"<tr>","<td style=\"border:1px solid black;font-family:arial;font-size:9px;\">" , commerce.getFormattedDateString_brcm(substring(rowDate,0,10)) , "</td>","<td style=\"border:1px solid black;font-family:arial;font-size:9px;\">" , currencyPrefixString, commerce.getFormattedGrandTotal_brcm(rowTotalFeesString) , "</td>","</tr>");
+  result = sbtostring(sb); 
+  grandTotal = grandTotal + rowTotalFees;
+ }
+  
+}
+// creating the return statement using string builder to increase the performance
+grandTotalString = string(round(grandTotal,2));
+sb = stringbuilder(result,"<tr>","<td style=\"border:1px solid black;font-family:arial;font-size:9px;\"><b>Quote Total :</b></td>","<td style=\"border:1px solid black;font-family:arial;font-size:9px;\">",currencyPrefixString ,commerce.getFormattedGrandTotal_brcm(grandTotalString) , "</td>","</tr></tbody></table></div>");
+result = sbtostring(sb);
+return  result;
